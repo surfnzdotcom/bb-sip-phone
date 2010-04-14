@@ -1,3 +1,6 @@
 [submodule "jortp"]
 	path = jortp
 	url = gitosis@git.linphone.org:jortp
+[submodule "linphone"]
+	path = linphone
+	url = gitosis@git.linphone.org:linphone-private
