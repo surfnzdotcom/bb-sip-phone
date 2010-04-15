@@ -1,5 +1,7 @@
 package org.linphone.sal;
 
+import org.linphone.jortp.PayloadType;
+
 public interface SalStreamDescription {
 	enum Type{
 		Audio,
@@ -18,5 +20,6 @@ public interface SalStreamDescription {
 	String getAddress();
 	void setPort(int port);
 	int getPort();
-	
+	PayloadType [] getPayloadTypes();
+	void setPayloadTypes(PayloadType pts[]);
 }

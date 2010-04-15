@@ -1,0 +1,64 @@
+package org.linphone.jlinphone.media;
+
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.linphone.jortp.Factory;
+import org.linphone.jortp.PayloadType;
+import org.linphone.jortp.RtpException;
+import org.linphone.jortp.RtpPacket;
+import org.linphone.jortp.RtpProfile;
+import org.linphone.jortp.RtpSession;
+
+public class AudioStreamEchoImpl implements AudioStream {
+	private AudioStreamParameters mParams;
+	private RtpSession mSession;
+	private Timer mTimer;
+	
+	class EchoTask extends TimerTask{
+		private long mTime;
+		private RtpSession mSession;
+		private int mClockrate;
+		
+		EchoTask(){
+			mSession=AudioStreamEchoImpl.this.mSession;
+			RtpProfile prof=mSession.getProfile();
+			PayloadType pt=prof.getPayloadType(mSession.getSendPayloadTypeNumber());
+			mClockrate=pt.getClockRate();
+		}
+		public void run() {
+			int ts=(int)mTime*mClockrate;
+			
+			RtpPacket p;
+			p=mSession.recvPacket(ts);
+			if (p!=null){
+				try {
+					mSession.sendPacket(p, ts);
+				} catch (RtpException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
+	public void setParameters(AudioStreamParameters params) {
+		mParams=params;
+	}
+
+	public void start() throws RtpException {
+		mSession=Factory.get().createRtpSession();
+		mSession.setLocalAddr(mParams.getLocalAddr());
+		mSession.setRemoteAddr(mParams.getRemoteDest());
+		mSession.setProfile(mParams.getRtpProfile());
+		mSession.setSendPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
+		mSession.setRecvPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
+		mTimer=new Timer("RTP timer");
+		mTimer.scheduleAtFixedRate(new EchoTask(), 0, 10);
+	}
+
+	public void stop() {
+		mTimer.cancel();
+	}
+
+}
