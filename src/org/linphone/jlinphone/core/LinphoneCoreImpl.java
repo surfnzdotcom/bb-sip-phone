@@ -10,33 +10,67 @@ import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneProxyConfig;
+import org.linphone.jortp.SocketAddress;
+import org.linphone.sal.Sal;
+import org.linphone.sal.SalMediaDescription;
+import org.linphone.sal.SalOp;
 
 public class LinphoneCoreImpl implements LinphoneCore {
-
+	private Sal mSal;
+	private LinphoneAuthInfo mAuthInfo;
+	private LinphoneProxyConfig mProxyCfg;
+	private Call mCall;
+	private LinphoneCallListener mListener;
+	
+	private class Call{
+		SalOp mOp;
+		SalMediaDescription mLocalDesc;
+		SalMediaDescription mFinal;
+		private Call(){
+			
+		}
+		public LinphoneAddress getRemoteAddress(){
+			return null;
+		}
+		
+	}
+	private Call createIncomingCall(SalOp op){
+		Call c=new Call();
+		c.mOp=op;
+		return c;
+	}
+	private Call createOutgoingCall(){
+		Call c=new Call();
+		c.mOp=new SalOp();
+		return c;
+	}
+	
 	public LinphoneCoreImpl(LinphoneCoreListener listener, File userConfig,
 			File factoryConfig, Object userdata) {
-		// TODO Auto-generated constructor stub
+		SocketAddress addr=org.linphone.jortp.Factory.get().createSocketAddress("0.0.0.0", 5060);
+		mSal=new Sal();
+		mSal.setUserAgent("jLinphone/0.0.1");
+		mSal.listenPort(addr, Sal.Transport.Datagram, false);
+		mListener=listener;
 	}
 
 	public void acceptCall() {
-		// TODO Auto-generated method stub
-
+		if (mCall){
+			mSal.callAccept(mCall.mOp);
+		}
 	}
 
 	public void addAuthInfo(LinphoneAuthInfo info) {
-		// TODO Auto-generated method stub
-
+		 mAuthInfo=info;
 	}
 
 	public void addProxyConfig(LinphoneProxyConfig proxyCfg)
 			throws LinphoneCoreException {
-		// TODO Auto-generated method stub
-
+		mProxyCfg=proxyCfg;
 	}
 
 	public void clearAuthInfos() {
-		// TODO Auto-generated method stub
-
+		mAuthInfo=null;
 	}
 
 	public void clearCallLogs() {
@@ -45,14 +79,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void clearProxyConfigs() {
-		// TODO Auto-generated method stub
-
-	}
-
-	public LinphoneProxyConfig createProxyConfig(String identity, String proxy,
-			String route, boolean enableRegister) throws LinphoneCoreException {
-		// TODO Auto-generated method stub
-		return null;
+		mProxyCfg=null;
 	}
 
 	public void destroy() {
@@ -60,18 +87,17 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 	}
 
-	public List<LinphoneCallLog> getCallLogs() {
+	public List getCallLogs() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	public LinphoneProxyConfig getDefaultProxyConfig() {
-		// TODO Auto-generated method stub
-		return null;
+		return mProxyCfg;
 	}
 
 	public LinphoneAddress getRemoteAddress() {
-		// TODO Auto-generated method stub
+		if (mCall!=null) return mCall.getRemoteAddress();
 		return null;
 	}
 
@@ -102,8 +128,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public boolean isIncall() {
-		// TODO Auto-generated method stub
-		return false;
+		return mCall!=null;
 	}
 
 	public boolean isMicMuted() {

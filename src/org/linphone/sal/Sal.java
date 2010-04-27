@@ -22,6 +22,7 @@ public interface Sal {
 	public void setListener(SalListener listener);
 	public void listenPort(SocketAddress addr, Transport t, boolean isSecure );
 	public void setUserAgent(String ua);
+	public void authenticate(SalOp op, SalAuthInfo info);
 	
 	//Call management
 	public void callSetLocalMediaDescription(SalMediaDescription md);
@@ -35,4 +36,6 @@ public interface Sal {
 	public void register(SalOp op, String proxy, String from, int expires);
 	public void unregister(SalOp op);
 	
+	//close
+	public void close();
 }

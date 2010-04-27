@@ -9,17 +9,16 @@ public class AudioStreamImpl implements AudioStream {
 	private SendStream mSendStream;
 	private AudioStreamParameters mParams;
 	private RtpSession mSession;
-	public void setParameters(AudioStreamParameters params) {
+	public void init(AudioStreamParameters params) throws RtpException {
 		mParams=params;
-	}
-	public void start() throws RtpException {
 		mSession=Factory.get().createRtpSession();
 		mSession.setLocalAddr(mParams.getLocalAddr());
 		mSession.setRemoteAddr(mParams.getRemoteDest());
 		mSession.setProfile(mParams.getRtpProfile());
 		mSession.setSendPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
 		mSession.setRecvPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
-		
+	}
+	public void start() {
 		mRecvStream=new RecvStream(mSession);
 		mSendStream=new SendStream(mSession);
 		mRecvStream.start();

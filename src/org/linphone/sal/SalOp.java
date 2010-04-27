@@ -6,7 +6,7 @@ public interface SalOp {
 	String getTo();
 	void setTo(String to);
 	String getContact();
-	void setContact();
+	void setContact(String contact);
 	void setUserContext(Object obj);
 	Object getUserContext();
 }
