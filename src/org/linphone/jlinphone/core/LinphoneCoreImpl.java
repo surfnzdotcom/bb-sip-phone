@@ -38,6 +38,9 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 		public void onCallAccepted(SalOp op) {
 			Call c=(Call)op.getUserContext();
+			if (mCall==null || mCall!=c){
+				mSal.callTerminate(op);
+			}
 			c.mFinal=mSal.getFinalMediaDescription(op);
 			startMediaStreams(c);
 		}
@@ -163,7 +166,13 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 	}
 	private RtpProfile makeProfile(SalStreamDescription sd){
-		
+		RtpProfile prof=org.linphone.jortp.Factory.get().createRtpProfile();
+		PayloadType pts[]=sd.getPayloadTypes();
+		int i;
+		for(i=0;i<pts.length;i++){
+			prof.setPayloadType(pts[i], pts[i].getNumber());
+		}
+		return prof;
 	}
 	private AudioStreamParameters makeAudioStreamParams(Call call){
 		AudioStreamParameters p=null;
