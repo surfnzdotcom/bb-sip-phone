@@ -8,5 +8,6 @@ public interface SalOp {
 	String getContact();
 	void setContact(String contact);
 	void setUserContext(Object obj);
+	Sal getSal();
 	Object getUserContext();
 }

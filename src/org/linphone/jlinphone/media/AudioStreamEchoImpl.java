@@ -9,6 +9,7 @@ import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpPacket;
 import org.linphone.jortp.RtpProfile;
 import org.linphone.jortp.RtpSession;
+import org.linphone.jortp.SocketAddress;
 
 public class AudioStreamEchoImpl implements AudioStream {
 	private AudioStreamParameters mParams;
@@ -42,23 +43,25 @@ public class AudioStreamEchoImpl implements AudioStream {
 		}
 		
 	}
-	public void init(AudioStreamParameters params) throws RtpException {
-		mParams=params;
+	public void init(SocketAddress local) throws RtpException {
 		mSession=Factory.get().createRtpSession();
-		mSession.setLocalAddr(mParams.getLocalAddr());
+		mSession.setLocalAddr(local);
+	}
+
+	public void start(AudioStreamParameters params) throws RtpException{
+		mParams=params;
+		
 		mSession.setRemoteAddr(mParams.getRemoteDest());
 		mSession.setProfile(mParams.getRtpProfile());
 		mSession.setSendPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
 		mSession.setRecvPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
-	}
-
-	public void start() {
 		mTimer=new Timer("RTP timer");
 		mTimer.scheduleAtFixedRate(new EchoTask(), 0, 10);
 	}
 
 	public void stop() {
 		mTimer.cancel();
+		mSession.close();
 	}
 
 }

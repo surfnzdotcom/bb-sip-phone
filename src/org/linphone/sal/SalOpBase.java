@@ -5,6 +5,11 @@ public class SalOpBase implements SalOp {
 	String mFrom;
 	String mTo;
 	Object mContext;
+	Sal mRoot;
+	
+	public SalOpBase(Sal sal){
+		mRoot=sal;
+	}
 	
 	public String getContact() {
 		return mContact;
@@ -36,6 +41,10 @@ public class SalOpBase implements SalOp {
 
 	public void setUserContext(Object obj) {
 		mContext=obj;
+	}
+
+	public Sal getSal() {
+		return mRoot;
 	}
 
 }

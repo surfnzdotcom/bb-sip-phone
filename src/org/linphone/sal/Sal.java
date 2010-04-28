@@ -25,7 +25,7 @@ public interface Sal {
 	public void authenticate(SalOp op, SalAuthInfo info);
 	
 	//Call management
-	public void callSetLocalMediaDescription(SalMediaDescription md);
+	public void callSetLocalMediaDescription(SalOp op, SalMediaDescription md);
 	public void call(SalOp op);
 	public void callDecline(SalOp op, Reason r, String redirect_uri);
 	public void callTerminate(SalOp op);
@@ -38,4 +38,5 @@ public interface Sal {
 	
 	//close
 	public void close();
+	public String getLocalAddr();
 }
