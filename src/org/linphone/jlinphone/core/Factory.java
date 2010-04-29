@@ -39,4 +39,10 @@ public class Factory extends LinphoneCoreFactory {
 	private Factory(){
 		
 	}
+
+	@Override
+	public LinphoneAddress createLinphoneAddress(String address) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

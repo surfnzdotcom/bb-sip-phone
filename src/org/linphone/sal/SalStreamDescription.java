@@ -5,18 +5,20 @@ import org.linphone.jortp.PayloadType;
 public class SalStreamDescription {
 	private String mAddress;
 	private PayloadType [] mPayloadTypes;
-	int mPort;
-	enum Proto{
+	private int mPort;
+	private Proto mProto;
+	private Type mType;
+	
+	public enum Proto{
 		RtpAvp,
 		RtpSavp,
 	}
-	enum Type{
+	public enum Type{
 		Audio,
 		Video,
 		Other
 	}
-	Proto mProto;
-	Type mType;
+	
 	public String getAddress() {
 		return mAddress;
 	}
