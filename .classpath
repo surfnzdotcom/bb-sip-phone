@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="submodules/externals/sip-for-me/src"/>
-	<classpathentry kind="src" path="submodules/jortp/src"/>
+	<classpathentry excluding="org/linphone/jortp/RtpDefaultTransport.java" kind="src" path="submodules/jortp/src"/>
 	<classpathentry kind="src" path="submodules/linphone/java"/>
 	<classpathentry kind="con" path="org.elipse.mtj.JavaMEContainer/Nokia N97 SDK v1.0/S60Emulator"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

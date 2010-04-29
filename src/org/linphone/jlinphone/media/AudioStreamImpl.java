@@ -1,6 +1,6 @@
 package org.linphone.jlinphone.media;
 
-import org.linphone.jortp.Factory;
+import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpSession;
 import org.linphone.jortp.SocketAddress;
@@ -17,7 +17,7 @@ public class AudioStreamImpl implements AudioStream {
 		mSession.close();
 	}
 	public void init(SocketAddress local) throws RtpException {
-		mSession=Factory.get().createRtpSession();
+		mSession=JOrtpFactory.instance().createRtpSession();
 		mSession.setLocalAddr(local);
 	}
 	public void start(AudioStreamParameters params) throws RtpException {
