@@ -9,15 +9,29 @@ public class SalStreamDescription {
 	private Proto mProto;
 	private Type mType;
 	
-	public enum Proto{
-		RtpAvp,
-		RtpSavp,
-	}
-	public enum Type{
-		Audio,
-		Video,
-		Other
-	}
+	public static class Proto{
+		static public Proto RtpAvp = new Proto("RtpAvp");
+		static public Proto RtpSavp = new Proto("RtpSavp");
+		private String mStringValue;
+		private Proto(String aStringValue) {
+			mStringValue = aStringValue;
+		}
+		public String toString() {
+			return mStringValue;
+		}
+	};
+	public static class Type{
+		static public Type Audio = new Type("Audio");
+		static public Type Video = new Type("Video");
+		static public Type Other = new Type("Other");
+		private String mStringValue;
+		private Type(String aStringValue) {
+			mStringValue = aStringValue;
+		}
+		public String toString() {
+			return mStringValue;
+		}
+	};
 	
 	public String getAddress() {
 		return mAddress;

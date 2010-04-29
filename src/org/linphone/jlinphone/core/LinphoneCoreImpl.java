@@ -1,8 +1,9 @@
 package org.linphone.jlinphone.core;
 
-import java.io.File;
-import java.util.List;
 
+import java.util.Vector;
+
+import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneAuthInfo;
 import org.linphone.core.LinphoneCallLog;
@@ -31,8 +32,21 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	Call mCall;
 	LinphoneCoreListener mListener;
 	AudioStream mAudioStream;
-	enum CallDir {Incoming, Outgoing};
-	enum CallState {Init, Ringing, Running, Terminated};
+	
+	static class CallState {
+		static CallState Init = new CallState ("Init");
+		static CallState Ringing = new CallState ("Ringing");
+		static CallState Running = new CallState ("Running");
+		static CallState Terminated = new CallState ("Terminated");
+		final String mValue;
+		private CallState(String state) {
+			mValue = state;
+		}
+		public String toString () {
+			return mValue;
+		}
+	}
+		
 	int mSipPort=5060;
 	SalListener mSalListener= new SalListener(){
 
@@ -72,13 +86,13 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	};
 	
 	private class Call{
-		CallDir mDir;
+		CallDirection mDir;
 		CallState mState;
 		SalOp mOp;
 		SalMediaDescription mLocalDesc;
 		SalMediaDescription mFinal;
 		
-		private Call(SalOp op, CallDir dir){
+		private Call(SalOp op, CallDirection dir){
 			mState=CallState.Init;
 			mOp=op;
 			mDir=dir;
@@ -88,7 +102,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		
 		public LinphoneAddress getRemoteAddress(){
 			if (mOp!=null){
-				if (mDir==CallDir.Incoming){
+				if (mDir==CallDirection.Incoming){
 					return LinphoneCoreFactory.instance().createLinphoneAddress(mOp.getFrom());
 				}else return LinphoneCoreFactory.instance().createLinphoneAddress(mOp.getTo());
 			}
@@ -103,7 +117,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		public CallState getState(){
 			return mState;
 		}
-		public CallDir getDir(){
+		public CallDirection getDir(){
 			return mDir;
 		}
 		
@@ -131,14 +145,14 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		return md;
 	}
 	private Call createIncomingCall(SalOp op){
-		Call c=new Call(op,CallDir.Incoming);
+		Call c=new Call(op,CallDirection.Incoming);
 		mSal.callSetLocalMediaDescription(op,c.mLocalDesc);
 		initMediaStreams(c);
 		return c;
 	}
 	private Call createOutgoingCall(LinphoneAddress addr){
 		SalOp op=new SalOp();
-		Call c=new Call(op,CallDir.Outgoing);
+		Call c=new Call(op,CallDirection.Outgoing);
 		c.mOp.setFrom(LinphoneCoreImpl.this.getIdentity());
 		c.mOp.setTo(addr.asString());
 		mSal.callSetLocalMediaDescription(op,c.mLocalDesc);
@@ -206,8 +220,8 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 	}
 	
-	public LinphoneCoreImpl(LinphoneCoreListener listener, File userConfig,
-			File factoryConfig, Object userdata) {
+	public LinphoneCoreImpl(LinphoneCoreListener listener, String userConfig,
+			String factoryConfig, Object userdata) {
 		SocketAddress addr=org.linphone.jortp.Factory.get().createSocketAddress("0.0.0.0", mSipPort);
 		mSal=new Sal();
 		mSal.setUserAgent("jLinphone/0.0.1");
@@ -253,7 +267,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 	}
 
-	public List getCallLogs() {
+	public Vector getCallLogs() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -276,7 +290,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			throws LinphoneCoreException {
 		LinphoneAddress addr=LinphoneCoreFactory.instance().createLinphoneAddress(destination);
 		if (addr==null){
-			if (!destination.contains("@")){
+			if (destination.indexOf("@") == -1){
 				LinphoneProxyConfig cfg=getDefaultProxyConfig();
 				if (cfg!=null){
 					LinphoneAddress tmp=LinphoneCoreFactory.instance()
@@ -313,7 +327,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 	public boolean isInComingInvitePending() {
 		return mCall!=null 
-			&& mCall.getDir()==CallDir.Incoming
+			&& mCall.getDir()==CallDirection.Incoming
 			&& mCall.getState()==CallState.Ringing;
 	}
 

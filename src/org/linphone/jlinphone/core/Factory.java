@@ -8,12 +8,12 @@ import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneProxyConfig;
 
-import java.io.File;
+
 import java.io.IOException;
 
 public class Factory extends LinphoneCoreFactory {
 	
-	public LinphoneCore createLinphoneCore(LinphoneCoreListener listener, File userConfig,File factoryConfig,Object  userdata) throws IOException {
+	public LinphoneCore createLinphoneCore(LinphoneCoreListener listener, String userConfig,String factoryConfig,Object  userdata) throws IOException {
 		return new LinphoneCoreImpl(listener,userConfig,factoryConfig,userdata);
 	}
 
@@ -31,7 +31,7 @@ public class Factory extends LinphoneCoreFactory {
 		return new LinphoneProxyConfigImpl();
 	}
 
-	@Override
+	
 	public void setDebugMode(boolean enable) {
 		// TODO Auto-generated method stub
 		
@@ -40,7 +40,6 @@ public class Factory extends LinphoneCoreFactory {
 		
 	}
 
-	@Override
 	public LinphoneAddress createLinphoneAddress(String address) {
 		// TODO Auto-generated method stub
 		return null;

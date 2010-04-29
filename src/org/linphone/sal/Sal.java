@@ -3,21 +3,37 @@ package org.linphone.sal;
 import org.linphone.jortp.SocketAddress;
 
 public interface Sal {
-	enum Reason{
-		Declined,
-		Busy,
-		Redirect,
-		TemporarilyUnavailable,
-		NotFound,
-		DoNotDisturb,
-		Media,
-		Forbidden,
-		Unknown
+	static public class  Reason{
+		public static Reason Declined = new Reason("Declined");
+		public static Reason Busy = new Reason("Busy");
+		public static Reason Redirect = new Reason("Redirect");
+		public static Reason TemporarilyUnavailable = new Reason("TemporarilyUnavailable");
+		public static Reason NotFound = new Reason("NotFound");
+		public static Reason DoNotDisturb = new Reason("DoNotDisturb");
+		public static Reason Media = new Reason("Media");
+		public static Reason Forbidden = new Reason("Forbidden");
+		public static Reason Unknown = new Reason("Unknown");
+		private String mStringValue;
+		private Reason(String aStringValue) {
+			mStringValue = aStringValue;
+		}
+		public String toString() {
+			return mStringValue;
+		}
 	}
-	enum Transport{
-		Datagram,
-		Stream
+
+	static public class Transport{
+		public static Transport Datagram = new Transport("Datagram");
+		public static Transport Stream = new Transport("Stream");
+		private String mStringValue;
+		private Transport(String aStringValue) {
+			mStringValue = aStringValue;
+		}
+		public String toString() {
+			return mStringValue;
+		}
 	}
+
 	//global
 	public void setListener(SalListener listener);
 	public void listenPort(SocketAddress addr, Transport t, boolean isSecure );

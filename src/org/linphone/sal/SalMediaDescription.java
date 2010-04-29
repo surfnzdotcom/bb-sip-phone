@@ -1,14 +1,14 @@
 package org.linphone.sal;
 
-import java.util.List;
+import java.util.Vector;
 
 public class SalMediaDescription{
-	List mStreams;
+	Vector mStreams;
 	public SalStreamDescription getStream(int index) {
-		return (SalStreamDescription)mStreams.get(index);
+		return (SalStreamDescription) mStreams.elementAt(index);
 	}
 	public void addStreamDescription(SalStreamDescription sd) {
-		mStreams.add(sd);
+		mStreams.addElement(sd);
 	}
 
 }

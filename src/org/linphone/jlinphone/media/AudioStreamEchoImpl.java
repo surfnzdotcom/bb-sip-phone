@@ -55,7 +55,7 @@ public class AudioStreamEchoImpl implements AudioStream {
 		mSession.setProfile(mParams.getRtpProfile());
 		mSession.setSendPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
 		mSession.setRecvPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
-		mTimer=new Timer("RTP timer");
+		mTimer=new Timer();
 		mTimer.scheduleAtFixedRate(new EchoTask(), 0, 10);
 	}
 
