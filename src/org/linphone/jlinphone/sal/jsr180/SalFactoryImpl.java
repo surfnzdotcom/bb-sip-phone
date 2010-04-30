@@ -19,12 +19,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.sal.jsr180;
 
 import org.linphone.sal.Sal;
+import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalFactory;
-import org.linphone.sal.SalOp;
 
 public class SalFactoryImpl extends SalFactory {
 
 	public Sal createSal() {
 		return new SalImpl();
+	}
+
+	public SalAddress createSalAddress(String address){
+		return new SalAddressImpl(address);
 	}
 }

@@ -19,17 +19,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.sal.jsr180;
 
 
-import java.io.IOException;
-
-import javax.microedition.io.Connector;
-import javax.microedition.io.SocketConnection;
-
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.jortp.SocketAddress;
 import org.linphone.sal.Sal;
+import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalAuthInfo;
 import org.linphone.sal.SalException;
+import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
@@ -39,45 +36,45 @@ import sip4me.gov.nist.core.Debug;
 import sip4me.gov.nist.core.LogWriter;
 import sip4me.gov.nist.microedition.sip.SipConnector;
 import sip4me.gov.nist.microedition.sip.StackConnector;
+import sip4me.gov.nist.siplite.header.Header;
+import sip4me.gov.nist.siplite.message.Request;
 import sip4me.gov.nist.siplite.stack.ServerLog;
+import sip4me.nist.javax.microedition.sip.SipClientConnection;
+import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
 import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
+import sip4me.nist.javax.microedition.sip.SipRefreshListener;
 import sip4me.nist.javax.microedition.sip.SipServerConnectionListener;
 
-public class SalImpl implements Sal, SipServerConnectionListener {
+class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	private SipConnectionNotifier mConnectionNotifier;
 	Logger mLog = JOrtpFactory.instance().createLogger("Sal");
-	
+	SipClientConnection mRegisterCnx;
+	int mRegisterRefreshID;
 	SalImpl() {
 	
 	}
 	public void authenticate(SalOp op, SalAuthInfo info) {
-		// TODO Auto-generated method stub
-
+		((SalOpImpl)op).authenticate(info);
 	}
 
 	public void call(SalOp op) {
-		// TODO Auto-generated method stub
-
+		((SalOpImpl)op).call();
 	}
 
 	public void callAccept(SalOp op) {
-		// TODO Auto-generated method stub
-
+		((SalOpImpl)op).callAccept();
 	}
 
 	public void callDecline(SalOp op, Reason r, String redirectUri) {
-		// TODO Auto-generated method stub
-
+		((SalOpImpl)op).callDecline(r, redirectUri);
 	}
 
 	public void callSetLocalMediaDescription(SalOp op, SalMediaDescription md) {
-		// TODO Auto-generated method stub
-
+		((SalOpImpl)op).callSetLocalMediaDescription(md);
 	}
 
 	public void callTerminate(SalOp op) {
-		// TODO Auto-generated method stub
-
+		((SalOpImpl)op).callTerminate();
 	}
 
 	public void close() {
@@ -91,29 +88,15 @@ public class SalImpl implements Sal, SipServerConnectionListener {
 	}
 
 	public String getLocalAddr() throws SalException{
-		SocketConnection dummyCon=null;
 		try {
 			if (mConnectionNotifier != null) {
 				return mConnectionNotifier.getLocalAddress();
 			} else {
-
-				String dummyConnString = "socket://linphone.org:80";
-				String localAdd= null;
-				dummyCon = (SocketConnection) Connector.open(dummyConnString);
-				localAdd = dummyCon.getLocalAddress();
-
-				return localAdd;
+				throw new Exception("no notification listener");
 			}
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new SalException("Cannot get Local address from notification listener reason ["+e.getMessage()+"]");
-		} finally {
-			if (dummyCon != null)
-				try {
-					dummyCon.close();
-				} catch (IOException e) {
-					//nop
-				}
 		}
 	}
 
@@ -134,7 +117,10 @@ public class SalImpl implements Sal, SipServerConnectionListener {
         if (!addr.getHost().equalsIgnoreCase("0.0.0.0")) {
         	SipConnectorUri+=":"+addr.getPort();
         } else {
-        	SipConnectorUri+=addr.getPort();
+			/*String dummyConnString = "datagram://mty11.axtel.net:5060";
+			UDPDatagramConnection dummyCon = (UDPDatagramConnection) Connector.open(dummyConnString);*/
+			String localAdd ="";/* dummyCon.getLocalAddress();*/
+        	SipConnectorUri+=localAdd+":"+addr.getPort();
         }
         
         mConnectionNotifier = (SipConnectionNotifier) SipConnector.open(SipConnectorUri);
@@ -148,9 +134,39 @@ public class SalImpl implements Sal, SipServerConnectionListener {
         }
 	}
 
-	public void register(SalOp op, String proxy, String from, int expires) {
-		
-		// TODO Auto-generated method stub
+	public void register(SalOp op, String proxy, String from, int expires) throws SalException{
+		// save from
+		op.setFrom(from);
+
+		SalOpImpl lSalOp = (SalOpImpl) op;
+		try {
+			mRegisterCnx = (SipClientConnection) SipConnector.open(proxy);
+			mRegisterCnx.initRequest(Request.REGISTER, mConnectionNotifier);
+			mRegisterCnx.setHeader(Header.FROM, from);
+			mRegisterCnx.setHeader(Header.EXPIRES, String.valueOf(expires));
+
+			SalAddress lAddress = SalFactory.instance().createSalAddress(from);
+			String contactHdr = lAddress.getUserName() + "@"
+			+ mConnectionNotifier.getLocalAddress() + ":"
+			+ mConnectionNotifier.getLocalPort();
+			mRegisterCnx.setHeader(Header.CONTACT, contactHdr);
+
+			mRegisterCnx.setRequestURI("sip:" + lAddress.getDomain());
+
+			SalAuthInfo lAuthInfo = lSalOp.getAuthInfo();
+
+			if (lAuthInfo != null && lAuthInfo.getUserid() != null  && lAuthInfo.getPassword() != null ) {
+				mRegisterCnx.setCredentials(lAuthInfo.getUserid(), lAuthInfo.getPassword(),lAuthInfo.getRealm());
+			}
+			mRegisterRefreshID = mRegisterCnx.enableRefresh(this);
+
+			// Finally, send register
+			mRegisterCnx.send();
+			mLog.info("REGISTER sent from ["+lAddress+"] to ["+proxy+"]");
+		} catch (Exception e) {
+			throw new SalException("cannot send register  from ["+op+"] to ["+proxy+"]",e);
+		}
+
 
 	}
 
@@ -174,6 +190,10 @@ public class SalImpl implements Sal, SipServerConnectionListener {
 	}
 	public SalOp createSalOp() {
 		return new SalOpImpl(this);
+	}
+	public void refreshEvent(int refreshID, int statusCode, String reasonPhrase) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

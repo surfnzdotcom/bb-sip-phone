@@ -12,6 +12,7 @@ import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
+import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.core.LinphoneCore.GeneralState;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -73,6 +74,8 @@ public class jlinphoneMidlet extends MIDlet implements CommandListener, Linphone
 		try {
 			LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
 			lc = LinphoneCoreFactory.instance().createLinphoneCore(this, rootDir+".linphonerc", null, null);
+			LinphoneProxyConfig lProxy = LinphoneCoreFactory.instance().createProxyConfig("sip:0952636505@freephonie.net", "sip:freephonie.net", null, true);
+			lc.setDefaultProxyConfig(lProxy);
 		} catch (LinphoneCoreException e) {
 			mLog.error("cannot start linphone",e);
 			e.printStackTrace();

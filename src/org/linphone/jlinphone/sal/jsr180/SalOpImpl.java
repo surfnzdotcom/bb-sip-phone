@@ -19,13 +19,49 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.sal.jsr180;
 
 import org.linphone.sal.Sal;
+import org.linphone.sal.SalAuthInfo;
+import org.linphone.sal.SalMediaDescription;
+import org.linphone.sal.SalOp;
 import org.linphone.sal.SalOpBase;
+import org.linphone.sal.Sal.Reason;
 
-public class SalOpImpl extends SalOpBase {
+class SalOpImpl extends SalOpBase {
 
+	SalAuthInfo mAutInfo;
+	
 	public SalOpImpl(Sal sal) {
 		super(sal);
 
 	}
 
+	public void authenticate(SalAuthInfo info) {
+		mAutInfo = info;
+	}
+
+	public void call() {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void callAccept() {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void callDecline(Reason r, String redirectUri) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void callSetLocalMediaDescription(SalMediaDescription md) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public void callTerminate() {
+		// TODO Auto-generated method stub
+	}
+	public SalAuthInfo getAuthInfo() {
+		return mAutInfo;
+	}
 }

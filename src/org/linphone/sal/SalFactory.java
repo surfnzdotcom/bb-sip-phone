@@ -43,5 +43,12 @@ abstract public class SalFactory {
 		return theSalFactory;
 	}
 	abstract public Sal createSal();
+	
+	/**
+	 * create a Sall Address from a parcable string
+	 * @param address in case of sip, <Display name> toto@linphone.org:5060
+	 * @return
+	 */
+	abstract public SalAddress createSalAddress(String address) throws IllegalArgumentException ;
 
 }

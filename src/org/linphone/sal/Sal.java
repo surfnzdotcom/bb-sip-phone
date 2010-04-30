@@ -52,7 +52,7 @@ public interface Sal {
 	SalMediaDescription getFinalMediaDescription(SalOp h);
 	
 	//Registration
-	public void register(SalOp op, String proxy, String from, int expires);
+	public void register(SalOp op, String proxy, String from, int expires) throws SalException;
 	public void unregister(SalOp op);
 	
 	//close
