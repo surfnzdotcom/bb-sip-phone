@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="org/linphone/jlinphone/sal/jsr180/test/SalTester.java" kind="src" path="src"/>
+	<classpathentry kind="src" path="submodules/linphone/java/common"/>
+	<classpathentry kind="src" path="submodules/linphone/java/j2me"/>
 	<classpathentry kind="src" path="submodules/externals/sip-for-me/src"/>
 	<classpathentry excluding="org/linphone/jortp/RtpDefaultTransport.java" kind="src" path="submodules/jortp/src"/>
-	<classpathentry kind="src" path="submodules/linphone/java"/>
 	<classpathentry kind="con" path="org.elipse.mtj.JavaMEContainer/Nokia N97 SDK v1.0/S60Emulator"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.mtj.core.EXTERNAL_LIBRARY/JMUnit for CLDC 1.1"/>

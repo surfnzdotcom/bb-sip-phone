@@ -262,6 +262,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	public void addProxyConfig(LinphoneProxyConfig proxyCfg)
 			throws LinphoneCoreException {
 		mProxyCfg=proxyCfg;
+		proxyCfg.done();
 	}
 
 	public void clearAuthInfos() {
@@ -278,8 +279,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void destroy() {
-		// TODO Auto-generated method stub
-
+		mSal.close();
 	}
 
 	public Vector getCallLogs() {

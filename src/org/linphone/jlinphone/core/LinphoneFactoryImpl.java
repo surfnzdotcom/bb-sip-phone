@@ -16,8 +16,8 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 		return new LinphoneCoreImpl(listener,userConfig,factoryConfig,userdata);
 	}
 
-	public LinphoneAuthInfo createAuthInfo(String username, String password) {
-		return new LinphoneAuthInfoImpl(username,password);
+	public LinphoneAuthInfo createAuthInfo(String username, String password, String realm) {
+		return new LinphoneAuthInfoImpl(username,password, null);
 	}
 
 	public LinphoneAddress createLinphoneAddress(String username,
@@ -27,7 +27,7 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 	
 	public LinphoneProxyConfig createProxyConfig(String identity, String proxy,
 			String route, boolean enableRegister) throws LinphoneCoreException {
-		return new LinphoneProxyConfigImpl();
+		return new LinphoneProxyConfigImpl(identity,proxy,route,enableRegister);
 	}
 
 	

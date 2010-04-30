@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.sal.jsr180;
 
 
+import java.io.IOException;
+
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.jortp.SocketAddress;
@@ -78,7 +80,14 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	}
 
 	public void close() {
-		// TODO Auto-generated method stub
+		if (mConnectionNotifier != null) {
+			try {
+				mConnectionNotifier.close();
+			} catch (IOException e) {
+				mLog.error("cannot close Sal connection", e);
+			}
+			mConnectionNotifier = null;
+		}
 
 	}
 
@@ -120,7 +129,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 			/*String dummyConnString = "datagram://mty11.axtel.net:5060";
 			UDPDatagramConnection dummyCon = (UDPDatagramConnection) Connector.open(dummyConnString);*/
 			String localAdd ="";/* dummyCon.getLocalAddress();*/
-        	SipConnectorUri+=localAdd+":"+addr.getPort();
+        	SipConnectorUri+=localAdd+addr.getPort();
         }
         
         mConnectionNotifier = (SipConnectionNotifier) SipConnector.open(SipConnectorUri);
@@ -140,15 +149,19 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 
 		SalOpImpl lSalOp = (SalOpImpl) op;
 		try {
-			mRegisterCnx = (SipClientConnection) SipConnector.open(proxy);
+			SalAddress lProxyAddress = SalFactory.instance().createSalAddress(proxy);
+			if (lProxyAddress.getPortInt() < 0) {
+				lProxyAddress.setPortInt(5060);
+			}
+			mRegisterCnx = (SipClientConnection) SipConnector.open(from);
 			mRegisterCnx.initRequest(Request.REGISTER, mConnectionNotifier);
 			mRegisterCnx.setHeader(Header.FROM, from);
 			mRegisterCnx.setHeader(Header.EXPIRES, String.valueOf(expires));
 
 			SalAddress lAddress = SalFactory.instance().createSalAddress(from);
-			String contactHdr = lAddress.getUserName() + "@"
-			+ mConnectionNotifier.getLocalAddress() + ":"
-			+ mConnectionNotifier.getLocalPort();
+			String contactHdr = lAddress.getUserName() 	+ "@"
+														+ mConnectionNotifier.getLocalAddress() + ":"
+														+ mConnectionNotifier.getLocalPort();
 			mRegisterCnx.setHeader(Header.CONTACT, contactHdr);
 
 			mRegisterCnx.setRequestURI("sip:" + lAddress.getDomain());
@@ -164,7 +177,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 			mRegisterCnx.send();
 			mLog.info("REGISTER sent from ["+lAddress+"] to ["+proxy+"]");
 		} catch (Exception e) {
-			throw new SalException("cannot send register  from ["+op+"] to ["+proxy+"]",e);
+			throw new SalException("cannot send register  from ["+from+"] to ["+proxy+"]",e);
 		}
 
 

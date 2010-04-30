@@ -78,5 +78,7 @@ class SalAddressImpl implements SalAddress {
 	public void setUserName(String username) {
 		mAddress.setUser(username);
 	}
-
+	public String toString() {
+		return asString();
+	}
 }

@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.sal;
 
 public class SalException extends Exception {
-
+	Throwable mE;
 	public SalException() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -30,9 +30,17 @@ public class SalException extends Exception {
 		// TODO Auto-generated constructor stub
 	}
 	public SalException(Throwable e) {
+		mE = e;
 	}
 
 	public SalException(String detailMessage,Throwable e) {
 		super(detailMessage);
+		mE = e;
 	}
+
+	public void printStackTrace() {
+		super.printStackTrace();
+		mE.printStackTrace();
+	}
+	
 }
