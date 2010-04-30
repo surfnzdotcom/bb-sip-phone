@@ -2,6 +2,10 @@ package org.linphone.jlinphone.core;
 
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneProxyConfig;
+import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
+import org.linphone.sal.SalException;
+import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalOp;
 
 public class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
@@ -15,6 +19,7 @@ public class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	private boolean mCommit;
 	private SalOp mOp;
 	private LinphoneCoreImpl mCore;
+	static Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
 	
 	public LinphoneProxyConfigImpl(){
 		mEscapePlus=false;
@@ -83,8 +88,12 @@ public class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 		mCore=core;
 		if (mCommit){
 			if (mEnableRegister){
-				mOp=new SalOp();
-				core.getSal().register(mOp, mProxy, mIdentity, mExpires);
+				mOp=core.getSal().createSalOp();
+				try {
+					core.getSal().register(mOp, mProxy, mIdentity, mExpires);
+				} catch (SalException e) {
+					mLog.error("Registration Error",e);
+				}
 			}else if (mOp!=null){
 				core.getSal().unregister(mOp);
 				mOp=null;
