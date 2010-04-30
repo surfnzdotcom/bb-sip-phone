@@ -8,6 +8,7 @@ public class SalStreamDescription {
 	private int mPort;
 	private Proto mProto;
 	private Type mType;
+	private int mPtime;
 	
 	public static class Proto{
 		static public Proto RtpAvp = new Proto("RtpAvp");
@@ -73,4 +74,11 @@ public class SalStreamDescription {
 		mType=t;
 	}
 
+	public void setPtime(int ptime) {
+		mPtime=ptime;
+	}
+
+	public int getPtime(){
+		return mPtime;
+	}
 }
