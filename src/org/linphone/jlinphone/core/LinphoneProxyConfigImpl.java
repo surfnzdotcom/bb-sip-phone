@@ -21,13 +21,21 @@ public class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	private LinphoneCoreImpl mCore;
 	static Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
 	
-	public LinphoneProxyConfigImpl(){
+	LinphoneProxyConfigImpl(){
 		mEscapePlus=false;
 		mEnableRegister=false;
 		mCommit=false;
 		mExpires=3600;
 	}
 	
+	LinphoneProxyConfigImpl(String identity, String proxy, String route,
+			boolean enableRegister) {
+		this();
+		mIdentity = identity;
+		mProxy = proxy;
+		mEnableRegister = enableRegister;
+	}
+
 	public void done() {
 		mCommit=true;
 	}
