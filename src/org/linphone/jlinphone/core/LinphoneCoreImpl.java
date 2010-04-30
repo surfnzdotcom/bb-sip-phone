@@ -336,13 +336,12 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public boolean isMicMuted() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	public void iterate() {
-		// TODO Auto-generated method stub
-
+		if (mProxyCfg!=null)
+			((LinphoneProxyConfigImpl)mProxyCfg).check(this);
 	}
 
 	public void muteMic(boolean isMuted) {
@@ -375,6 +374,10 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			stopMediaStreams(mCall);
 			mCall=null;
 		}
+	}
+	
+	public Sal getSal(){
+		return mSal;
 	}
 
 }
