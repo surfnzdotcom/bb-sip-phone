@@ -3,7 +3,7 @@ package org.linphone.jlinphone.media;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.linphone.jortp.Factory;
+import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.PayloadType;
 import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpPacket;
@@ -44,7 +44,7 @@ public class AudioStreamEchoImpl implements AudioStream {
 		
 	}
 	public void init(SocketAddress local) throws RtpException {
-		mSession=Factory.get().createRtpSession();
+		mSession=JOrtpFactory.instance().createRtpSession();
 		mSession.setLocalAddr(local);
 	}
 

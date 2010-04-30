@@ -9,11 +9,10 @@ import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneProxyConfig;
 
 
-import java.io.IOException;
 
-public class Factory extends LinphoneCoreFactory {
+public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 	
-	public LinphoneCore createLinphoneCore(LinphoneCoreListener listener, String userConfig,String factoryConfig,Object  userdata) throws IOException {
+	public LinphoneCore createLinphoneCore(LinphoneCoreListener listener, String userConfig,String factoryConfig,Object  userdata) throws LinphoneCoreException {
 		return new LinphoneCoreImpl(listener,userConfig,factoryConfig,userdata);
 	}
 
@@ -36,7 +35,7 @@ public class Factory extends LinphoneCoreFactory {
 		// TODO Auto-generated method stub
 		
 	}
-	private Factory(){
+	public LinphoneFactoryImpl(){
 		
 	}
 

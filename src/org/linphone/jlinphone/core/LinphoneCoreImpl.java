@@ -15,11 +15,15 @@ import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.jlinphone.media.AudioStream;
 import org.linphone.jlinphone.media.AudioStreamEchoImpl;
 import org.linphone.jlinphone.media.AudioStreamParameters;
+import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
 import org.linphone.jortp.PayloadType;
 import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpProfile;
 import org.linphone.jortp.SocketAddress;
 import org.linphone.sal.Sal;
+import org.linphone.sal.SalException;
+import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
@@ -32,7 +36,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	Call mCall;
 	LinphoneCoreListener mListener;
 	AudioStream mAudioStream;
-	
+	Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
 	static class CallState {
 		static CallState Init = new CallState ("Init");
 		static CallState Ringing = new CallState ("Ringing");
@@ -63,7 +67,14 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			if (mCall!=null){
 				mSal.callDecline(op, Sal.Reason.Busy, null);
 			}else{
-				mCall=createIncomingCall(op);
+				try {
+					mCall=createIncomingCall(op);
+				} catch (SalException e) {
+					System.err.println("Cannot create incoming call, reason ["+e.getMessage()+"]");
+					e.printStackTrace();
+					mSal.callDecline(op, Sal.Reason.Unknown, null);
+					
+				}
 				mListener.inviteReceived(LinphoneCoreImpl.this, 
 						op.getFrom());
 			}
@@ -92,7 +103,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		SalMediaDescription mLocalDesc;
 		SalMediaDescription mFinal;
 		
-		private Call(SalOp op, CallDirection dir){
+		private Call(SalOp op, CallDirection dir) throws SalException{
 			mState=CallState.Init;
 			mOp=op;
 			mDir=dir;
@@ -122,19 +133,17 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 		
 	}
-	private String getLocalAddr(){
-		return mSal.getLocalAddr();
-	}
-	private SalMediaDescription makeLocalDesc(){
+
+	private SalMediaDescription makeLocalDesc() throws SalException{
 		SalMediaDescription md=new SalMediaDescription();
 		SalStreamDescription sd=new SalStreamDescription();
 		PayloadType pts[]=new PayloadType[1];
 		PayloadType amr;
-		sd.setAddress(getLocalAddr());
+		sd.setAddress(mSal.getLocalAddr());
 		sd.setPort(7078);
 		sd.setProto(SalStreamDescription.Proto.RtpAvp);
 		sd.setType(SalStreamDescription.Type.Audio);
-		amr=org.linphone.jortp.Factory.get().createPayloadType();
+		amr=JOrtpFactory.instance().createPayloadType();
 		amr.setClockRate(8000);
 		amr.setMimeType("AMR");
 		amr.setNumChannels(1);
@@ -144,14 +153,14 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		md.addStreamDescription(sd);
 		return md;
 	}
-	private Call createIncomingCall(SalOp op){
+	private Call createIncomingCall(SalOp op) throws SalException{
 		Call c=new Call(op,CallDirection.Incoming);
 		mSal.callSetLocalMediaDescription(op,c.mLocalDesc);
 		initMediaStreams(c);
 		return c;
 	}
-	private Call createOutgoingCall(LinphoneAddress addr){
-		SalOp op=new SalOp();
+	private Call createOutgoingCall(LinphoneAddress addr) throws SalException{
+		SalOp op= mSal.createSalOp();
 		Call c=new Call(op,CallDirection.Outgoing);
 		c.mOp.setFrom(LinphoneCoreImpl.this.getIdentity());
 		c.mOp.setTo(addr.asString());
@@ -160,11 +169,11 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		return c;
 	}
 	
-	private String getIdentity() {
+	private String getIdentity() throws SalException {
 		if (mProxyCfg!=null){
 			return mProxyCfg.getIdentity();
 		}
-		return "sip:anonymous@"+getLocalAddr()+Integer.toString(mSipPort);
+		return "sip:anonymous@"+mSal.getLocalAddr()+Integer.toString(mSipPort);
 	}
 	private void initMediaStreams(Call call){
 		mAudioStream=new AudioStreamEchoImpl();
@@ -172,7 +181,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			String host="0.0.0.0";
 			int port=call.getLocalMediaDescription().getStream(0).getPort();
 			
-			SocketAddress addr=org.linphone.jortp.Factory.get().createSocketAddress(host, port);
+			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(host, port);
 			mAudioStream.init(addr);
 		} catch (RtpException e) {
 			// TODO Auto-generated catch block
@@ -180,7 +189,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 	}
 	private RtpProfile makeProfile(SalStreamDescription sd){
-		RtpProfile prof=org.linphone.jortp.Factory.get().createRtpProfile();
+		RtpProfile prof=JOrtpFactory.instance().createRtpProfile();
 		PayloadType pts[]=sd.getPayloadTypes();
 		int i;
 		for(i=0;i<pts.length;i++){
@@ -192,7 +201,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		AudioStreamParameters p=null;
 		SalStreamDescription sd=call.getFinalMediaDescription().getStream(0);
 		if (sd!=null){
-			SocketAddress dest=org.linphone.jortp.Factory.get().createSocketAddress(
+			SocketAddress dest=JOrtpFactory.instance().createSocketAddress(
 					sd.getAddress(), sd.getPort());
 			p=new AudioStreamParameters();
 			p.setRtpProfile(makeProfile(sd));
@@ -221,13 +230,19 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 	
 	public LinphoneCoreImpl(LinphoneCoreListener listener, String userConfig,
-			String factoryConfig, Object userdata) {
-		SocketAddress addr=org.linphone.jortp.Factory.get().createSocketAddress("0.0.0.0", mSipPort);
-		mSal=new Sal();
-		mSal.setUserAgent("jLinphone/0.0.1");
-		mSal.listenPort(addr, Sal.Transport.Datagram, false);
-		mSal.setListener(mSalListener);
-		mListener=listener;
+			String factoryConfig, Object userdata) throws LinphoneCoreException{
+		try {
+			SocketAddress addr=JOrtpFactory.instance().createSocketAddress("0.0.0.0", mSipPort);
+			mSal=SalFactory.instance().createSal();
+			mSal.setUserAgent("jLinphone/0.0.1");
+			mSal.listenPort(addr, Sal.Transport.Datagram, false);
+			mSal.setListener(mSalListener);
+			mListener=listener;
+		} catch (Exception e ) {
+			throw new LinphoneCoreException("Cannot create Linphone core for user conf ["
+											+userConfig
+											+"] factory conf ["+factoryConfig+"] reason ["+e.getMessage()+"] ",e);
+		}
 	}
 
 	public void acceptCall() {
@@ -315,14 +330,17 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		invite(addr);
 	}
 
-	public void invite(LinphoneAddress to) {
+	public void invite(LinphoneAddress to) throws LinphoneCoreException {
+		try {
 		if (mCall!=null){
-			
 			return;
 		}
 		Call c=createOutgoingCall(to);
 		mSal.call(c.mOp);
 		mCall=c;
+		} catch (Exception e) {
+			throw new LinphoneCoreException("Cannot place call to ["+to+"]",e);
+		}
 	}
 
 	public boolean isInComingInvitePending() {

@@ -1,5 +1,7 @@
 package org.linphone.sal;
 
+
+
 import org.linphone.jortp.SocketAddress;
 
 public interface Sal {
@@ -36,9 +38,10 @@ public interface Sal {
 
 	//global
 	public void setListener(SalListener listener);
-	public void listenPort(SocketAddress addr, Transport t, boolean isSecure );
+	public void listenPort(SocketAddress addr, Transport t, boolean isSecure )throws SalException;
 	public void setUserAgent(String ua);
 	public void authenticate(SalOp op, SalAuthInfo info);
+	public SalOp createSalOp();
 	
 	//Call management
 	public void callSetLocalMediaDescription(SalOp op, SalMediaDescription md);
@@ -54,5 +57,5 @@ public interface Sal {
 	
 	//close
 	public void close();
-	public String getLocalAddr();
+	public String getLocalAddr() throws SalException;
 }
