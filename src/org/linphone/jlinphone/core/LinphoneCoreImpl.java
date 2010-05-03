@@ -30,7 +30,6 @@ import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
 import org.linphone.sal.SalStreamDescription;
 
-import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
 
 public class LinphoneCoreImpl implements LinphoneCore {
 	Sal mSal;
@@ -62,6 +61,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			if (mCall==null || mCall!=c){
 				mSal.callTerminate(op);
 			}
+			mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_OUT_CONNECTED);
 			c.mFinal=mSal.getFinalMediaDescription(op);
 			startMediaStreams(c);
 		}
@@ -80,6 +80,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 				}
 				mListener.inviteReceived(LinphoneCoreImpl.this, 
 						op.getFrom());
+				mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_IN_INVITE);
 			}
 		}
 
@@ -93,6 +94,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		public void onCallTerminated(SalOp op) {
 			if (mCall!=null){
 				mListener.byeReceived(LinphoneCoreImpl.this, op.getFrom());
+				mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_END);
 				mCall=null;
 			}
 		}
@@ -273,6 +275,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			mSal.callAccept(mCall.mOp);
 			md=mCall.mFinal=mSal.getFinalMediaDescription(mCall.mOp);
 			mCall.mState=CallState.Running;
+			mListener.generalState(this, GeneralState.GSTATE_CALL_IN_CONNECTED);
 			startMediaStreams(mCall);
 		}
 	}
@@ -353,13 +356,15 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void invite(LinphoneAddress to) throws LinphoneCoreException {
-		try {
 		if (mCall!=null){
 			return;
 		}
-		Call c=createOutgoingCall(to);
-		mSal.call(c.mOp);
-		mCall=c;
+		try {
+			
+			Call c=createOutgoingCall(to);
+			mSal.call(c.mOp);
+			mCall=c;
+			mListener.generalState(this, GeneralState.GSTATE_CALL_OUT_INVITE);
 		} catch (Exception e) {
 			throw new LinphoneCoreException("Cannot place call to ["+to+"]",e);
 		}
@@ -412,6 +417,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		if (mCall!=null){
 			mSal.callTerminate(mCall.mOp);
 			stopMediaStreams(mCall);
+			mListener.generalState(this, GeneralState.GSTATE_CALL_END);
 			mCall=null;
 		}
 	}
