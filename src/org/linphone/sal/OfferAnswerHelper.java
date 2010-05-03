@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import org.linphone.jortp.PayloadType;
 
-import sun.reflect.generics.tree.ArrayTypeSignature;
 
 public class OfferAnswerHelper {
 	public static class AnswerResult{
@@ -77,19 +76,18 @@ public class OfferAnswerHelper {
 				PayloadType rpt=rpts[j];
 				if (lpt.getMimeType().equalsIgnoreCase(rpt.getMimeType())
 					&& lpt.getClockRate()==rpt.getClockRate()	){
-					try {
-						PayloadType matched=(PayloadType)lpt.clone();
-						matched.setNumber(rpt.getNumber());
-						matched.setSendFmtp(rpt.getRecvFmtp());
-						result.addElement(matched);
-					} catch (CloneNotSupportedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					
+					PayloadType matched=(PayloadType)lpt.clone();
+					matched.setNumber(rpt.getNumber());
+					matched.setSendFmtp(rpt.getRecvFmtp());
+					result.addElement(matched);
+					
 				}
 			}
 		}
-		sd.setPayloadTypes((PayloadType[]) result.toArray());
+		PayloadType ptr[]=new PayloadType[result.size()];
+		result.copyInto(ptr);
+		sd.setPayloadTypes(ptr);
 		return sd;
 	}
 }

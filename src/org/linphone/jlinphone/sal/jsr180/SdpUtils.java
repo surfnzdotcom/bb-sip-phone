@@ -8,6 +8,7 @@ import org.linphone.jortp.PayloadType;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalStreamDescription;
 
+import sip4me.gov.nist.core.ParseException;
 import sip4me.gov.nist.javax.sdp.MediaDescription;
 import sip4me.gov.nist.javax.sdp.SdpException;
 import sip4me.gov.nist.javax.sdp.SdpFactory;
@@ -44,7 +45,7 @@ public class SdpUtils {
 		}
 		
 		for(int i=0;i<mlines.size();++i){
-			MediaDescription mline=(MediaDescription)mlines.get(i);
+			MediaDescription mline=(MediaDescription)mlines.elementAt(i);
 			SalStreamDescription ssd=toStreamDescription(mline);
 			if (ssd!=null) md.addStreamDescription(ssd);
 		}
@@ -73,10 +74,13 @@ public class SdpUtils {
 		} catch (SdpException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		return sd;
 	}
-	private MediaDescription toMLine(SalStreamDescription sd){
+	private static MediaDescription toMLine(SalStreamDescription sd){
 		Vector attrs=new Vector();
 		PayloadType pts[]=sd.getPayloadTypes();
 		int payloads[]=new int[pts.length];
@@ -151,23 +155,28 @@ public class SdpUtils {
 		fillCodecs(ssd,mline);
 		return ssd;
 	}
-	private static void extractRtpmap(PayloadType pt, String value) {
-		String parts[]=value.split("\\s");
-		if (parts.length==2){
-			int ptn=Integer.parseInt(parts[0]);
-			if (ptn==pt.getNumber()){
-				//this rtpmap belongs to the supplied payload type
-				String rtpmap[]=parts[1].split("/");
-				if (rtpmap.length>=2){
-					pt.setMimeType(rtpmap[0]);
-					pt.setClockRate(Integer.parseInt(rtpmap[1]));
-					if (rtpmap.length==3){
-						pt.setNumChannels(Integer.parseInt(rtpmap[2]));
-					}
-				}
+	private static void extractRtpmap(PayloadType pt, String value){
+		int space=value.indexOf(' ');
+		String number=value.substring(0, space);
+		int n=Integer.parseInt(number);
+		if (n==pt.getNumber()){
+			int i=space;
+			//jump to amr/8000/1
+			while(value.charAt(i)==' ') i++;
+			String rtpmap=value.substring(i);
+			String rate;
+			int slash=rtpmap.indexOf('/');
+			pt.setMimeType(rtpmap.substring(0,slash));
+			int slash2=rtpmap.indexOf('/',slash+1);
+			if (slash2>0){
+				rate=rtpmap.substring(slash+1,slash2);
+			}else rate=rtpmap.substring(slash+1);
+			pt.setClockRate(Integer.parseInt(rate));
+			if (slash2>0){
+				String chans=rtpmap.substring(slash2+1);
+				pt.setNumChannels(Integer.parseInt(chans));
 			}
 		}
-		
 	}
 	private static void fillPayloadType(PayloadType pt, MediaDescription mline){
 		Vector attrs=mline.getAttributeFields();
