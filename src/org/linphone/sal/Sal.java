@@ -40,7 +40,7 @@ public interface Sal {
 	public void setListener(SalListener listener);
 	public void listenPort(SocketAddress addr, Transport t, boolean isSecure )throws SalException;
 	public void setUserAgent(String ua);
-	public void authenticate(SalOp op, SalAuthInfo info);
+	public void authenticate(SalOp op, SalAuthInfo info) throws SalException;
 	public SalOp createSalOp();
 	
 	//Call management

@@ -8,7 +8,7 @@ import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalOp;
 
-public class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
+class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	private String mProxy;
 	private String mIdentity;
 	private String mDialPrefix;
@@ -87,7 +87,9 @@ public class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	public boolean isRegistered() {
 		return mRegistered;
 	}
-
+	public void setRegistered(boolean isRegistered) {
+		mRegistered = isRegistered;
+	}
 	public boolean registerEnabled() {
 		return mEnableRegister;
 	}

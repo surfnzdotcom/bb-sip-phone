@@ -7,6 +7,8 @@ import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.core.LinphoneCore.GeneralState;
+import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
 
 import jmunit.framework.cldc11.Assertion;
 import jmunit.framework.cldc11.TestCase;
@@ -47,6 +49,7 @@ class DummyLinphoneCoreListener implements LinphoneCoreListener {
 }
 public class LinphoneCoreTester extends TestCase {
 
+	Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
 	/**
 	 * The default constructor. It just transmits the necessary informations to
 	 * the superclass.
@@ -116,14 +119,14 @@ public class LinphoneCoreTester extends TestCase {
 		
 	}
 	public void testRegister() {
-		int REGISTER_TIMEOUT = 60000;
-		
+		int REGISTER_TIMEOUT = 5000;
+		LinphoneCore lc=null;
 		try {
-			LinphoneCore lc = LinphoneCoreFactory.instance().createLinphoneCore(new DummyLinphoneCoreListener() {
+			lc = LinphoneCoreFactory.instance().createLinphoneCore(new DummyLinphoneCoreListener() {
 
 				public void generalState(LinphoneCore lc, GeneralState state) {
 					if (state == GeneralState.GSTATE_REG_OK) {
-						//nop for now
+						mLog.info("Registration OK");
 					}
 				}
 				
@@ -137,6 +140,7 @@ public class LinphoneCoreTester extends TestCase {
 																						, null, 
 																						true);
 			
+			
 			lc.addProxyConfig(lProrxy);
 			lc.setDefaultProxyConfig(lProrxy);
 			long startDate = System.currentTimeMillis();
@@ -145,14 +149,41 @@ public class LinphoneCoreTester extends TestCase {
 				Thread.sleep(100);
 			}
 			
-			Assertion.assertTrue("register failed after ["+REGISTER_TIMEOUT+"] ms", lProrxy.isRegistered());
+			Assertion.assertTrue("Register failed after ["+REGISTER_TIMEOUT+"] ms", lProrxy.isRegistered());
 			
-			lc.destroy();
+			
 			
 		} catch (Exception e) {
 			Assertion.fail(e.getMessage());
+		} finally {
+			if (lc != null) lc.destroy();
 		}
 		
+	}
+	public void testInvite() {
+		int INVITE_TIMEOUT = 5000;
+		LinphoneCore lc=null;
+		Object semaphore = new Object();
+		try {
+			lc = LinphoneCoreFactory.instance().createLinphoneCore(new DummyLinphoneCoreListener() {
+				public void generalState(LinphoneCore lc, GeneralState state) {
+					if (state == GeneralState.GSTATE_CALL_OUT_CONNECTED) {
+						mLog.info("Call ok OK");
+					}
+				}
+
+			}, null, null, null);
+			long startDate = System.currentTimeMillis();
+			
+			
+			//Assertion.assertTrue("Register failed after ["+INVITE_TIMEOUT+"] ms", lProrxy.isRegistered());
+			
+
+		} catch (Exception e) {
+			Assertion.fail(e.getMessage());
+		} finally {
+			if (lc != null) lc.destroy();
+		}
 	}
 	
 }

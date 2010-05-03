@@ -18,24 +18,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.sal.jsr180;
 
+import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
 import org.linphone.sal.Sal;
 import org.linphone.sal.SalAuthInfo;
+import org.linphone.sal.SalException;
 import org.linphone.sal.SalMediaDescription;
-import org.linphone.sal.SalOp;
 import org.linphone.sal.SalOpBase;
 import org.linphone.sal.Sal.Reason;
 
-class SalOpImpl extends SalOpBase {
+import sip4me.nist.javax.microedition.sip.SipClientConnection;
+import sip4me.nist.javax.microedition.sip.SipConnection;
 
+class SalOpImpl extends SalOpBase {
+	static Logger mLog = JOrtpFactory.instance().createLogger("Sal");
 	SalAuthInfo mAutInfo;
+	SipClientConnection mSipRegisterCnx;
 	
 	public SalOpImpl(Sal sal) {
 		super(sal);
 
 	}
-
-	public void authenticate(SalAuthInfo info) {
+	public void setRegisterSipCnx(SipClientConnection cnx) {
+		mSipRegisterCnx=cnx;
+	}
+	public SipConnection getSipCnx() {
+		return mSipRegisterCnx;
+	}
+	public void authenticate(SalAuthInfo info) throws SalException{
 		mAutInfo = info;
+		try {
+			if (mSipRegisterCnx != null) {
+				if ( info != null) {
+					mSipRegisterCnx.setCredentials(info.getUserid(), info.getPassword(),info.getRealm());
+				} else {
+					throw new Exception("Bad auth info ["+info+"]");
+				}
+			} else {
+				mLog.warn("no registrar connection ready yet");
+			}
+		} catch (Exception e) {
+			throw new SalException("Cannot authenticate",e);
+		}
 	}
 
 	public void call() {

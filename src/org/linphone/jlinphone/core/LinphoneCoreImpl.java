@@ -22,6 +22,7 @@ import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpProfile;
 import org.linphone.jortp.SocketAddress;
 import org.linphone.sal.Sal;
+import org.linphone.sal.SalAuthInfo;
 import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
@@ -29,10 +30,12 @@ import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
 import org.linphone.sal.SalStreamDescription;
 
+import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
+
 public class LinphoneCoreImpl implements LinphoneCore {
 	Sal mSal;
 	LinphoneAuthInfo mAuthInfo;
-	LinphoneProxyConfig mProxyCfg;
+	LinphoneProxyConfigImpl mProxyCfg;
 	Call mCall;
 	LinphoneCoreListener mListener;
 	AudioStream mAudioStream;
@@ -92,6 +95,25 @@ public class LinphoneCoreImpl implements LinphoneCore {
 				mListener.byeReceived(LinphoneCoreImpl.this, op.getFrom());
 				mCall=null;
 			}
+		}
+
+		public void onAuthRequested(SalOp op, String realm, String userName) {
+			try {
+				if (mAuthInfo != null && userName.equalsIgnoreCase(mAuthInfo.getUsername())) {
+					mSal.authenticate(op, new SalAuthInfo(realm,userName,mAuthInfo.getPassword()));
+				} else {
+					mListener.authInfoRequested(LinphoneCoreImpl.this, realm, userName);
+				}
+			} catch (Exception e) {
+				mLog.error("Cannot provide auth info", e);
+			}
+
+		}
+
+		public void onAuthSuccess(SalOp lSalOp, String realm, String username) {
+			mProxyCfg.setRegistered(true);
+			mListener.generalState(LinphoneCoreImpl.this, GeneralState.GSTATE_REG_OK);
+			
 		}
 		
 	};
@@ -261,7 +283,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 	public void addProxyConfig(LinphoneProxyConfig proxyCfg)
 			throws LinphoneCoreException {
-		mProxyCfg=proxyCfg;
+		mProxyCfg=(LinphoneProxyConfigImpl) proxyCfg;
 		proxyCfg.done();
 	}
 
@@ -373,7 +395,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void setDefaultProxyConfig(LinphoneProxyConfig proxyCfg) {
-		mProxyCfg=proxyCfg;
+		mProxyCfg=(LinphoneProxyConfigImpl) proxyCfg;
 	}
 
 	public void setNetworkStateReachable(boolean isReachable) {

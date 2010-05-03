@@ -9,11 +9,13 @@ public class SalAuthInfo {
 	public SalAuthInfo(String username, String password){
 		mUsername=username;
 		mPassword=password;
+		mUserid=username;
 	}
 	public SalAuthInfo(String realm, String username, String password){
 		mRealm=realm;
 		mUsername=username;
 		mPassword=password;
+		mUserid=username;
 	}
 	public SalAuthInfo(){
 		

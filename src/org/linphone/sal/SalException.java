@@ -34,7 +34,7 @@ public class SalException extends Exception {
 	}
 
 	public SalException(String detailMessage,Throwable e) {
-		super(detailMessage);
+		super(detailMessage + "caused by ["+e.getClass().getName()+" "+ e.getMessage()+"]");
 		mE = e;
 	}
 

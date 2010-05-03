@@ -44,6 +44,8 @@ import sip4me.gov.nist.siplite.stack.ServerLog;
 import sip4me.nist.javax.microedition.sip.SipClientConnection;
 import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
 import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
+import sip4me.nist.javax.microedition.sip.SipException;
+import sip4me.nist.javax.microedition.sip.SipHeader;
 import sip4me.nist.javax.microedition.sip.SipRefreshListener;
 import sip4me.nist.javax.microedition.sip.SipServerConnectionListener;
 
@@ -52,10 +54,11 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	Logger mLog = JOrtpFactory.instance().createLogger("Sal");
 	SipClientConnection mRegisterCnx;
 	int mRegisterRefreshID;
+	private SalListener mSalListener;
 	SalImpl() {
 	
 	}
-	public void authenticate(SalOp op, SalAuthInfo info) {
+	public void authenticate(SalOp op, SalAuthInfo info) throws SalException {
 		((SalOpImpl)op).authenticate(info);
 	}
 
@@ -147,31 +150,68 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		// save from
 		op.setFrom(from);
 
-		SalOpImpl lSalOp = (SalOpImpl) op;
+		final SalOpImpl lSalOp = (SalOpImpl) op;
 		try {
 			SalAddress lProxyAddress = SalFactory.instance().createSalAddress(proxy);
 			if (lProxyAddress.getPortInt() < 0) {
 				lProxyAddress.setPortInt(5060);
 			}
 			mRegisterCnx = (SipClientConnection) SipConnector.open(from);
+			lSalOp.setRegisterSipCnx(mRegisterCnx);
 			mRegisterCnx.initRequest(Request.REGISTER, mConnectionNotifier);
 			mRegisterCnx.setHeader(Header.FROM, from);
 			mRegisterCnx.setHeader(Header.EXPIRES, String.valueOf(expires));
 
-			SalAddress lAddress = SalFactory.instance().createSalAddress(from);
+			final SalAddress lAddress = SalFactory.instance().createSalAddress(from);
 			String contactHdr = lAddress.getUserName() 	+ "@"
 														+ mConnectionNotifier.getLocalAddress() + ":"
 														+ mConnectionNotifier.getLocalPort();
 			mRegisterCnx.setHeader(Header.CONTACT, contactHdr);
 
 			mRegisterCnx.setRequestURI("sip:" + lAddress.getDomain());
+			mRegisterCnx.setListener(new SipClientConnectionListener() {
 
-			SalAuthInfo lAuthInfo = lSalOp.getAuthInfo();
+				public void notifyResponse(SipClientConnection scc) {
+					// positione credential
+					try {
+						scc.receive(0);
+						switch (scc.getStatusCode()) {
+						case 407:
+							SipHeader lAuthHeader = new SipHeader(Header.AUTHORIZATION,scc.getHeader(Header.PROXY_AUTHENTICATE));
+							/*
+							String lStringAuthHeader = lAuthHeader.getValue(); 
+							String lRealm=null;
+							String lDigestToken = "Digest realm=\"";
+							int disgestIndex = lStringAuthHeader.indexOf(lDigestToken);
+							if (disgestIndex < 0) {
+								mLog.error("cannot find Digest realm");
+							} else {
+								lRealm = lStringAuthHeader.substring(disgestIndex+lDigestToken.length()+1, lStringAuthHeader.indexOf("=\"", disgestIndex+lDigestToken.length()+1));
+								 if (lRealm == null) {
+									mLog.error("cannot find Digest ream");
+								}
+							}
+							*/
+							
+							mSalListener.onAuthRequested(lSalOp,lAuthHeader.getParameter("realm"),lAddress.getUserName());
+							break;
+							
+						case 200:
+							mSalListener.onAuthSuccess(lSalOp,lSalOp.getAuthInfo().getRealm(),lSalOp.getAuthInfo().getUsername());
+							break;
+						default: 
+							mLog.error("Unexpected answer ["+scc+"]");
+						}
+					} catch (Exception e) {
+						mLog.error("Cannot process REGISTER answer", e);
+					} 
+					
+				}
+				
+			});
 
-			if (lAuthInfo != null && lAuthInfo.getUserid() != null  && lAuthInfo.getPassword() != null ) {
-				mRegisterCnx.setCredentials(lAuthInfo.getUserid(), lAuthInfo.getPassword(),lAuthInfo.getRealm());
-			}
-			mRegisterRefreshID = mRegisterCnx.enableRefresh(this);
+			 
+			mRegisterCnx.enableRefresh(this);
 
 			// Finally, send register
 			mRegisterCnx.send();
@@ -184,8 +224,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	}
 
 	public void setListener(SalListener listener) {
-		// TODO Auto-generated method stub
-
+		mSalListener = listener;
 	}
 
 	public void setUserAgent(String ua) {
@@ -208,5 +247,6 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		// TODO Auto-generated method stub
 		
 	}
+
 
 }
