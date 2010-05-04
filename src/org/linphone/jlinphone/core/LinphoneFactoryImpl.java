@@ -40,7 +40,6 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 	}
 
 	public LinphoneAddress createLinphoneAddress(String address) {
-		// TODO Auto-generated method stub
-		return null;
+		return new LinphoneAddressImpl(address);
 	}
 }

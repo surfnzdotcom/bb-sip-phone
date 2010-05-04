@@ -1,24 +1,34 @@
+/*
+SalMediaDescription.java
+Copyright (C) 2010  Belledonne Communications, Grenoble, France
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
+
 package org.linphone.sal;
 
-import java.util.Vector;
+public interface SalMediaDescription {
 
-public class SalMediaDescription{
-	Vector mStreams;
-	String mAddress;
+	public abstract SalStreamDescription getStream(int index);
 
-	public SalStreamDescription getStream(int index) {
-		return (SalStreamDescription) mStreams.elementAt(index);
-	}
-	public int getNumStreams(){
-		return mStreams.size();
-	}
-	public void addStreamDescription(SalStreamDescription sd) {
-		mStreams.addElement(sd);
-	}
-	public void setAddress(String addr){
-		mAddress=addr;
-	}
-	public String getAddress(){
-		return mAddress;
-	}
+	public abstract int getNumStreams();
+
+	public abstract void addStreamDescription(SalStreamDescription sd);
+
+	public abstract void setAddress(String addr);
+
+	public abstract String getAddress();
+
 }

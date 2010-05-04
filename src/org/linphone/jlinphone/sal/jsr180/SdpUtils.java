@@ -5,7 +5,9 @@ import java.util.Vector;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.jortp.PayloadType;
+import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalMediaDescription;
+import org.linphone.sal.SalMediaDescriptionBase;
 import org.linphone.sal.SalStreamDescription;
 
 import sip4me.gov.nist.core.ParseException;
@@ -29,7 +31,7 @@ public class SdpUtils {
 		return sLogger;
 	}
 	public static SalMediaDescription toSalMediaDescription(SessionDescription sd){
-		SalMediaDescription md=new SalMediaDescription();
+		SalMediaDescription md= SalFactory.instance().createSalMediaDescription();
 		ConnectionField c=sd.getConnection();
 		Vector mlines;
 		try {

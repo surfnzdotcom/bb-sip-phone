@@ -157,7 +157,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	private SalMediaDescription makeLocalDesc() throws SalException{
-		SalMediaDescription md=new SalMediaDescription();
+		SalMediaDescription md=SalFactory.instance().createSalMediaDescription();
 		SalStreamDescription sd=new SalStreamDescription();
 		PayloadType pts[]=new PayloadType[1];
 		PayloadType amr;
@@ -173,6 +173,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		pts[0]=amr;
 		sd.setPayloadTypes(pts);
 		md.addStreamDescription(sd);
+		md.setAddress(mSal.getLocalAddr());
 		return md;
 	}
 	private Call createIncomingCall(SalOp op) throws SalException{
@@ -301,6 +302,9 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void destroy() {
+		if (isIncall()) {
+			terminateCall();
+		}
 		mSal.close();
 	}
 
@@ -340,7 +344,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 				addr=LinphoneCoreFactory.instance().createLinphoneAddress(
 						"sip:"+destination);
 				if (addr==null){
-					throw new LinphoneCoreException("Bad destination.");
+					throw new LinphoneCoreException("Bad destination ["+destination+"]");
 				}
 			}
 		}

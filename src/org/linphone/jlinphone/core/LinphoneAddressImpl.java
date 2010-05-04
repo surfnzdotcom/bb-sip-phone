@@ -2,15 +2,22 @@ package org.linphone.jlinphone.core;
 
 import org.linphone.core.LinphoneAddress;
 import org.linphone.sal.SalAddress;
+import org.linphone.sal.SalFactory;
 
 public class LinphoneAddressImpl implements LinphoneAddress {
-	private SalAddress mAddress;
+	final private SalAddress mAddress;
 	
 	public LinphoneAddressImpl(String username, String domain,
 			String displayName) {
-		// TODO Auto-generated constructor stub
+		mAddress = SalFactory.instance().createSalAddress("sip:"+username+"@"+domain);
+		if (displayName != null) {
+			mAddress.setDisplayName(displayName);
+		}
 	}
-
+	public LinphoneAddressImpl(String uri) {
+		mAddress = SalFactory.instance().createSalAddress(uri);
+	}
+	
 	public String getDisplayName() {
 		return mAddress.getDisplayName();
 	}
@@ -61,6 +68,9 @@ public class LinphoneAddressImpl implements LinphoneAddress {
 
 	public void setUserName(String username) {
 		mAddress.setUserName(username);
+	}
+	public String toString() {
+		return asString();
 	}
 
 }

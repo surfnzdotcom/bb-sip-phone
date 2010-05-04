@@ -50,5 +50,7 @@ abstract public class SalFactory {
 	 * @return
 	 */
 	abstract public SalAddress createSalAddress(String address) throws IllegalArgumentException ;
+	
+	abstract public SalMediaDescription createSalMediaDescription();
 
 }

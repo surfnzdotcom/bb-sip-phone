@@ -14,7 +14,7 @@ import org.linphone.jortp.SocketAddress;
 public class AudioStreamEchoImpl implements AudioStream {
 	private AudioStreamParameters mParams;
 	private RtpSession mSession;
-	private Timer mTimer;
+	private Timer mTimer = new Timer();
 	
 	class EchoTask extends TimerTask{
 		private long mTime;

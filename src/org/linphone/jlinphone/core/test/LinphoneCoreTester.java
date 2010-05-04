@@ -97,7 +97,8 @@ public class LinphoneCoreTester extends TestCase {
 		
 			case 0: testLinphoneCoreFactory();break;
 //			case 1: testCreateLinphoneCore();break;
-			case 1: testRegister();break;
+//			case 1: testRegister();break;
+			case 1: testInvite();break;
 			
 		}
 	}
@@ -163,23 +164,34 @@ public class LinphoneCoreTester extends TestCase {
 	public void testInvite() {
 		int INVITE_TIMEOUT = 5000;
 		LinphoneCore lc=null;
-		Object semaphore = new Object();
+		final Object semaphore = new Object();
 		try {
 			lc = LinphoneCoreFactory.instance().createLinphoneCore(new DummyLinphoneCoreListener() {
 				public void generalState(LinphoneCore lc, GeneralState state) {
 					if (state == GeneralState.GSTATE_CALL_OUT_CONNECTED) {
 						mLog.info("Call ok OK");
+						synchronized (semaphore) {
+							semaphore.notify();
+						}
 					}
 				}
 
 			}, null, null, null);
-			long startDate = System.currentTimeMillis();
-			
-			
-			//Assertion.assertTrue("Register failed after ["+INVITE_TIMEOUT+"] ms", lProrxy.isRegistered());
+
+			try {
+				lc.invite("sip:test@192.168.0.10:5062");
+			} catch (LinphoneCoreException e) {
+				mLog.error("",e);
+				Assertion.fail(e.getMessage());
+			}
+			synchronized (semaphore) {
+				semaphore.wait(INVITE_TIMEOUT);
+			}
+			Assertion.assertTrue("Invite failed after ["+INVITE_TIMEOUT+"] ms", lc.isIncall());
 			
 
 		} catch (Exception e) {
+			
 			Assertion.fail(e.getMessage());
 		} finally {
 			if (lc != null) lc.destroy();

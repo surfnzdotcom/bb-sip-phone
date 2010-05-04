@@ -16,7 +16,7 @@ public class OfferAnswerHelper {
 		}
 	}
 	public static SalMediaDescription computeOutgoing(SalMediaDescription local, SalMediaDescription remote){
-		SalMediaDescription md=new SalMediaDescription();
+		SalMediaDescription md=SalFactory.instance().createSalMediaDescription();
 		int i;
 		md.setAddress(remote.getAddress());
 		for (i=0;i<remote.getNumStreams();++i){
@@ -31,8 +31,8 @@ public class OfferAnswerHelper {
 	}
 	public static AnswerResult computeIncoming(SalMediaDescription local, SalMediaDescription remote){
 		AnswerResult ar=new AnswerResult();
-		SalMediaDescription answer=new SalMediaDescription();
-		SalMediaDescription result=new SalMediaDescription();
+		SalMediaDescription answer=SalFactory.instance().createSalMediaDescription();
+		SalMediaDescription result=SalFactory.instance().createSalMediaDescription();
 		int i;
 		
 		ar.mAnswer=answer;

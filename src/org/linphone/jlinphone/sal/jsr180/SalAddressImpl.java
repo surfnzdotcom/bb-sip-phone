@@ -28,7 +28,7 @@ class SalAddressImpl implements SalAddress {
 		mAddress = new SipAddress(address);
 	}
 	public String asString() {
-		return mAddress.toString();
+		return mAddress.getURI().toString();
 	}
 
 	public String asStringUriOnly() {

@@ -62,7 +62,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		((SalOpImpl)op).authenticate(info);
 	}
 
-	public void call(SalOp op) {
+	public void call(SalOp op) throws SalException {
 		((SalOpImpl)op).call();
 	}
 
@@ -95,8 +95,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	}
 
 	public SalMediaDescription getFinalMediaDescription(SalOp h) {
-		// TODO Auto-generated method stub
-		return null;
+		return ((SalOpImpl)h).getFinalMediaDescription();
 	}
 
 	public String getLocalAddr() throws SalException{
@@ -115,7 +114,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	public void listenPort(SocketAddress addr, Transport t, boolean isSecure) throws SalException {
 		// Configure logging of the stack
         try {
-        	
+        
 		Debug.enableDebug(false);
 		LogWriter.needsLogging = true;
 		LogWriter.setTraceLevel(LogWriter.TRACE_DEBUG);
@@ -152,10 +151,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 
 		final SalOpImpl lSalOp = (SalOpImpl) op;
 		try {
-			SalAddress lProxyAddress = SalFactory.instance().createSalAddress(proxy);
-			if (lProxyAddress.getPortInt() < 0) {
-				lProxyAddress.setPortInt(5060);
-			}
+			
 			mRegisterCnx = (SipClientConnection) SipConnector.open(from);
 			lSalOp.setRegisterSipCnx(mRegisterCnx);
 			mRegisterCnx.initRequest(Request.REGISTER, mConnectionNotifier);
@@ -241,7 +237,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		
 	}
 	public SalOp createSalOp() {
-		return new SalOpImpl(this);
+		return new SalOpImpl(this,mConnectionNotifier,mSalListener);
 	}
 	public void refreshEvent(int refreshID, int statusCode, String reasonPhrase) {
 		// TODO Auto-generated method stub

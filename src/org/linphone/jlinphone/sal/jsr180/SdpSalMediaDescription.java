@@ -1,5 +1,5 @@
 /*
-SalFactoryImpl.java
+SdpSalMediaDescription.java
 Copyright (C) 2010  Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
@@ -18,22 +18,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.sal.jsr180;
 
-import org.linphone.sal.Sal;
-import org.linphone.sal.SalAddress;
-import org.linphone.sal.SalFactory;
-import org.linphone.sal.SalMediaDescription;
+import org.linphone.sal.SalMediaDescriptionBase;
 
-public class SalFactoryImpl extends SalFactory {
+public class SdpSalMediaDescription extends SalMediaDescriptionBase {
 
-	public Sal createSal() {
-		return new SalImpl();
+	public String toString() {
+		return SdpUtils.toSessionDescription(this).toString();
 	}
 
-	public SalAddress createSalAddress(String address){
-		return new SalAddressImpl(address);
-	}
-
-	public SalMediaDescription createSalMediaDescription() {
-		return new SdpSalMediaDescription();
-	}
 }

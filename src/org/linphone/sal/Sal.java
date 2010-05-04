@@ -45,7 +45,7 @@ public interface Sal {
 	
 	//Call management
 	public void callSetLocalMediaDescription(SalOp op, SalMediaDescription md);
-	public void call(SalOp op);
+	public void call(SalOp op) throws SalException;
 	public void callDecline(SalOp op, Reason r, String redirect_uri);
 	public void callTerminate(SalOp op);
 	public void callAccept(SalOp op);
