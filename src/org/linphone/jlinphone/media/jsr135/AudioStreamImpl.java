@@ -1,5 +1,7 @@
-package org.linphone.jlinphone.media;
+package org.linphone.jlinphone.media.jsr135;
 
+import org.linphone.jlinphone.media.AudioStream;
+import org.linphone.jlinphone.media.AudioStreamParameters;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpSession;
