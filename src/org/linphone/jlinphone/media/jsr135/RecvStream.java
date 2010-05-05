@@ -87,9 +87,11 @@ public class RecvStream implements Runnable, PlayerListener {
 		mPlayer.addPlayerListener(this);
 		mPlayer.realize();
 		mPlayer.prefetch();
+		
+/*
 		AudioPathControl  lPathCtr = (AudioPathControl) mPlayer.getControl("net.rim.device.api.media.control.AudioPathControl");
 		lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
-		
+*/	
 		//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
 		mPlayer.start();
 
