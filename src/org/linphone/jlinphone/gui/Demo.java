@@ -18,9 +18,11 @@ import javax.microedition.lcdui.TextField;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
+import net.rim.device.api.io.FileInputStream;
+
 import org.linphone.core.LinphoneCore;
 
-import com.ibm.oti.connection.file.FileInputStream;
+
 
 public class Demo extends MIDlet implements CommandListener, ItemCommandListener {
 
@@ -43,9 +45,9 @@ public class Demo extends MIDlet implements CommandListener, ItemCommandListener
 		mForm=new Form("jLinphone");
 		mEntry=new TextField("SIP address or number", null, 100, TextField.ANY);
 		try {
-			is=new FileInputStream("startcall-green.png");
+			is=new FileInputStream(0,"startcall-green.png");
 			mGreen=Image.createImage(is);
-			is=new FileInputStream("stopcall-red.png");
+			is=new FileInputStream(0,"stopcall-red.png");
 			mRed=Image.createImage(is);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
