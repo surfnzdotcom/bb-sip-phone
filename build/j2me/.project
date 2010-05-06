@@ -20,10 +20,22 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.mtj.core.preverifier</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.mtj.core.packageBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>net.rim.ejde.BlackBerryPreProcessNature</nature>
 		<nature>net.rim.ejde.BlackBerryProjectCoreNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.mtj.core.nature</nature>
+		<nature>org.eclipse.mtj.jmunit.jmunitNature</nature>
 	</natures>
 </projectDescription>
