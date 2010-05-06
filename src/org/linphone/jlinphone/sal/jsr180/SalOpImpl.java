@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.sal.jsr180;
 
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.linphone.jortp.JOrtpFactory;
@@ -33,6 +34,7 @@ import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 
 import org.linphone.sal.SalOpBase;
+import org.linphone.sal.OfferAnswerHelper.AnswerResult;
 import org.linphone.sal.Sal.Reason;
 
 import sip4me.gov.nist.javax.sdp.SdpFactory;
@@ -44,6 +46,8 @@ import sip4me.nist.javax.microedition.sip.SipClientConnection;
 import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
 import sip4me.nist.javax.microedition.sip.SipConnection;
 import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
+import sip4me.nist.javax.microedition.sip.SipDialog;
+import sip4me.nist.javax.microedition.sip.SipException;
 
 
 class SalOpImpl extends SalOpBase {
@@ -54,6 +58,7 @@ class SalOpImpl extends SalOpBase {
 	SalMediaDescription mLocalSalMediaDescription;
 	SalMediaDescription mFinalSalMediaDescription;
 	final SalListener mSalListener;
+	SipDialog mDialog;
 	
 	public SalOpImpl(Sal sal, SipConnectionNotifier aConnectionNotifier, SalListener aSalListener) {
 		super(sal);
@@ -91,7 +96,7 @@ class SalOpImpl extends SalOpBase {
 				lToAddress.setPortInt(5060);
 			}
 			*/
-			SipClientConnection lInviteTransaction = (SipClientConnection) SipConnector.open(lToAddress.asString());
+			final SipClientConnection lInviteTransaction = (SipClientConnection) SipConnector.open(lToAddress.asString());
 			lInviteTransaction.initRequest(Request.INVITE,mConnectionNotifier);
 			lInviteTransaction.setHeader(Header.FROM, getFrom());
 			lInviteTransaction.setRequestURI("sip:" + getTo());
@@ -107,20 +112,30 @@ class SalOpImpl extends SalOpBase {
 						scc.receive(0);
 						switch (scc.getStatusCode()) {
 						case 200:
-							SipClientConnection lAckTransaction  = scc.getDialog().getNewClientConnection(Request.ACK);
-							lAckTransaction.initAck();
-							InputStream lSdpInputStream = lAckTransaction.openContentInputStream();
+							//SipClientConnection lAckTransaction  = scc.getDialog().getNewClientConnection(Request.ACK);
+							//lAckTransaction.initAck();
+							InputStream lSdpInputStream = lInviteTransaction.openContentInputStream();
 							byte [] lRawSdp = new byte [lSdpInputStream.available()];
 							lSdpInputStream.read(lRawSdp);
 							
-							SessionDescription lSessionDescription  = SdpFactory.getInstance().createSessionDescription(String.valueOf(lRawSdp)) ;
+							SessionDescription lSessionDescription  = SdpFactory.getInstance().createSessionDescription(new String(lRawSdp)) ;
 							SalMediaDescription lRemote = SdpUtils.toSalMediaDescription(lSessionDescription);
 							mFinalSalMediaDescription = OfferAnswerHelper.computeOutgoing(mLocalSalMediaDescription, lRemote);
-							lAckTransaction.send();
+							mDialog=lInviteTransaction.getDialog(); 
+							lInviteTransaction.initAck();
+							lInviteTransaction.send();
+							
 							mSalListener.onCallAccepted(SalOpImpl.this);
 							break;
-						default: 
-							mLog.warn("Unexpected answer ["+scc+"]");
+						case 180:
+							mSalListener.onCallRinging(SalOpImpl.this);
+							break;
+						default:
+							if (scc.getStatusCode() > 300) {
+								mSalListener.onCallFailure(SalOpImpl.this,scc.getReasonPhrase());
+							} else {
+								mLog.warn("Unexpected answer ["+scc+"]");
+							}
 						}
 					} catch (Exception e) {
 						mLog.error("cannot handle invite answer", e);
@@ -151,13 +166,31 @@ class SalOpImpl extends SalOpBase {
 	}
 
 	public void callTerminate() {
-		// TODO Auto-generated method stub
+		try {
+		if (mDialog != null) {
+			SipClientConnection lByeConnection = mDialog.getNewClientConnection(Request.BYE);
+			lByeConnection.setListener(new SipClientConnectionListener() {
+				
+				public void notifyResponse(SipClientConnection scc) {
+						try {
+							scc.receive(0);
+							mSalListener.onCallTerminated(SalOpImpl.this);
+							
+						} catch (Exception e) {
+							mLog.error("cannot receive bye answer", e);
+						} 
+				}});
+			lByeConnection.send();
+			
+		}
+		} catch (Exception e) {
+			mLog.error("cannot terminate call", e);
+		}
 	}
 	public SalAuthInfo getAuthInfo() {
 		return mAutInfo;
 	}
 	public SalMediaDescription getFinalMediaDescription() {
-		// TODO Auto-generated method stub
-		return null;
+		return mFinalSalMediaDescription;
 	}
 }

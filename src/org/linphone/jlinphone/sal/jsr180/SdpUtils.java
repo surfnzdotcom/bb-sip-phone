@@ -5,6 +5,7 @@ import java.util.Vector;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.jortp.PayloadType;
+import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalMediaDescriptionBase;
@@ -30,28 +31,23 @@ public class SdpUtils {
 			sLogger=Logger.getLogger("Sal");
 		return sLogger;
 	}
-	public static SalMediaDescription toSalMediaDescription(SessionDescription sd){
+	public static SalMediaDescription toSalMediaDescription(SessionDescription sd) throws SalException{
 		SalMediaDescription md= SalFactory.instance().createSalMediaDescription();
 		ConnectionField c=sd.getConnection();
 		Vector mlines;
 		try {
 			mlines = sd.getMediaDescriptions(false);
-		} catch (SdpException e) {
-			getLogger().error("Could not get mlines", e);
-			return null;
-		}
-		try {
 			md.setAddress(c.getAddress());
-		} catch (SdpParseException e) {
-			getLogger().error("Could not get c= address from sdp", e);
+
+			for(int i=0;i<mlines.size();++i){
+				MediaDescription mline=(MediaDescription)mlines.elementAt(i);
+				SalStreamDescription ssd=toStreamDescription(mline);
+				if (ssd!=null) md.addStreamDescription(ssd);
+			}
+		} catch (Exception e) {
+			throw new SalException("Could parse sdp", e);
 		}
-		
-		for(int i=0;i<mlines.size();++i){
-			MediaDescription mline=(MediaDescription)mlines.elementAt(i);
-			SalStreamDescription ssd=toStreamDescription(mline);
-			if (ssd!=null) md.addStreamDescription(ssd);
-		}
-		
+
 		return md;
 	}
 	public static SessionDescription toSessionDescription(SalMediaDescription md){
@@ -96,6 +92,7 @@ public class SdpUtils {
 			rtpmap.append('/');
 			rtpmap.append(pt.getClockRate());
 			if (pt.getNumChannels()>0){
+				rtpmap.append('/');
 				rtpmap.append(pt.getNumChannels());
 			}
 			AttributeField attr=null;
@@ -199,13 +196,18 @@ public class SdpUtils {
 	private static void fillCodecs(SalStreamDescription ssd, MediaDescription mline) {
 		MediaField mf=mline.getMedia();
 		Vector payloadNumbers=mf.getFormats();
+		Vector payLoadTypes = new Vector();
 		int i;
 		for(i=0;i<payloadNumbers.size();++i){
 			String numstr=(String)payloadNumbers.elementAt(i);
 			PayloadType pt=JOrtpFactory.instance().createPayloadType();
 			pt.setNumber(Integer.parseInt(numstr));
 			fillPayloadType(pt,mline);
+			payLoadTypes.addElement(pt);
 		}
+		PayloadType[] payloadTypeArray = new PayloadType[payLoadTypes.size()];
+		payLoadTypes.copyInto(payloadTypeArray);
+		ssd.setPayloadTypes(payloadTypeArray);
 	}
 	
 }

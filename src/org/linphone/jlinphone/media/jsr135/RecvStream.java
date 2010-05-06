@@ -82,25 +82,28 @@ public class RecvStream implements Runnable, PlayerListener {
 
 	public void run() {
 		
-		mPlayer = Manager.createPlayer(mInput, "audio/amr");
+		try {
+			mPlayer = Manager.createPlayer(mInput, "audio/amr");
 
-		mPlayer.addPlayerListener(this);
-		mPlayer.realize();
-		mPlayer.prefetch();
-		AudioPathControl  lPathCtr = (AudioPathControl) mPlayer.getControl("net.rim.device.api.media.control.AudioPathControl");
-		lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
-		
-		//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
-		mPlayer.start();
+			mPlayer.addPlayerListener(this);
+			mPlayer.realize();
+			mPlayer.prefetch();
+			//AudioPathControl  lPathCtr = (AudioPathControl) mPlayer.getControl("net.rim.device.api.media.control.AudioPathControl");
+			//lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
 
-		while (mRunning) {
-			Thread.sleep(250);
+			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
+			mPlayer.start();
+
+			while (mRunning) {
+				Thread.sleep(250);
+			}
+
+			mPlayer.stop();
+
+			mPlayer.close();
+		} catch (Exception e) {
+			sLogger.error("Cannot start player", e);
 		}
-
-		mPlayer.stop();
-
-		mPlayer.close();
-
 	}
 
 	public void playerUpdate(Player arg0, String event, Object eventData) {

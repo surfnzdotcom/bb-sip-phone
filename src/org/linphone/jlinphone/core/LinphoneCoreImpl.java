@@ -15,6 +15,7 @@ import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.jlinphone.media.AudioStream;
 import org.linphone.jlinphone.media.AudioStreamEchoImpl;
 import org.linphone.jlinphone.media.AudioStreamParameters;
+import org.linphone.jlinphone.media.jsr135.AudioStreamImpl;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.jortp.PayloadType;
@@ -117,6 +118,11 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			mListener.generalState(LinphoneCoreImpl.this, GeneralState.GSTATE_REG_OK);
 			
 		}
+
+		public void onCallFailure(SalOp op, String reasonPhrase) {
+			mListener.generalState(LinphoneCoreImpl.this,  LinphoneCore.GeneralState.GSTATE_CALL_ERROR);
+			
+		}
 		
 	};
 	
@@ -201,7 +207,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		return "sip:anonymous@"+mSal.getLocalAddr()+Integer.toString(mSipPort);
 	}
 	private void initMediaStreams(Call call){
-		mAudioStream=new AudioStreamEchoImpl();
+		mAudioStream=new AudioStreamImpl();
 		try {
 			String host="0.0.0.0";
 			int port=call.getLocalMediaDescription().getStream(0).getPort();
@@ -241,8 +247,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			try {
 				mAudioStream.start(makeAudioStreamParams(call));
 			} catch (RtpException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				mLog.error("Cannot start stream", e);
 			}
 		}
 	}
