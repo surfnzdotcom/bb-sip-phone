@@ -14,8 +14,10 @@ public class AudioStreamImpl implements AudioStream {
 	private RtpSession mSession;
 	
 	public void stop() {
-		mRecvStream.stop();
-		mSendStream.stop();
+		if (mRecvStream!=null)
+			mRecvStream.stop();
+		if (mSendStream!=null)
+			mSendStream.stop();
 		mSession.close();
 	}
 	public void init(SocketAddress local) throws RtpException {
