@@ -1,6 +1,13 @@
 package org.linphone.jlinphone.gui;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.linphone.core.LinphoneCore;
+import org.linphone.core.LinphoneCoreException;
+import org.linphone.core.LinphoneCoreFactory;
+import org.linphone.core.LinphoneCoreListener;
+import org.linphone.core.LinphoneCore.GeneralState;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
@@ -27,7 +34,7 @@ import net.rim.device.api.ui.decor.BackgroundFactory;
 import net.rim.device.api.ui.decor.Border;
 import net.rim.device.api.ui.decor.BorderFactory;
 
-public class LinphoneScreen extends MainScreen implements FieldChangeListener, FocusChangeListener{
+public class LinphoneScreen extends MainScreen implements FieldChangeListener, FocusChangeListener, LinphoneCoreListener{
 	private BasicEditField mInputAddress;
 	private ButtonField mCall;
 	private ButtonField mHangup;
@@ -35,9 +42,11 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	private LabelField mStatus;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	private LinphoneCore mCore;
+	private Timer mTimer;
 	
 	LinphoneScreen()
     {
+		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
 		VerticalFieldManager v=new VerticalFieldManager();
 		mInputAddress=new BasicEditField(null,null);
 		XYEdges edges = new XYEdges(8,8,8,8);
@@ -48,7 +57,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		Bitmap bitmap=Bitmap.getBitmapResource("startcall-green.png");
 		Background b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
 		mCall.setBackground(b);
-		mHangup.setMargin(10, 10, 10, 10);
+		mCall.setMargin(10, 10, 10, 10);
 		
 		mHangup=new ButtonField("      ",Field.USE_ALL_WIDTH|Field.FIELD_RIGHT|ButtonField.CONSUME_CLICK);
 		bitmap=Bitmap.getBitmapResource("stopcall-red.png");
@@ -78,6 +87,23 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
         
         mCall.setChangeListener(this);
         mHangup.setChangeListener(this);
+        
+        try {
+        	
+			LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
+		} catch (LinphoneCoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		mTimer=new Timer();
+		TimerTask task=new TimerTask(){
+
+			public void run() {
+				mCore.iterate();
+			}
+			
+		};
+		mTimer.scheduleAtFixedRate(task, 0, 200);
     }
 
     
@@ -90,7 +116,8 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
     public void close()
     {
         // Display a farewell message before closing the application
-        Dialog.alert("Goodbye!");     
+        Dialog.alert("Goodbye!");
+        mCore.destroy();
         super.close();
     }
 
@@ -98,13 +125,71 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	public void fieldChanged(Field field, int context) {
 		if (field==mCall){
 			sLogger.info("Called button pressed.");
+			try {
+				if (mCore.isInComingInvitePending()){
+					mCore.acceptCall();
+				}else{
+					mCore.invite(mInputAddress.getText());
+				}
+			} catch (LinphoneCoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}else if (field==mHangup){
 			sLogger.info("Hangup button pressed");
+			mCore.terminateCall();
 		}
 	}
 
 
 	public void focusChanged(Field field, int eventType) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void authInfoRequested(LinphoneCore lc, String realm, String username) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void byeReceived(LinphoneCore lc, String from) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void displayMessage(LinphoneCore lc, String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void displayStatus(LinphoneCore lc, String message) {
+		mStatus.setText(message);
+	}
+
+
+	public void displayWarning(LinphoneCore lc, String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void generalState(LinphoneCore lc, GeneralState state) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void inviteReceived(LinphoneCore lc, String from) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void show(LinphoneCore lc) {
 		// TODO Auto-generated method stub
 		
 	}   
