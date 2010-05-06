@@ -129,7 +129,10 @@ public class LinphoneCoreTester extends TestCase {
 					if (state == GeneralState.GSTATE_REG_OK) {
 						mLog.info("Registration OK");
 					}
+					
 				}
+
+				
 				
 			}, null, null, null);
 			LinphoneAuthInfo lAuthInfo =  LinphoneCoreFactory.instance().createAuthInfo("8182449906ip", "49906", "Realm");
@@ -175,11 +178,14 @@ public class LinphoneCoreTester extends TestCase {
 						}
 					}
 				}
+				public void displayStatus(LinphoneCore lc, String message) {
+					mLog.info(message);
+				}
 
 			}, null, null, null);
 
 			try {
-				lc.invite("sip:test@192.168.0.10:5062");
+				lc.invite("sip:test@192.168.0.21:5060");
 			} catch (LinphoneCoreException e) {
 				mLog.error("",e);
 				Assertion.fail(e.getMessage());
@@ -189,6 +195,8 @@ public class LinphoneCoreTester extends TestCase {
 			}
 			Assertion.assertTrue("Invite failed after ["+INVITE_TIMEOUT+"] ms", lc.isIncall());
 			
+			Thread.sleep(5000);
+			lc.terminateCall();
 
 		} catch (Exception e) {
 			

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.microedition.media.Manager;
-import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 
@@ -83,38 +82,24 @@ public class RecvStream implements Runnable, PlayerListener {
 
 	public void run() {
 		
-		try {
-			mPlayer = Manager.createPlayer(mInput, "audio/amr");
+		mPlayer = Manager.createPlayer(mInput, "audio/amr");
+
+		mPlayer.addPlayerListener(this);
+		mPlayer.realize();
+		mPlayer.prefetch();
+		AudioPathControl  lPathCtr = (AudioPathControl) mPlayer.getControl("net.rim.device.api.media.control.AudioPathControl");
+		lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
 		
-			mPlayer.addPlayerListener(this);
-			mPlayer.realize();
-			mPlayer.prefetch();
-			
-	/*
-			AudioPathControl  lPathCtr = (AudioPathControl) mPlayer.getControl("net.rim.device.api.media.control.AudioPathControl");
-			lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
-	*/	
-			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
-			mPlayer.start();
-	
-			while (mRunning) {
-				try {
-					Thread.sleep(250);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-	
-			mPlayer.stop();
-	
-			mPlayer.close();
-		
-		} catch (IOException e) {
-			sLogger.error("IOException",e);
-		} catch (MediaException e) {
-			sLogger.error("MediaException",e);
+		//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
+		mPlayer.start();
+
+		while (mRunning) {
+			Thread.sleep(250);
 		}
+
+		mPlayer.stop();
+
+		mPlayer.close();
 
 	}
 

@@ -78,7 +78,7 @@ public class SendStream implements Runnable, PlayerListener{
 
 	public void run() {
 		try {
-			mPlayer = Manager.createPlayer("capture://audio?encoding=audio/amr&updateMethod=time&updateThreshold=20");
+			mPlayer = Manager.createPlayer("capture://audio?encoding=audio/amr"/*&updateMethod=time&updateThreshold=20"*/);
 		
 			mPlayer.addPlayerListener(this);
 	

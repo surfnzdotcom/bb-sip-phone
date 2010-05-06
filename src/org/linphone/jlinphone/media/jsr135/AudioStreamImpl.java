@@ -10,7 +10,7 @@ import org.linphone.jortp.SocketAddress;
 public class AudioStreamImpl implements AudioStream {
 	private RecvStream mRecvStream;
 	private SendStream mSendStream;
-	private AudioStreamParameters mParams;
+	
 	private RtpSession mSession;
 	
 	public void stop() {
@@ -23,10 +23,11 @@ public class AudioStreamImpl implements AudioStream {
 		mSession.setLocalAddr(local);
 	}
 	public void start(AudioStreamParameters params) throws RtpException {
-		mSession.setRemoteAddr(mParams.getRemoteDest());
-		mSession.setProfile(mParams.getRtpProfile());
-		mSession.setSendPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
-		mSession.setRecvPayloadTypeNumber(mParams.getActivePayloadTypeNumber());
+		
+		mSession.setRemoteAddr(params.getRemoteDest());
+		mSession.setProfile(params.getRtpProfile());
+		mSession.setSendPayloadTypeNumber(params.getActivePayloadTypeNumber());
+		mSession.setRecvPayloadTypeNumber(params.getActivePayloadTypeNumber());
 		
 		mRecvStream=new RecvStream(mSession);
 		mSendStream=new SendStream(mSession);
