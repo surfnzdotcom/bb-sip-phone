@@ -113,13 +113,14 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
      * 
      * @see net.rim.device.api.ui.Screen#close()
      */
-    public void close()
-    {
-        // Display a farewell message before closing the application
-        Dialog.alert("Goodbye!");
-        mCore.destroy();
-        super.close();
-    }
+	public void close() {   
+		try {// Display a farewell message before closing the application
+			Dialog.alert("Goodbye!");
+			mCore.destroy();
+		} finally {
+			super.close();
+		}
+	}
 
 
 	public void fieldChanged(Field field, int context) {
@@ -132,8 +133,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 					mCore.invite(mInputAddress.getText());
 				}
 			} catch (LinphoneCoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				sLogger.error("call error",e);
 			}
 		}else if (field==mHangup){
 			sLogger.info("Hangup button pressed");

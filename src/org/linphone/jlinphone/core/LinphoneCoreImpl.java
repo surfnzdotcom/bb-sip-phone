@@ -3,6 +3,9 @@ package org.linphone.jlinphone.core;
 
 import java.util.Vector;
 
+import javax.microedition.io.Connector;
+import javax.microedition.io.SocketConnection;
+
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneAuthInfo;
@@ -178,6 +181,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		amr.setMimeType("AMR");
 		amr.setNumChannels(1);
 		amr.setType(PayloadType.MediaType.Audio);
+		amr.setNumber(103);
 		pts[0]=amr;
 		sd.setPayloadTypes(pts);
 		md.addStreamDescription(sd);
@@ -262,13 +266,19 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	public LinphoneCoreImpl(LinphoneCoreListener listener, String userConfig,
 			String factoryConfig, Object userdata) throws LinphoneCoreException{
 		try {
-			SocketAddress addr=JOrtpFactory.instance().createSocketAddress("0.0.0.0", mSipPort);
+			String dummyConnString = "socket://www.linphone.org:80;deviceside=true";//;interface=wifi";
+			mLog.info("Opening dummy socket connection to : " + dummyConnString);
+			SocketConnection dummyCon = (SocketConnection) Connector.open(dummyConnString);
+			String localAdd = dummyCon.getLocalAddress();
+			dummyCon.close();
+			
+			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(localAdd, mSipPort);
 			mSal=SalFactory.instance().createSal();
 			mSal.setUserAgent("jLinphone/0.0.1");
 			mSal.listenPort(addr, Sal.Transport.Datagram, false);
 			mSal.setListener(mSalListener);
 			mListener=listener;
-		} catch (Exception e ) {
+		} catch (Throwable e ) {
 			throw new LinphoneCoreException("Cannot create Linphone core for user conf ["
 											+userConfig
 											+"] factory conf ["+factoryConfig+"] reason ["+e.getMessage()+"] ",e);
@@ -375,7 +385,9 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			mCall=c;
 			mListener.generalState(this, GeneralState.GSTATE_CALL_OUT_INVITE);
 		} catch (Exception e) {
+			terminateCall();
 			throw new LinphoneCoreException("Cannot place call to ["+to+"]",e);
+			
 		}
 	}
 

@@ -22,6 +22,7 @@ public class SendStream implements Runnable, PlayerListener{
 	private boolean mRunning;
 	private Player mPlayer;
 	private int mTs;
+
 	private OutputStream mOutput= new OutputStream(){
 
 		public void close() throws IOException {
@@ -78,7 +79,7 @@ public class SendStream implements Runnable, PlayerListener{
 
 	public void run() {
 		try {
-			mPlayer = Manager.createPlayer("capture://audio?encoding=audio/amr"/*&updateMethod=time&updateThreshold=20"*/);
+			mPlayer = Manager.createPlayer("capture://audio?encoding=audio/amr&updateMethod=time&updateThreshold=20");
 		
 			mPlayer.addPlayerListener(this);
 	

@@ -23,6 +23,15 @@ public class RecvStream implements Runnable, PlayerListener {
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("RecvStream");
 	
 	private InputStream mInput= new InputStream(){
+		 byte [] sSilentAmr= {  (byte)0x3c, (byte)0x48, (byte)0xf5, (byte)0x1f,
+			        (byte)0x96, (byte)0x66, (byte)0x79, (byte)0xe1,
+			        (byte)0xe0, (byte)0x01, (byte)0xe7, (byte)0x8a,
+			        (byte)0xf0, (byte)0x00, (byte)0x00, (byte)0x00,
+			        (byte)0xc0, (byte)0x00, (byte)0x00, (byte)0x00,
+			        (byte)0xc0, (byte)0x00, (byte)0x00, (byte)0x00,
+			        (byte)0xc0, (byte)0x00, (byte)0x00, (byte)0x00,
+			        (byte)0xc0, (byte)0x00 };
+
 		public int available() throws IOException {
 			return 1;
 		}
@@ -38,7 +47,7 @@ public class RecvStream implements Runnable, PlayerListener {
 		}
 
 		public int read(byte[] b, int offset, int length) throws IOException {
-			sLogger.warn("Called in read(data, offset, length) !",null);
+			sLogger.info("Called in read date ["+System.currentTimeMillis()+"] length ["+length+"] ts ["+mTs+"]");
 			return read(b);
 		}
 
@@ -50,9 +59,13 @@ public class RecvStream implements Runnable, PlayerListener {
 				int datalen=packet.getRealLength()-packet.getDataOffset()-1;
 				System.arraycopy(packet.getBytes(),packet.getDataOffset()+1, b, 0, datalen );
 				return datalen;
+			} else {
+				System.arraycopy(sSilentAmr,0, b, 0, sSilentAmr.length );
+				return sSilentAmr.length;
 			}
+
 			
-			return 0;
+			
 		}
 
 		public int read() throws IOException {

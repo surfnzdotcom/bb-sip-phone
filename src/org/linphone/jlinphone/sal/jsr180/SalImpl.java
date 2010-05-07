@@ -20,6 +20,7 @@ package org.linphone.jlinphone.sal.jsr180;
 
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -47,6 +48,7 @@ import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
 import sip4me.nist.javax.microedition.sip.SipException;
 import sip4me.nist.javax.microedition.sip.SipHeader;
 import sip4me.nist.javax.microedition.sip.SipRefreshListener;
+import sip4me.nist.javax.microedition.sip.SipServerConnection;
 import sip4me.nist.javax.microedition.sip.SipServerConnectionListener;
 
 class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
@@ -117,22 +119,19 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
         
 		Debug.enableDebug(false);
 		LogWriter.needsLogging = true;
-		LogWriter.setTraceLevel(LogWriter.TRACE_DEBUG);
+		LogWriter.setTraceLevel(LogWriter.TRACE_EXCEPTION);
 		ServerLog.setTraceLevel(ServerLog.TRACE_NONE);
 		
         StackConnector.properties.setProperty ("javax.sip.RETRANSMISSION_FILTER", "on");
-        		
+        StackConnector.properties.setProperty("sip4me.gov.nist.javax.sip.NETWORK_LAYER", "sip4me.gov.nist.core.net.BBNetworkLayer");		
 		StackConnector.properties.setProperty ("javax.sip.IP_ADDRESS", addr.getHost());  
 		mLog.info("Stack initialized with IP: " + addr.getHost());
         String SipConnectorUri = "sip:";
-        if (!addr.getHost().equalsIgnoreCase("0.0.0.0")) {
-        	SipConnectorUri+=":"+addr.getPort();
-        } else {
-			/*String dummyConnString = "datagram://mty11.axtel.net:5060";
-			UDPDatagramConnection dummyCon = (UDPDatagramConnection) Connector.open(dummyConnString);*/
-			String localAdd ="";/* dummyCon.getLocalAddress();*/
-        	SipConnectorUri+=localAdd+addr.getPort();
-        }
+//        if (addr.getHost().equalsIgnoreCase("0.0.0.0")) {
+        	SipConnectorUri+=addr.getPort();
+//        } else {
+//        	SipConnectorUri+="anonymous@"+addr.getHost()+":"+addr.getPort();
+//        }
         
         mConnectionNotifier = (SipConnectionNotifier) SipConnector.open(SipConnectorUri);
         mConnectionNotifier.setListener(this);
@@ -233,7 +232,14 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 
 	}
 	public void notifyRequest(SipConnectionNotifier ssc) {
-		// TODO Auto-generated method stub
+		try {
+			SipServerConnection lCnx = ssc.acceptAndOpen();
+			mLog.debug("receiving request: " +lCnx.getRequestURI());
+			lCnx.initResponse(500);
+			lCnx.send();
+		} catch (Exception e) {
+		}
+		
 		
 	}
 	public SalOp createSalOp() {
