@@ -90,10 +90,10 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
         
         try {
         	
-        	mCore = LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
+			mCore=LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
 		} catch (LinphoneCoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			sLogger.fatal("Cannot create LinphoneCore", e);
+			return;
 		}
 		mTimer=new Timer();
 		TimerTask task=new TimerTask(){

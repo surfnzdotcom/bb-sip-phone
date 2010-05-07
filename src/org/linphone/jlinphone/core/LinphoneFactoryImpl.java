@@ -40,6 +40,12 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 	}
 
 	public LinphoneAddress createLinphoneAddress(String address) {
-		return new LinphoneAddressImpl(address);
+		LinphoneAddress ret=null;
+		try{
+			ret=new LinphoneAddressImpl(address);
+		}catch(Exception e){
+			
+		}
+		return ret;
 	}
 }
