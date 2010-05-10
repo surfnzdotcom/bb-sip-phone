@@ -16,16 +16,12 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.FocusChangeListener;
 import net.rim.device.api.ui.Font;
-import net.rim.device.api.ui.Manager;
+import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.BasicEditField;
-import net.rim.device.api.ui.component.BitmapField;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Dialog;
-import net.rim.device.api.ui.component.EditField;
 import net.rim.device.api.ui.component.LabelField;
-import net.rim.device.api.ui.component.RichTextField;
-import net.rim.device.api.ui.container.GridFieldManager;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
@@ -53,6 +49,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		Border border=BorderFactory.createRoundedBorder(edges);
 		mInputAddress.setBorder(border);
 		mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,30));
+		mInputAddress.setText("sip:jehan@192.168.0.21");
 		mCall=new ButtonField("      ",Field.USE_ALL_WIDTH|Field.FIELD_LEFT|ButtonField.CONSUME_CLICK);
 		Bitmap bitmap=Bitmap.getBitmapResource("startcall-green.png");
 		Background b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
@@ -166,8 +163,13 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	}
 
 
-	public void displayStatus(LinphoneCore lc, String message) {
-		mStatus.setText(message);
+	public void displayStatus(LinphoneCore lc, final String message) {
+		UiApplication.getUiApplication().invokeLater(new Runnable() {
+			public void run() {
+				mStatus.setText(message);
+			}
+		});
+
 	}
 
 

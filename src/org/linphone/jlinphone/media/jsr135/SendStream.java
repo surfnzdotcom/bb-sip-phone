@@ -21,8 +21,8 @@ public class SendStream implements Runnable, PlayerListener{
 	private RtpSession mSession;
 	private boolean mRunning;
 	private Player mPlayer;
-	private int mTs;
-
+	private int mTs=0;
+	private int mFrameSize=32;
 	private OutputStream mOutput= new OutputStream(){
 
 		public void close() throws IOException {
@@ -32,26 +32,33 @@ public class SendStream implements Runnable, PlayerListener{
 		}
 
 		public void write(byte[] buffer, int offset, int count)
-				throws IOException {
-			sLogger.warn("Called in write(buffer,offset,count)",null);
-			write(buffer);
+		throws IOException {
+			sLogger.info("Called in write date ["+System.currentTimeMillis()+"] offset ["+offset+"] length ["+count+"] ts ["+mTs+"]");
+			int lOffset=offset;
+			if (mTs == 0) {
+				lOffset += "#!AMR\n".length();
+			}
+			while (lOffset + mFrameSize <offset+count) {
+				RtpPacket packet=JOrtpFactory.instance().createRtpPacket(mFrameSize+1);
+				System.arraycopy(buffer, lOffset, packet.getBytes(), packet.getDataOffset()+1, mFrameSize);
+				//set cmr byte
+				packet.getBytes()[packet.getDataOffset()]=(byte)0xf0;
+				try {
+					mSession.sendPacket(packet, mTs);
+				} catch (RtpException e) {
+					sLogger.error("Fail to send RTP packet",e);
+				}
+				mTs+=160;
+				lOffset+=mFrameSize;
+			}
 		}
 
 		public void write(byte[] buffer) throws IOException {
-			RtpPacket packet=JOrtpFactory.instance().createRtpPacket(buffer.length+1);
-			System.arraycopy(buffer, 0, packet.getBytes(), packet.getDataOffset()+1, buffer.length);
-			//set cmr byte
-			packet.getBytes()[packet.getDataOffset()]=(byte)0xf0;
-			try {
-				mSession.sendPacket(packet, mTs);
-			} catch (RtpException e) {
-				sLogger.error("Fail to send RTP packet",e);
+			write( buffer, 0, buffer.length);
 			}
-			mTs+=160;
-		}
 
 		public void write(int arg0) throws IOException {
-			
+			sLogger.error("write(int arg0) not implemented");
 		}
 		
 	};
@@ -80,29 +87,23 @@ public class SendStream implements Runnable, PlayerListener{
 	public void run() {
 		try {
 			mPlayer = Manager.createPlayer("capture://audio?encoding=audio/amr&updateMethod=time&updateThreshold=20");
-		
 			mPlayer.addPlayerListener(this);
-	
 			mPlayer.realize();
-	
 			RecordControl recordControl = (RecordControl) mPlayer.getControl("RecordControl");
-	
 			recordControl.setRecordStream(mOutput);
-	
-			recordControl.startRecord();
-	
-			mPlayer.start();
-	
+
+			//recordControl.startRecord();
+
+			//mPlayer.start();
+
 			while (mRunning) {
 				Thread.sleep(250);
 			}
-	
+
 			recordControl.commit();
-	
 			mOutput.close();
-	
 			mPlayer.close();
-		
+
 		} catch (IOException e) {
 			sLogger.error("IOException in SendStream !",e);
 		} catch (MediaException e) {
@@ -110,7 +111,7 @@ public class SendStream implements Runnable, PlayerListener{
 		} catch (InterruptedException e) {
 			sLogger.error("InterruptedException in SendStream !",e);
 		}
-		
+
 	}
 
 	public void playerUpdate(Player arg0, String event, Object eventData) {

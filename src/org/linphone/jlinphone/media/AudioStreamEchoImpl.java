@@ -29,16 +29,18 @@ public class AudioStreamEchoImpl implements AudioStream {
 		}
 		public void run() {
 			int ts=(int)mTime*mClockrate;
-			
-			RtpPacket p;
-			p=mSession.recvPacket(ts);
-			if (p!=null){
-				try {
+
+			RtpPacket p=null;;
+			try {
+				p=mSession.recvPacket(ts);
+				if (p!=null){
+
 					mSession.sendPacket(p, ts);
-				} catch (RtpException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+
 				}
+			} catch (RtpException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 		

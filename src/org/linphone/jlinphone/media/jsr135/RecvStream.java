@@ -11,6 +11,7 @@ import net.rim.device.api.media.control.AudioPathControl;
 
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
+import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpPacket;
 import org.linphone.jortp.RtpSession;
 
@@ -20,6 +21,7 @@ public class RecvStream implements Runnable, PlayerListener {
 	private RtpSession mSession;
 	private boolean mRunning;
 	private int mTs;
+	private long mTime=0;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("RecvStream");
 	
 	private InputStream mInput= new InputStream(){
@@ -28,9 +30,9 @@ public class RecvStream implements Runnable, PlayerListener {
 			        (byte)0xe0, (byte)0x01, (byte)0xe7, (byte)0x8a,
 			        (byte)0xf0, (byte)0x00, (byte)0x00, (byte)0x00,
 			        (byte)0xc0, (byte)0x00, (byte)0x00, (byte)0x00,
-			        (byte)0xc0, (byte)0x00, (byte)0x00, (byte)0x00,
-			        (byte)0xc0, (byte)0x00, (byte)0x00, (byte)0x00,
-			        (byte)0xc0, (byte)0x00 };
+			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
+			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00 };
 
 		public int available() throws IOException {
 			return 1;
@@ -47,25 +49,61 @@ public class RecvStream implements Runnable, PlayerListener {
 		}
 
 		public int read(byte[] b, int offset, int length) throws IOException {
-			sLogger.info("Called in read date ["+System.currentTimeMillis()+"] length ["+length+"] ts ["+mTs+"]");
-			return read(b);
+			try {
+				sLogger.info("Called in read date ["+System.currentTimeMillis()+"] offset ["+offset+"]length ["+length+"] ts ["+mTs+"]");
+
+				int lWrittenLenth=0;
+				if (mTs == 0) {
+					mTime = System.currentTimeMillis();
+					String lAmrHeader="#!AMR\n";
+					lWrittenLenth=lAmrHeader.length();
+					System.arraycopy(lAmrHeader.getBytes("US-ASCII"),0, b, offset, lWrittenLenth );
+					length = length -lWrittenLenth;
+					offset+=lWrittenLenth;
+
+				} else {
+					long nextTickTime =  System.currentTimeMillis() - mTime;
+					if (nextTickTime < 20) {
+						try {
+							sLogger.info("blocking reader for ["+(20-nextTickTime)+"] ms");
+							Thread.sleep(20-nextTickTime);
+						} catch (InterruptedException e) {
+							sLogger.info("blocked reader interrupted",e);
+						}
+					}
+				}
+				RtpPacket packet=null;
+				try {
+					int mNUmberOfPacketConsumed=0;
+					while((packet=mSession.recvPacket(mTs))!=null) {
+						//+1 because we need to skip the CMR bytes
+						int datalen=packet.getRealLength()-packet.getDataOffset()-1;
+						System.arraycopy(packet.getBytes(),packet.getDataOffset()+1, b, offset, datalen );
+						lWrittenLenth+= datalen;
+						offset+=datalen;
+						mNUmberOfPacketConsumed++;
+					}
+					if (mNUmberOfPacketConsumed == 0) {
+						sLogger.info("inserting silence");
+						System.arraycopy(sSilentAmr,0, b, offset, sSilentAmr.length );
+						lWrittenLenth+= sSilentAmr.length;
+					}
+					mTs+=160;
+					mTime =  System.currentTimeMillis();
+
+				} catch (RtpException e) {
+					sLogger.error("Bad RTP packet", e);
+				}
+				sLogger.info("["+lWrittenLenth+"] bytes returned"); 
+				return lWrittenLenth;
+			} catch (Throwable e) {
+				sLogger.error("Exiting player input stream",e);
+				return 0;
+			}
 		}
 
 		public int read(byte[] b) throws IOException {
-			RtpPacket packet=mSession.recvPacket(mTs);
-			mTs+=160;
-			if (packet!=null){
-				//+1 because we need to skip the CMR bytes
-				int datalen=packet.getRealLength()-packet.getDataOffset()-1;
-				System.arraycopy(packet.getBytes(),packet.getDataOffset()+1, b, 0, datalen );
-				return datalen;
-			} else {
-				System.arraycopy(sSilentAmr,0, b, 0, sSilentAmr.length );
-				return sSilentAmr.length;
-			}
-
-			
-			
+			return read(b,0,b.length);
 		}
 
 		public int read() throws IOException {

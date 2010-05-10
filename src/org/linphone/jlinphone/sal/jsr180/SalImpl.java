@@ -232,12 +232,18 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 
 	}
 	public void notifyRequest(SipConnectionNotifier ssc) {
+		SipServerConnection lCnx=null;
 		try {
-			SipServerConnection lCnx = ssc.acceptAndOpen();
-			mLog.debug("receiving request: " +lCnx.getRequestURI());
+			lCnx = ssc.acceptAndOpen();
+			mLog.debug("receiving request: "+lCnx.getMethod()+" " +lCnx.getRequestURI());
 			lCnx.initResponse(500);
 			lCnx.send();
 		} catch (Exception e) {
+			if (lCnx !=null) {
+				mLog.error("Cannot answer to : "+lCnx.getMethod()+" " +lCnx.getRequestURI(), e);
+			} else {
+				mLog.error("Unknown error while processing Request",e);
+			}
 		}
 		
 		

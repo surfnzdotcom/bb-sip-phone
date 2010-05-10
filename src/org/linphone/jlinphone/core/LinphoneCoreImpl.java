@@ -266,7 +266,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	public LinphoneCoreImpl(LinphoneCoreListener listener, String userConfig,
 			String factoryConfig, Object userdata) throws LinphoneCoreException{
 		try {
-			String dummyConnString = "socket://www.linphone.org:80;deviceside=true";//;interface=wifi";
+			String dummyConnString = "socket://www.linphone.org:80;deviceside=true;interface=wifi";
 			mLog.info("Opening dummy socket connection to : " + dummyConnString);
 			SocketConnection dummyCon = (SocketConnection) Connector.open(dummyConnString);
 			String localAdd = dummyCon.getLocalAddress();

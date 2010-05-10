@@ -134,7 +134,7 @@ class SalOpImpl extends SalOpBase {
 							if (scc.getStatusCode() > 300) {
 								mSalListener.onCallFailure(SalOpImpl.this,scc.getReasonPhrase());
 							} else {
-								mLog.warn("Unexpected answer ["+scc+"]");
+								mLog.warn("Unexpected answer ["+scc.getStatusCode()+" "+scc.getRequestURI()+"]");
 							}
 						}
 					} catch (Exception e) {
