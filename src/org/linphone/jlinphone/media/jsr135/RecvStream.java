@@ -3,9 +3,13 @@ package org.linphone.jlinphone.media.jsr135;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.microedition.media.Control;
 import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
+import javax.microedition.media.protocol.ContentDescriptor;
+import javax.microedition.media.protocol.DataSource;
+import javax.microedition.media.protocol.SourceStream;
 
 import net.rim.device.api.media.control.AudioPathControl;
 
@@ -21,10 +25,10 @@ public class RecvStream implements Runnable, PlayerListener {
 	private RtpSession mSession;
 	private boolean mRunning;
 	private int mTs;
-	private long mTime=0;
+	private long mStartTime=0;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("RecvStream");
 	
-	private InputStream mInput= new InputStream(){
+	private SourceStream mInput= new SourceStream(){
 		 byte [] sSilentAmr= {  (byte)0x3c, (byte)0x48, (byte)0xf5, (byte)0x1f,
 			        (byte)0x96, (byte)0x66, (byte)0x79, (byte)0xe1,
 			        (byte)0xe0, (byte)0x01, (byte)0xe7, (byte)0x8a,
@@ -34,27 +38,18 @@ public class RecvStream implements Runnable, PlayerListener {
 			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
 			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00 };
 
-		public int available() throws IOException {
-			return 1;
-		}
 
-		public void close() throws IOException {
-		}
-
-		public void mark(int readlimit) {
-		}
-
-		public boolean markSupported() {
-			return false;
-		}
-
+		 ContentDescriptor mContentDescriptor=new ContentDescriptor("audio/amr");
+		 /* (non-Javadoc)
+		 * @see java.io.InputStream#read(byte[], int, int)
+		 */
 		public int read(byte[] b, int offset, int length) throws IOException {
 			try {
-				sLogger.info("Called in read date ["+System.currentTimeMillis()+"] offset ["+offset+"]length ["+length+"] ts ["+mTs+"]");
+				if (sLogger.isLevelEnabled(Logger.Info))sLogger.info("Called in read date ["+System.currentTimeMillis()+"] offset ["+offset+"]length ["+length+"] ts ["+mTs+"]");
 
 				int lWrittenLenth=0;
-				if (mTs == 0) {
-					mTime = System.currentTimeMillis();
+				if (mTs==0) {
+					mStartTime = System.currentTimeMillis();
 					String lAmrHeader="#!AMR\n";
 					lWrittenLenth=lAmrHeader.length();
 					System.arraycopy(lAmrHeader.getBytes("US-ASCII"),0, b, offset, lWrittenLenth );
@@ -62,39 +57,42 @@ public class RecvStream implements Runnable, PlayerListener {
 					offset+=lWrittenLenth;
 
 				} else {
-					long nextTickTime =  System.currentTimeMillis() - mTime;
-					if (nextTickTime < 20) {
+					long sleeptime;
+					while (( sleeptime =  (System.currentTimeMillis() - mStartTime-(mTs/8))) < 20) {
+						if (sLogger.isLevelEnabled(Logger.Debug)) sLogger.debug("blocking reader for ["+(20 - sleeptime)+"] ms");
 						try {
-							sLogger.info("blocking reader for ["+(20-nextTickTime)+"] ms");
-							Thread.sleep(20-nextTickTime);
+							Thread.sleep(20 - sleeptime);
 						} catch (InterruptedException e) {
 							sLogger.info("blocked reader interrupted",e);
 						}
 					}
 				}
+				
 				RtpPacket packet=null;
 				try {
-					int mNUmberOfPacketConsumed=0;
-					while((packet=mSession.recvPacket(mTs))!=null) {
+					int lNumberOfPacketConsumed=0;
+					while((lWrittenLenth + sSilentAmr.length < length) && (packet=mSession.recvPacket(mTs))!=null) {
 						//+1 because we need to skip the CMR bytes
 						int datalen=packet.getRealLength()-packet.getDataOffset()-1;
 						System.arraycopy(packet.getBytes(),packet.getDataOffset()+1, b, offset, datalen );
 						lWrittenLenth+= datalen;
 						offset+=datalen;
-						mNUmberOfPacketConsumed++;
+						lNumberOfPacketConsumed++;
 					}
-					if (mNUmberOfPacketConsumed == 0) {
-						sLogger.info("inserting silence");
-						System.arraycopy(sSilentAmr,0, b, offset, sSilentAmr.length );
-						lWrittenLenth+= sSilentAmr.length;
+					if (lNumberOfPacketConsumed == 0 && (lWrittenLenth + sSilentAmr.length > length)) {
+						sLogger.warn("inserting silence at ts ["+mTs+"]");
+						int lSilenceSize = length<lWrittenLenth + sSilentAmr.length?length-lWrittenLenth:sSilentAmr.length; 
+						System.arraycopy(sSilentAmr,0, b, offset,lSilenceSize );
+						lWrittenLenth+= lSilenceSize;
+						lNumberOfPacketConsumed++;
 					}
 					mTs+=160;
-					mTime =  System.currentTimeMillis();
+					
 
 				} catch (RtpException e) {
 					sLogger.error("Bad RTP packet", e);
 				}
-				sLogger.info("["+lWrittenLenth+"] bytes returned"); 
+				if (sLogger.isLevelEnabled(Logger.Debug)) sLogger.debug("["+lWrittenLenth+"] bytes returned"); 
 				return lWrittenLenth;
 			} catch (Throwable e) {
 				sLogger.error("Exiting player input stream",e);
@@ -102,12 +100,38 @@ public class RecvStream implements Runnable, PlayerListener {
 			}
 		}
 
-		public int read(byte[] b) throws IOException {
-			return read(b,0,b.length);
+
+
+		public ContentDescriptor getContentDescriptor() {
+			return mContentDescriptor;
 		}
 
-		public int read() throws IOException {
-			return 0;
+		public long getContentLength() {
+			return -1;
+		}
+
+		public int getSeekType() {
+			return SourceStream.NOT_SEEKABLE;
+		}
+
+		public int getTransferSize() {
+			return sSilentAmr.length;
+		}
+
+		public long seek(long where) throws IOException {
+			throw new IOException("not seekable");
+		}
+
+		public long tell() {
+			return mTs;
+		}
+
+		public Control getControl(String controlType) {
+			return null;
+		}
+
+		public Control[] getControls() {
+			return null;
 		}
 		
 	};
@@ -136,7 +160,45 @@ public class RecvStream implements Runnable, PlayerListener {
 	public void run() {
 		
 		try{
-			mPlayer = Manager.createPlayer(mInput, "audio/amr");
+			mPlayer = Manager.createPlayer(new DataSource (null) {
+				SourceStream[] mStream = {mInput};
+				public void connect() throws IOException {
+					sLogger.info("connect data source");
+					
+				}
+
+				public void disconnect() {
+					sLogger.info("disconnect data source");
+					
+				}
+
+				public String getContentType() {
+					return "audio/amr";
+				}
+
+				public SourceStream[] getStreams() {
+					return mStream;
+				}
+
+				public void start() throws IOException {
+					sLogger.info("start data source");
+					
+				}
+
+				public void stop() throws IOException {
+					sLogger.info("start data source");
+					
+				}
+
+				public Control getControl(String controlType) {
+					return null;
+				}
+
+				public Control[] getControls() {
+					return null;
+				}
+				
+			});
 	
 			mPlayer.addPlayerListener(this);
 			mPlayer.realize();
@@ -161,8 +223,8 @@ public class RecvStream implements Runnable, PlayerListener {
 	}
 
 	public void playerUpdate(Player arg0, String event, Object eventData) {
-		if (sLogger.isLevelEnabled(sLogger.Info))
-				sLogger.info("Got event " + event + "[" + (eventData == null ? "" : eventData.toString()) + "]");
+		if (sLogger.isLevelEnabled(sLogger.Warn))
+				sLogger.warn("Got event " + event + "[" + (eventData == null ? "" : eventData.toString()) + "]");
 	}
 
 }

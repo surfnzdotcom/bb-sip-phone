@@ -43,6 +43,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	LinphoneScreen()
     {
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
+		//Logger.setGlobalLogLevel(Logger.Debug);
 		VerticalFieldManager v=new VerticalFieldManager();
 		mInputAddress=new BasicEditField(null,null);
 		XYEdges edges = new XYEdges(8,8,8,8);

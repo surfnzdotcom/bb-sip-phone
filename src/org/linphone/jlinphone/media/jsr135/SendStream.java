@@ -92,9 +92,9 @@ public class SendStream implements Runnable, PlayerListener{
 			RecordControl recordControl = (RecordControl) mPlayer.getControl("RecordControl");
 			recordControl.setRecordStream(mOutput);
 
-			//recordControl.startRecord();
+			recordControl.startRecord();
 
-			//mPlayer.start();
+			mPlayer.start();
 
 			while (mRunning) {
 				Thread.sleep(250);
@@ -115,8 +115,8 @@ public class SendStream implements Runnable, PlayerListener{
 	}
 
 	public void playerUpdate(Player arg0, String event, Object eventData) {
-		if (sLogger.isLevelEnabled(sLogger.Info))
-			sLogger.info("Got event " + event + "[" + (eventData == null ? "" : eventData.toString()) + "]");
+		if (sLogger.isLevelEnabled(sLogger.Warn))
+			sLogger.warn("Got event " + event + "[" + (eventData == null ? "" : eventData.toString()) + "]");
 	}
 
 }

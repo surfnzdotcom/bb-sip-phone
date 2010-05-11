@@ -7,6 +7,7 @@ import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneProxyConfig;
+import org.linphone.jortp.Logger;
 
 
 
@@ -32,7 +33,9 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 
 	
 	public void setDebugMode(boolean enable) {
-		// TODO Auto-generated method stub
+		if (enable) {
+			Logger.setGlobalLogLevel(Logger.Debug);
+		}
 		
 	}
 	public LinphoneFactoryImpl(){
