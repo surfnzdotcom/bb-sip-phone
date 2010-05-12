@@ -16,6 +16,7 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.FocusChangeListener;
 import net.rim.device.api.ui.Font;
+import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.BasicEditField;
@@ -39,11 +40,12 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	private LinphoneCore mCore;
 	private Timer mTimer;
+	private ConsoleScreen lConsoleScreen = new ConsoleScreen();
 	
 	LinphoneScreen()
     {
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-		//Logger.setGlobalLogLevel(Logger.Debug);
+		LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
 		VerticalFieldManager v=new VerticalFieldManager();
 		mInputAddress=new BasicEditField(null,null);
 		XYEdges edges = new XYEdges(8,8,8,8);
@@ -86,11 +88,33 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
         mCall.setChangeListener(this);
         mHangup.setChangeListener(this);
         
+        addMenuItem(new MenuItem("Settings", 110, 10)
+        {
+        	   public void run() 
+        	   {
+        		   UiApplication.getUiApplication().pushScreen(new SettingsScreen());
+        	   }
+        	});
+        addMenuItem(new MenuItem("Console", 110, 10)
+        {
+        	   public void run() 
+        	   {
+        		   UiApplication.getUiApplication().pushScreen(lConsoleScreen);
+        	   }
+        	});
+        
         try {
         	
 			mCore=LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
-		} catch (LinphoneCoreException e) {
+		} catch (final LinphoneCoreException e) {
 			sLogger.fatal("Cannot create LinphoneCore", e);
+			UiApplication.getUiApplication().invokeLater(new Runnable() {
+				public void run() {
+					Dialog.alert(e.getMessage());
+					close();
+				}
+			});
+			
 			return;
 		}
 		mTimer=new Timer();
@@ -114,7 +138,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	public void close() {   
 		try {// Display a farewell message before closing the application
 			Dialog.alert("Goodbye!");
-			mCore.destroy();
+			if (mCore != null) mCore.destroy();
 		} finally {
 			super.close();
 		}
@@ -130,8 +154,14 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 				}else{
 					mCore.invite(mInputAddress.getText());
 				}
-			} catch (LinphoneCoreException e) {
+			} catch (final LinphoneCoreException e) {
 				sLogger.error("call error",e);
+				UiApplication.getUiApplication().invokeLater(new Runnable() {
+					public void run() {
+						Dialog.alert(e.getMessage());
+						
+					}
+				});
 			}
 		}else if (field==mHangup){
 			sLogger.info("Hangup button pressed");

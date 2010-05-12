@@ -38,7 +38,7 @@ public class SendStream implements Runnable, PlayerListener{
 			if (mTs == 0) {
 				lOffset += "#!AMR\n".length();
 			}
-			while (lOffset + mFrameSize <offset+count) {
+			while (lOffset + mFrameSize <= offset+count) {
 				RtpPacket packet=JOrtpFactory.instance().createRtpPacket(mFrameSize+1);
 				System.arraycopy(buffer, lOffset, packet.getBytes(), packet.getDataOffset()+1, mFrameSize);
 				//set cmr byte

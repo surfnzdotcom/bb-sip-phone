@@ -1,6 +1,7 @@
 package org.linphone.jlinphone.core;
 
 
+import java.io.IOException;
 import java.util.Vector;
 
 import javax.microedition.io.Connector;
@@ -65,6 +66,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			if (mCall==null || mCall!=c){
 				mSal.callTerminate(op);
 			}
+			mListener.displayStatus(LinphoneCoreImpl.this,"Connected to "+getRemoteAddress().toString());
 			mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_OUT_CONNECTED);
 			c.mFinal=mSal.getFinalMediaDescription(op);
 			startMediaStreams(c);
@@ -97,6 +99,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 		public void onCallTerminated(SalOp op) {
 			if (mCall!=null){
+				mListener.displayStatus(LinphoneCoreImpl.this,"Call terminated");
 				mListener.byeReceived(LinphoneCoreImpl.this, op.getFrom());
 				mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_END);
 				mCall=null;
@@ -123,6 +126,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 
 		public void onCallFailure(SalOp op, String reasonPhrase) {
+			mListener.displayStatus(LinphoneCoreImpl.this,"Call failure");
 			mListener.generalState(LinphoneCoreImpl.this,  LinphoneCore.GeneralState.GSTATE_CALL_ERROR);
 			
 		}
@@ -208,7 +212,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		if (mProxyCfg!=null){
 			return mProxyCfg.getIdentity();
 		}
-		return "sip:anonymous@"+mSal.getLocalAddr()+Integer.toString(mSipPort);
+		return "sip:anonymous@"+mSal.getLocalAddr()+":"+Integer.toString(mSipPort);
 	}
 	private void initMediaStreams(Call call){
 		mAudioStream=new AudioStreamImpl();
@@ -219,8 +223,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(host, port);
 			mAudioStream.init(addr);
 		} catch (RtpException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			mLog.error("Cannot init media stream",e);
 		}
 	}
 	private RtpProfile makeProfile(SalStreamDescription sd){
@@ -265,31 +268,38 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	
 	public LinphoneCoreImpl(LinphoneCoreListener listener, String userConfig,
 			String factoryConfig, Object userdata) throws LinphoneCoreException{
+		String localAdd=null;
 		try {
 			String dummyConnString = "socket://www.linphone.org:80;deviceside=true;interface=wifi";
 			mLog.info("Opening dummy socket connection to : " + dummyConnString);
 			SocketConnection dummyCon = (SocketConnection) Connector.open(dummyConnString);
-			String localAdd = dummyCon.getLocalAddress();
+			localAdd = dummyCon.getLocalAddress();
 			dummyCon.close();
-			
+		} catch (IOException ioexp) {
+			throw new LinphoneCoreException("Network unreachable, please enable wifi");
+		}
+		try {
 			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(localAdd, mSipPort);
 			mSal=SalFactory.instance().createSal();
 			mSal.setUserAgent("jLinphone/0.0.1");
 			mSal.listenPort(addr, Sal.Transport.Datagram, false);
 			mSal.setListener(mSalListener);
 			mListener=listener;
-		} catch (Throwable e ) {
+			mListener.displayStatus(LinphoneCoreImpl.this,"Ready");
+			mListener.generalState(this, GeneralState.GSTATE_POWER_ON);
+		} catch (Exception e ) {
+			destroy();
 			throw new LinphoneCoreException("Cannot create Linphone core for user conf ["
-											+userConfig
-											+"] factory conf ["+factoryConfig+"] reason ["+e.getMessage()+"] ",e);
+					+userConfig
+					+"] factory conf ["+factoryConfig+"]",e);
+
 		}
 	}
 
 	public void acceptCall() {
 		if (mCall!=null){
-			SalMediaDescription md;
 			mSal.callAccept(mCall.mOp);
-			md=mCall.mFinal=mSal.getFinalMediaDescription(mCall.mOp);
+			mCall.mFinal=mSal.getFinalMediaDescription(mCall.mOp);
 			mCall.mState=CallState.Running;
 			mListener.generalState(this, GeneralState.GSTATE_CALL_IN_CONNECTED);
 			startMediaStreams(mCall);
@@ -323,7 +333,11 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		if (isIncall()) {
 			terminateCall();
 		}
-		mSal.close();
+		if (mSal != null) {
+			mSal.close();
+			mSal=null;
+		}
+		if (mListener !=null) mListener.generalState(this, GeneralState.GSTATE_POWER_OFF);
 	}
 
 	public Vector getCallLogs() {
@@ -357,7 +371,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 					tmp.setDisplayName(null);
 					tmp.setUserName(destination);
 					return tmp;
-				}else throw new LinphoneCoreException("Bad destination.");
+				}else throw new LinphoneCoreException("Bad destination ["+destination+"]");
 			}else{
 				addr=LinphoneCoreFactory.instance().createLinphoneAddress(
 						"sip:"+destination);
@@ -383,6 +397,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			Call c=createOutgoingCall(to);
 			mSal.call(c.mOp);
 			mCall=c;
+			mListener.displayStatus(LinphoneCoreImpl.this,"Calling  "+getRemoteAddress());
 			mListener.generalState(this, GeneralState.GSTATE_CALL_OUT_INVITE);
 		} catch (Exception e) {
 			terminateCall();

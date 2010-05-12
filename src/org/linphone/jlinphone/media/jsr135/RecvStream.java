@@ -207,7 +207,7 @@ public class RecvStream implements Runnable, PlayerListener {
 			lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
 			
 			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
-			mPlayer.start();
+			//mPlayer.start();
 	
 			while (mRunning) {
 				Thread.sleep(250);

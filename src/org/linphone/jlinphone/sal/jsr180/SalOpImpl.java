@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.sal.jsr180;
 
 
-import java.io.IOException;
+
 import java.io.InputStream;
 
 import org.linphone.jortp.JOrtpFactory;
@@ -34,7 +34,7 @@ import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 
 import org.linphone.sal.SalOpBase;
-import org.linphone.sal.OfferAnswerHelper.AnswerResult;
+
 import org.linphone.sal.Sal.Reason;
 
 import sip4me.gov.nist.javax.sdp.SdpFactory;
@@ -54,6 +54,7 @@ class SalOpImpl extends SalOpBase {
 	static Logger mLog = JOrtpFactory.instance().createLogger("Sal");
 	SalAuthInfo mAutInfo;
 	SipClientConnection mSipRegisterCnx;
+	SipClientConnection mInviteTransaction;
 	final SipConnectionNotifier mConnectionNotifier;
 	SalMediaDescription mLocalSalMediaDescription;
 	SalMediaDescription mFinalSalMediaDescription;
@@ -96,16 +97,16 @@ class SalOpImpl extends SalOpBase {
 				lToAddress.setPortInt(5060);
 			}
 			*/
-			final SipClientConnection lInviteTransaction = (SipClientConnection) SipConnector.open(lToAddress.asString());
-			lInviteTransaction.initRequest(Request.INVITE,mConnectionNotifier);
-			lInviteTransaction.setHeader(Header.FROM, getFrom());
-			lInviteTransaction.setRequestURI("sip:" + getTo());
-			lInviteTransaction.setHeader(Header.CONTENT_TYPE, "application/sdp");
+			mInviteTransaction = (SipClientConnection) SipConnector.open(lToAddress.asString());
+			mInviteTransaction.initRequest(Request.INVITE,mConnectionNotifier);
+			mInviteTransaction.setHeader(Header.FROM, getFrom());
+			mInviteTransaction.setRequestURI("sip:" + getTo());
+			mInviteTransaction.setHeader(Header.CONTENT_TYPE, "application/sdp");
 			
 			String lSdp = mLocalSalMediaDescription.toString();
-			lInviteTransaction.setHeader(Header.CONTENT_LENGTH, String.valueOf(lSdp.length()));
-			lInviteTransaction.openContentOutputStream().write(lSdp.getBytes("US-ASCII"));
-			lInviteTransaction.setListener(new SipClientConnectionListener() {
+			mInviteTransaction.setHeader(Header.CONTENT_LENGTH, String.valueOf(lSdp.length()));
+			mInviteTransaction.openContentOutputStream().write(lSdp.getBytes("US-ASCII"));
+			mInviteTransaction.setListener(new SipClientConnectionListener() {
 			
 				public void notifyResponse(SipClientConnection scc) {
 					try {
@@ -114,16 +115,16 @@ class SalOpImpl extends SalOpBase {
 						case 200:
 							//SipClientConnection lAckTransaction  = scc.getDialog().getNewClientConnection(Request.ACK);
 							//lAckTransaction.initAck();
-							InputStream lSdpInputStream = lInviteTransaction.openContentInputStream();
+							InputStream lSdpInputStream = mInviteTransaction.openContentInputStream();
 							byte [] lRawSdp = new byte [lSdpInputStream.available()];
 							lSdpInputStream.read(lRawSdp);
 							
 							SessionDescription lSessionDescription  = SdpFactory.getInstance().createSessionDescription(new String(lRawSdp)) ;
 							SalMediaDescription lRemote = SdpUtils.toSalMediaDescription(lSessionDescription);
 							mFinalSalMediaDescription = OfferAnswerHelper.computeOutgoing(mLocalSalMediaDescription, lRemote);
-							mDialog=lInviteTransaction.getDialog(); 
-							lInviteTransaction.initAck();
-							lInviteTransaction.send();
+							mDialog=mInviteTransaction.getDialog(); 
+							mInviteTransaction.initAck();
+							mInviteTransaction.send();
 							
 							mSalListener.onCallAccepted(SalOpImpl.this);
 							break;
@@ -143,7 +144,7 @@ class SalOpImpl extends SalOpBase {
 					
 				}
 			});
-			lInviteTransaction.send();
+			mInviteTransaction.send();
 		} catch (Exception e) {
 			throw new SalException(e);
 		}
@@ -167,22 +168,41 @@ class SalOpImpl extends SalOpBase {
 
 	public void callTerminate() {
 		try {
-		if (mDialog != null) {
-			SipClientConnection lByeConnection = mDialog.getNewClientConnection(Request.BYE);
-			lByeConnection.setListener(new SipClientConnectionListener() {
-				
-				public void notifyResponse(SipClientConnection scc) {
+			if (mDialog != null) {
+				SipClientConnection lByeConnection = mDialog.getNewClientConnection(Request.BYE);
+				lByeConnection.setListener(new SipClientConnectionListener() {
+
+					public void notifyResponse(SipClientConnection scc) {
 						try {
 							scc.receive(0);
 							mSalListener.onCallTerminated(SalOpImpl.this);
-							
+
 						} catch (Exception e) {
 							mLog.error("cannot receive bye answer", e);
 						} 
-				}});
-			lByeConnection.send();
-			
-		}
+					}});
+				lByeConnection.send();
+
+			} else if (mInviteTransaction != null) {
+				try {
+					SipClientConnection mSipRegisterCnx = mInviteTransaction.initCancel();
+					mSipRegisterCnx.setListener(new SipClientConnectionListener() {
+
+						public void notifyResponse(SipClientConnection scc) {
+							try {
+								scc.receive(0);
+								mSalListener.onCallTerminated(SalOpImpl.this);
+
+							} catch (Exception e) {
+								mLog.error("cannot receive bye answer", e);
+							} 
+						}});
+					mSipRegisterCnx.send();
+
+				} catch (SipException e) {
+					mLog.error("cannot cancel call", e);
+				}
+			}
 		} catch (Exception e) {
 			mLog.error("cannot terminate call", e);
 		}
