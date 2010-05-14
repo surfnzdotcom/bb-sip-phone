@@ -9,6 +9,8 @@ import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
 import javax.microedition.media.control.RecordControl;
 
+import net.rim.device.api.system.DeviceInfo;
+
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.jortp.RtpException;
@@ -92,10 +94,10 @@ public class SendStream implements Runnable, PlayerListener{
 			RecordControl recordControl = (RecordControl) mPlayer.getControl("RecordControl");
 			recordControl.setRecordStream(mOutput);
 
-			recordControl.startRecord();
-
-			mPlayer.start();
-
+			if (DeviceInfo.isSimulator() == false) { //only start record on real device
+				recordControl.startRecord();
+				mPlayer.start();
+			}
 			while (mRunning) {
 				Thread.sleep(250);
 			}

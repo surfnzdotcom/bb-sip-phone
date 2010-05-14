@@ -3,6 +3,7 @@ package org.linphone.jlinphone.media.jsr135;
 import org.linphone.jlinphone.media.AudioStream;
 import org.linphone.jlinphone.media.AudioStreamParameters;
 import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
 import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpSession;
 import org.linphone.jortp.SocketAddress;
@@ -10,7 +11,7 @@ import org.linphone.jortp.SocketAddress;
 public class AudioStreamImpl implements AudioStream {
 	private RecvStream mRecvStream;
 	private SendStream mSendStream;
-	
+	static Logger mLog = JOrtpFactory.instance().createLogger("AudioStream");
 	private RtpSession mSession;
 	
 	public void stop() {
@@ -19,6 +20,8 @@ public class AudioStreamImpl implements AudioStream {
 		if (mSendStream!=null)
 			mSendStream.stop();
 		mSession.close();
+		mLog.warn("received stats :"+mSession.getRecvStats().toString());
+		mLog.warn("send stats :"+mSession.getSendStats().toString());
 	}
 	public void init(SocketAddress local) throws RtpException {
 		mSession=JOrtpFactory.instance().createRtpSession();

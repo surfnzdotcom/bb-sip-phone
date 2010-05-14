@@ -57,6 +57,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	SipClientConnection mRegisterCnx;
 	int mRegisterRefreshID;
 	private SalListener mSalListener;
+	private SalOp mIncallOp;
 	SalImpl() {
 	
 	}
@@ -65,10 +66,11 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	}
 
 	public void call(SalOp op) throws SalException {
+		mIncallOp = op;
 		((SalOpImpl)op).call();
 	}
 
-	public void callAccept(SalOp op) {
+	public void callAccept(SalOp op) throws SalException {
 		((SalOpImpl)op).callAccept();
 	}
 
@@ -82,6 +84,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 
 	public void callTerminate(SalOp op) {
 		((SalOpImpl)op).callTerminate();
+		mIncallOp=null;
 	}
 
 	public void close() {
@@ -119,7 +122,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
         
 		Debug.enableDebug(false);
 		LogWriter.needsLogging = true;
-		LogWriter.setTraceLevel(LogWriter.TRACE_EXCEPTION);
+		LogWriter.setTraceLevel(LogWriter.TRACE_MESSAGES);
 		ServerLog.setTraceLevel(ServerLog.TRACE_NONE);
 		
         StackConnector.properties.setProperty ("javax.sip.RETRANSMISSION_FILTER", "on");
@@ -235,9 +238,23 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		SipServerConnection lCnx=null;
 		try {
 			lCnx = ssc.acceptAndOpen();
-			mLog.debug("receiving request: "+lCnx.getMethod()+" " +lCnx.getRequestURI());
-			lCnx.initResponse(500);
-			lCnx.send();
+			mLog.info("receiving request: "+lCnx.getMethod()+" " +lCnx.getRequestURI());
+			if ("INVITE".equals(lCnx.getMethod())) {
+				SalOp lOp = new SalOpImpl(this,mConnectionNotifier,mSalListener,lCnx);
+				SalAddress lFrom = SalFactory.instance().createSalAddress(lCnx.getHeader(Header.FROM));
+				SalAddress lTo = SalFactory.instance().createSalAddress(lCnx.getHeader(Header.TO));
+				lOp.setFrom(lFrom.asStringUriOnly());
+				lOp.setTo(lTo.asStringUriOnly());
+				mSalListener.onCallReceived(lOp);
+			} else if ("BYE".equals(lCnx.getMethod())) {
+				mSalListener.onCallTerminated(mIncallOp);
+				lCnx.initResponse(200);
+				lCnx.send();
+				mIncallOp=null;
+			} else {
+				lCnx.initResponse(500);
+				lCnx.send();
+			}
 		} catch (Exception e) {
 			if (lCnx !=null) {
 				mLog.error("Cannot answer to : "+lCnx.getMethod()+" " +lCnx.getRequestURI(), e);

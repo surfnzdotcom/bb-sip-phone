@@ -34,7 +34,7 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 	
 	public void setDebugMode(boolean enable) {
 		if (enable) {
-			Logger.setGlobalLogLevel(Logger.Debug);
+			Logger.setGlobalLogLevel(Logger.Info);
 		}
 		
 	}

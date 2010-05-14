@@ -20,6 +20,7 @@ package org.linphone.jlinphone.sal.jsr180;
 
 
 
+
 import java.io.InputStream;
 
 import org.linphone.jortp.JOrtpFactory;
@@ -35,6 +36,7 @@ import org.linphone.sal.SalMediaDescription;
 
 import org.linphone.sal.SalOpBase;
 
+import org.linphone.sal.OfferAnswerHelper.AnswerResult;
 import org.linphone.sal.Sal.Reason;
 
 import sip4me.gov.nist.javax.sdp.SdpFactory;
@@ -48,6 +50,7 @@ import sip4me.nist.javax.microedition.sip.SipConnection;
 import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
 import sip4me.nist.javax.microedition.sip.SipDialog;
 import sip4me.nist.javax.microedition.sip.SipException;
+import sip4me.nist.javax.microedition.sip.SipServerConnection;
 
 
 class SalOpImpl extends SalOpBase {
@@ -55,6 +58,7 @@ class SalOpImpl extends SalOpBase {
 	SalAuthInfo mAutInfo;
 	SipClientConnection mSipRegisterCnx;
 	SipClientConnection mInviteTransaction;
+	SipServerConnection mInviteServerTransaction;
 	final SipConnectionNotifier mConnectionNotifier;
 	SalMediaDescription mLocalSalMediaDescription;
 	SalMediaDescription mFinalSalMediaDescription;
@@ -65,6 +69,10 @@ class SalOpImpl extends SalOpBase {
 		super(sal);
 		mConnectionNotifier = aConnectionNotifier;
 		mSalListener = aSalListener;
+	}
+	public SalOpImpl(Sal sal, SipConnectionNotifier aConnectionNotifier, SalListener aSalListener,SipServerConnection aServerInviteTransaction) {
+		this(sal,aConnectionNotifier,aSalListener);
+		mInviteServerTransaction = aServerInviteTransaction;
 	}
 	public void setRegisterSipCnx(SipClientConnection cnx) {
 		mSipRegisterCnx=cnx;
@@ -151,8 +159,40 @@ class SalOpImpl extends SalOpBase {
 
 	}
 
-	public void callAccept() {
-		// TODO Auto-generated method stub
+	public void callAccept() throws SalException {
+		try {
+			InputStream lSdpInputStream = mInviteServerTransaction.openContentInputStream();
+			byte [] lRawSdp = new byte [lSdpInputStream.available()];
+			lSdpInputStream.read(lRawSdp);
+			
+			SessionDescription lSessionDescription  = SdpFactory.getInstance().createSessionDescription(new String(lRawSdp)) ;
+			SalMediaDescription lRemote = SdpUtils.toSalMediaDescription(lSessionDescription);
+			
+			AnswerResult lAnswerResult = OfferAnswerHelper.computeIncoming(mLocalSalMediaDescription, lRemote);
+			if (lAnswerResult.getResult().getNumStreams() == 0) {
+				mLog.warn("No codec matching");
+				mInviteServerTransaction.initResponse(404);
+				mInviteServerTransaction.send();
+				mSalListener.onCallFailure(this, "no matching codecs");
+			} else {
+				mFinalSalMediaDescription = lAnswerResult.getResult();
+				mInviteServerTransaction.initResponse(200);
+				mInviteServerTransaction.setHeader(Header.CONTENT_TYPE, "application/sdp");
+				
+				String lSdp = lAnswerResult.getAnswer().toString();
+				mInviteServerTransaction.setHeader(Header.CONTENT_LENGTH, String.valueOf(lSdp.length()));
+				mInviteServerTransaction.openContentOutputStream().write(lSdp.getBytes("US-ASCII"));
+				mInviteServerTransaction.send();
+				mDialog = mInviteServerTransaction.getDialog();
+				
+			}
+			
+			
+			
+			
+		} catch (Exception e) {
+			throw new SalException(e);
+		}
 
 	}
 

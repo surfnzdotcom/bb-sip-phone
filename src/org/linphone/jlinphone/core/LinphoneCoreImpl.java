@@ -79,11 +79,12 @@ public class LinphoneCoreImpl implements LinphoneCore {
 				try {
 					mCall=createIncomingCall(op);
 				} catch (SalException e) {
-					System.err.println("Cannot create incoming call, reason ["+e.getMessage()+"]");
-					e.printStackTrace();
+					mLog.error("Cannot create incoming call",e);
 					mSal.callDecline(op, Sal.Reason.Unknown, null);
-					
+					return;
 				}
+				mCall.mState=CallState.Ringing;
+				mListener.displayStatus(LinphoneCoreImpl.this,getRemoteAddress()+" is calling you");
 				mListener.inviteReceived(LinphoneCoreImpl.this, 
 						op.getFrom());
 				mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_IN_INVITE);
@@ -126,8 +127,9 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 
 		public void onCallFailure(SalOp op, String reasonPhrase) {
-			mListener.displayStatus(LinphoneCoreImpl.this,"Call failure");
+			mListener.displayStatus(LinphoneCoreImpl.this,"Call failure ["+reasonPhrase+"]");
 			mListener.generalState(LinphoneCoreImpl.this,  LinphoneCore.GeneralState.GSTATE_CALL_ERROR);
+			mCall=null;
 			
 		}
 		
@@ -168,6 +170,9 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		public CallDirection getDir(){
 			return mDir;
 		}
+		public void setState(CallState aState) {
+			mState = aState;
+		}
 		
 	}
 
@@ -183,6 +188,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		amr=JOrtpFactory.instance().createPayloadType();
 		amr.setClockRate(8000);
 		amr.setMimeType("AMR");
+		amr.appendRecvFmtp("octet-align=1");
 		amr.setNumChannels(1);
 		amr.setType(PayloadType.MediaType.Audio);
 		amr.setNumber(103);
@@ -296,13 +302,18 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 	}
 
-	public void acceptCall() {
+	public void acceptCall() throws LinphoneCoreException {
 		if (mCall!=null){
-			mSal.callAccept(mCall.mOp);
-			mCall.mFinal=mSal.getFinalMediaDescription(mCall.mOp);
-			mCall.mState=CallState.Running;
-			mListener.generalState(this, GeneralState.GSTATE_CALL_IN_CONNECTED);
-			startMediaStreams(mCall);
+			try {
+				mSal.callAccept(mCall.mOp);
+				mCall.mFinal=mSal.getFinalMediaDescription(mCall.mOp);
+				mCall.mState=CallState.Running;
+				mListener.displayStatus(LinphoneCoreImpl.this,"Connected");
+				mListener.generalState(this, GeneralState.GSTATE_CALL_IN_CONNECTED);
+				startMediaStreams(mCall);
+			} catch (Exception e) {
+				throw new LinphoneCoreException("cannot accept call from ["+getRemoteAddress()+"]");
+			}
 		}
 	}
 

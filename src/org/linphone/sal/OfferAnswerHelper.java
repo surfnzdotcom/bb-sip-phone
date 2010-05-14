@@ -47,6 +47,7 @@ public class OfferAnswerHelper {
 			SalStreamDescription sd=intersect(local.getStream(i),rsd);
 			sd.setPort(rsd.getPort());
 			sd.setPtime(rsd.getPtime());
+			sd.setAddress(rsd.getAddress());
 			
 			SalStreamDescription asd=new SalStreamDescription();
 			asd.setPayloadTypes(sd.getPayloadTypes());

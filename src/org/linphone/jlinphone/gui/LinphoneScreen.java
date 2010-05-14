@@ -45,14 +45,14 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	LinphoneScreen()
     {
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-		LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
+		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
 		VerticalFieldManager v=new VerticalFieldManager();
 		mInputAddress=new BasicEditField(null,null);
 		XYEdges edges = new XYEdges(8,8,8,8);
 		Border border=BorderFactory.createRoundedBorder(edges);
 		mInputAddress.setBorder(border);
 		mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,30));
-		mInputAddress.setText("sip:jehan@192.168.0.21");
+		mInputAddress.setText("sip:jehan@192.168.0.14");
 		mCall=new ButtonField("      ",Field.USE_ALL_WIDTH|Field.FIELD_LEFT|ButtonField.CONSUME_CLICK);
 		Bitmap bitmap=Bitmap.getBitmapResource("startcall-green.png");
 		Background b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);

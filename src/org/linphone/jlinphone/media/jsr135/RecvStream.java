@@ -7,6 +7,7 @@ import javax.microedition.media.Control;
 import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
+import javax.microedition.media.control.VolumeControl;
 import javax.microedition.media.protocol.ContentDescriptor;
 import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
@@ -28,6 +29,7 @@ public class RecvStream implements Runnable, PlayerListener {
 	private long mStartTime=0;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("RecvStream");
 	
+	
 	private SourceStream mInput= new SourceStream(){
 		 byte [] sSilentAmr= {  (byte)0x3c, (byte)0x48, (byte)0xf5, (byte)0x1f,
 			        (byte)0x96, (byte)0x66, (byte)0x79, (byte)0xe1,
@@ -38,6 +40,8 @@ public class RecvStream implements Runnable, PlayerListener {
 			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00,
 			        (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00 };
 
+		private RtpPacket mTroncatedPacket;
+		private int mTroncatedPacketSize;
 
 		 ContentDescriptor mContentDescriptor=new ContentDescriptor("audio/amr");
 		 /* (non-Javadoc)
@@ -57,11 +61,12 @@ public class RecvStream implements Runnable, PlayerListener {
 					offset+=lWrittenLenth;
 
 				} else {
-					long sleeptime;
-					while (( sleeptime =  (System.currentTimeMillis() - mStartTime-(mTs/8))) < 20) {
-						if (sLogger.isLevelEnabled(Logger.Debug)) sLogger.debug("blocking reader for ["+(20 - sleeptime)+"] ms");
+					long nextTick;
+					while (( nextTick =  (System.currentTimeMillis() - mStartTime-(mTs/8))) < 20) {
+						long sleepTime = Math.max(20 - nextTick,10); //sleep accuracy
+						if (sLogger.isLevelEnabled(Logger.Debug)) sLogger.debug("blocking reader for ["+sleepTime+"] ms");
 						try {
-							Thread.sleep(20 - sleeptime);
+							Thread.sleep(sleepTime);
 						} catch (InterruptedException e) {
 							sLogger.info("blocked reader interrupted",e);
 						}
@@ -71,6 +76,26 @@ public class RecvStream implements Runnable, PlayerListener {
 				RtpPacket packet=null;
 				try {
 					int lNumberOfPacketConsumed=0;
+					if ((length < sSilentAmr.length) && ((packet=mSession.recvPacket(mTs))!=null))  {
+						// special case for end of buffer
+						
+						System.arraycopy(packet.getBytes(),packet.getDataOffset()+1, b, offset, length );
+						lWrittenLenth+= length;
+						mTroncatedPacketSize=length;
+						mTroncatedPacket = packet;
+						lNumberOfPacketConsumed++;
+						return mTroncatedPacketSize;
+					} 
+					if (mTroncatedPacket != null) {
+						// special case for troncated packet
+						int datalen=mTroncatedPacket.getRealLength()-mTroncatedPacket.getDataOffset()-1;
+						System.arraycopy(mTroncatedPacket.getBytes(),mTroncatedPacket.getDataOffset()+1+mTroncatedPacketSize, b, offset, datalen- mTroncatedPacketSize);
+						lWrittenLenth+= datalen- mTroncatedPacketSize;
+						mTroncatedPacketSize=0;
+						mTroncatedPacket = null;
+						lNumberOfPacketConsumed++;
+						offset+= datalen - mTroncatedPacketSize;
+					}
 					while((lWrittenLenth + sSilentAmr.length < length) && (packet=mSession.recvPacket(mTs))!=null) {
 						//+1 because we need to skip the CMR bytes
 						int datalen=packet.getRealLength()-packet.getDataOffset()-1;
@@ -79,13 +104,8 @@ public class RecvStream implements Runnable, PlayerListener {
 						offset+=datalen;
 						lNumberOfPacketConsumed++;
 					}
-					if (lNumberOfPacketConsumed == 0 && (lWrittenLenth + sSilentAmr.length > length)) {
-						sLogger.warn("inserting silence at ts ["+mTs+"]");
-						int lSilenceSize = length<lWrittenLenth + sSilentAmr.length?length-lWrittenLenth:sSilentAmr.length; 
-						System.arraycopy(sSilentAmr,0, b, offset,lSilenceSize );
-						lWrittenLenth+= lSilenceSize;
-						lNumberOfPacketConsumed++;
-					}
+					
+
 					mTs+=160;
 					
 
@@ -206,8 +226,8 @@ public class RecvStream implements Runnable, PlayerListener {
 			AudioPathControl  lPathCtr = (AudioPathControl) mPlayer.getControl("net.rim.device.api.media.control.AudioPathControl");
 			lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
 			
-			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(10);
-			//mPlayer.start();
+			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(50);
+			mPlayer.start();
 	
 			while (mRunning) {
 				Thread.sleep(250);

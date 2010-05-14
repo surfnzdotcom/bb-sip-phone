@@ -48,7 +48,7 @@ public interface Sal {
 	public void call(SalOp op) throws SalException;
 	public void callDecline(SalOp op, Reason r, String redirect_uri);
 	public void callTerminate(SalOp op);
-	public void callAccept(SalOp op);
+	public void callAccept(SalOp op) throws SalException;
 	SalMediaDescription getFinalMediaDescription(SalOp h);
 	
 	//Registration
