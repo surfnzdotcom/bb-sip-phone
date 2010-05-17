@@ -19,6 +19,7 @@ public class OfferAnswerHelper {
 		SalMediaDescription md=SalFactory.instance().createSalMediaDescription();
 		int i;
 		md.setAddress(remote.getAddress());
+	
 		for (i=0;i<remote.getNumStreams();++i){
 			SalStreamDescription rsd=remote.getStream(i);
 			SalStreamDescription sd=intersect(local.getStream(i),rsd);

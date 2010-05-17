@@ -5,9 +5,9 @@ import java.io.InputStream;
 
 import javax.microedition.media.Control;
 import javax.microedition.media.Manager;
+import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
 import javax.microedition.media.PlayerListener;
-import javax.microedition.media.control.VolumeControl;
 import javax.microedition.media.protocol.ContentDescriptor;
 import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
@@ -20,9 +20,9 @@ import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpPacket;
 import org.linphone.jortp.RtpSession;
 
-public class RecvStream implements Runnable, PlayerListener {
+public class RecvStream implements /*Runnable,*/ PlayerListener {
 	private Player mPlayer;
-	private Thread mThread;
+	
 	private RtpSession mSession;
 	private boolean mRunning;
 	private int mTs;
@@ -157,27 +157,22 @@ public class RecvStream implements Runnable, PlayerListener {
 	};
 
 	public RecvStream(RtpSession session) {
-		mThread=new Thread(this,"RecvStream thread");
+		//mThread=new Thread(this,"RecvStream thread");
 		mSession=session;
 		mTs=0;
 	}
 
-	public void start() {
-		mRunning=true;
-		mThread.start();
-	}
 
 	public void stop() {
-		mRunning=false;
 		try {
-			mThread.join();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			mPlayer.stop();
+			mPlayer.close();
+		} catch (MediaException e) {
+			sLogger.error("Error stopping reveive stream",e);
 		}
 	}
 
-	public void run() {
+	public void start() {
 		
 		try{
 			mPlayer = Manager.createPlayer(new DataSource (null) {
@@ -229,13 +224,6 @@ public class RecvStream implements Runnable, PlayerListener {
 			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(50);
 			mPlayer.start();
 	
-			while (mRunning) {
-				Thread.sleep(250);
-			}
-	
-			mPlayer.stop();
-	
-			mPlayer.close();
 		}catch (Exception e){
 			sLogger.error("player error:",e);
 		}

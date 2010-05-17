@@ -122,7 +122,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
         
 		Debug.enableDebug(false);
 		LogWriter.needsLogging = true;
-		LogWriter.setTraceLevel(LogWriter.TRACE_MESSAGES);
+		LogWriter.setTraceLevel(LogWriter.TRACE_EXCEPTION);
 		ServerLog.setTraceLevel(ServerLog.TRACE_NONE);
 		
         StackConnector.properties.setProperty ("javax.sip.RETRANSMISSION_FILTER", "on");

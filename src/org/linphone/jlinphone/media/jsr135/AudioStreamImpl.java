@@ -36,8 +36,9 @@ public class AudioStreamImpl implements AudioStream {
 		
 		mRecvStream=new RecvStream(mSession);
 		mSendStream=new SendStream(mSession);
-		mRecvStream.start();
 		mSendStream.start();
+		mRecvStream.start();
+		
 	}
 	
 }

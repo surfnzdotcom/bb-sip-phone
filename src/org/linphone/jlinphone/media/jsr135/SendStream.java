@@ -17,9 +17,9 @@ import org.linphone.jortp.RtpException;
 import org.linphone.jortp.RtpPacket;
 import org.linphone.jortp.RtpSession;
 
-public class SendStream implements Runnable, PlayerListener{
+public class SendStream implements PlayerListener{
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("SendStream");
-	private Thread mThread;
+	
 	private RtpSession mSession;
 	private boolean mRunning;
 	private Player mPlayer;
@@ -66,27 +66,26 @@ public class SendStream implements Runnable, PlayerListener{
 	};
 
 	public SendStream(RtpSession session) {
-		mThread=new Thread(this,"SendStream thread");
+		
 		mSession=session;
 		mRunning=false;
 		mTs=0;
 	}
 
-	public void start() {
-		mRunning=true;
-		mThread.start();
-	}
 
 	public void stop() {
-		mRunning=false;
 		try {
-			mThread.join();
-		} catch (InterruptedException e) {
-			
-		}
+			RecordControl recordControl = (RecordControl) mPlayer.getControl("RecordControl");
+			recordControl.commit();
+			mOutput.close();
+			mPlayer.close();
+		}  catch (Exception e) {
+			sLogger.error("InterruptedException in SendStream !",e);
+		} 
+
 	}
 
-	public void run() {
+	public void start() {
 		try {
 			mPlayer = Manager.createPlayer("capture://audio?encoding=audio/amr&updateMethod=time&updateThreshold=20");
 			mPlayer.addPlayerListener(this);
@@ -98,20 +97,11 @@ public class SendStream implements Runnable, PlayerListener{
 				recordControl.startRecord();
 				mPlayer.start();
 			}
-			while (mRunning) {
-				Thread.sleep(250);
-			}
-
-			recordControl.commit();
-			mOutput.close();
-			mPlayer.close();
 
 		} catch (IOException e) {
 			sLogger.error("IOException in SendStream !",e);
 		} catch (MediaException e) {
 			sLogger.error("MediaException in SendStream !",e);
-		} catch (InterruptedException e) {
-			sLogger.error("InterruptedException in SendStream !",e);
 		}
 
 	}

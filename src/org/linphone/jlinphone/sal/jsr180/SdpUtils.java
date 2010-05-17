@@ -41,7 +41,11 @@ public class SdpUtils {
 
 			for(int i=0;i<mlines.size();++i){
 				MediaDescription mline=(MediaDescription)mlines.elementAt(i);
+				
 				SalStreamDescription ssd=toStreamDescription(mline);
+				if (ssd.getAddress() == null) {
+					ssd.setAddress(c.getAddress());
+				}
 				if (ssd!=null) md.addStreamDescription(ssd);
 			}
 		} catch (Exception e) {

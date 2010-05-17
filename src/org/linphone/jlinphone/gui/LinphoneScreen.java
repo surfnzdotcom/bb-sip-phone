@@ -1,7 +1,13 @@
 package org.linphone.jlinphone.gui;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.microedition.media.Manager;
+import javax.microedition.media.Player;
+import javax.microedition.media.control.RecordControl;
 
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
@@ -44,6 +50,24 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	
 	LinphoneScreen()
     {
+		
+		try {
+			Player lDummyRecorder = Manager.createPlayer("capture://audio?encoding=audio/amr");
+
+			lDummyRecorder.realize();
+			RecordControl recordControl = (RecordControl) lDummyRecorder.getControl("RecordControl");
+			OutputStream lOutput = new ByteArrayOutputStream();
+			recordControl.setRecordStream(lOutput);
+			recordControl.startRecord();
+			lDummyRecorder.start();
+			recordControl.commit();
+			lOutput.close();
+			lDummyRecorder.close();
+			
+		} catch (Exception e) {
+			sLogger.error("Cannot ask for recorder permission",e);
+		}
+		
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
 		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
 		VerticalFieldManager v=new VerticalFieldManager();
@@ -52,7 +76,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		Border border=BorderFactory.createRoundedBorder(edges);
 		mInputAddress.setBorder(border);
 		mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,30));
-		mInputAddress.setText("sip:jehan@192.168.0.14");
+		mInputAddress.setText("sip:jehan@192.168.0.16:5062");
 		mCall=new ButtonField("      ",Field.USE_ALL_WIDTH|Field.FIELD_LEFT|ButtonField.CONSUME_CLICK);
 		Bitmap bitmap=Bitmap.getBitmapResource("startcall-green.png");
 		Background b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
