@@ -34,6 +34,7 @@ import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
 import org.linphone.sal.SalStreamDescription;
+import org.linphone.sal.Sal.Reason;
 
 
 public class LinphoneCoreImpl implements LinphoneCore {
@@ -73,22 +74,25 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 
 		public void onCallReceived(SalOp op) {
-			if (mCall!=null){
-				mSal.callDecline(op, Sal.Reason.Busy, null);
-			}else{
-				try {
+			try {
+				if (mCall!=null){
+					mSal.callDecline(op, Sal.Reason.Busy, null);
+				}else{
 					mCall=createIncomingCall(op);
-				} catch (SalException e) {
-					mLog.error("Cannot create incoming call",e);
-					mSal.callDecline(op, Sal.Reason.Unknown, null);
-					return;
-				}
-				mCall.mState=CallState.Ringing;
-				mListener.displayStatus(LinphoneCoreImpl.this,getRemoteAddress()+" is calling you");
-				mListener.inviteReceived(LinphoneCoreImpl.this, 
-						op.getFrom());
-				mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_IN_INVITE);
+
+					mCall.mState=CallState.Ringing;
+					mListener.displayStatus(LinphoneCoreImpl.this,getRemoteAddress()+" is calling you");
+					mListener.inviteReceived(LinphoneCoreImpl.this, 
+							op.getFrom());
+					mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_IN_INVITE);
+					mSal.callRinging(op);
+				} 
+			}catch (SalException e) {
+				mLog.error("Cannot create incoming call",e);
+				mSal.callDecline(op, Sal.Reason.Unknown, null);
+				return;
 			}
+
 		}
 
 		public void onCallRinging(SalOp op) {
@@ -462,8 +466,12 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 	public void terminateCall() {
 		if (mCall!=null){
-			mSal.callTerminate(mCall.mOp);
-			stopMediaStreams(mCall);
+			if (isInComingInvitePending()) {
+				mSal.callDecline(mCall.mOp, Reason.Declined, null);
+			} else {
+				mSal.callTerminate(mCall.mOp);
+				stopMediaStreams(mCall);
+			}
 			mListener.generalState(this, GeneralState.GSTATE_CALL_END);
 			mCall=null;
 		}

@@ -13,6 +13,7 @@ import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
+import org.linphone.core.LinphoneLogHandler;
 import org.linphone.core.LinphoneCore.GeneralState;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -69,7 +70,25 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		}
 		
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
+		LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
+		LinphoneCoreFactory.instance().setLogHandler(new LinphoneLogHandler() {
+
+			public void log(String loggerName, int level, String levelName, String msg, Throwable e) {
+				StringBuffer sb=new StringBuffer();
+				sb.append(loggerName);
+				sb.append("-");
+				sb.append(levelName);
+				sb.append(":");
+				sb.append(msg);
+				if (e!=null) {
+					sb.append(" ["+e.getMessage()+"]");
+				}
+				
+				lConsoleScreen.log(sb.toString());
+				
+			}
+			
+		});
 		VerticalFieldManager v=new VerticalFieldManager();
 		mInputAddress=new BasicEditField(null,null);
 		XYEdges edges = new XYEdges(8,8,8,8);

@@ -52,5 +52,7 @@ abstract public class SalFactory {
 	abstract public SalAddress createSalAddress(String address) throws IllegalArgumentException ;
 	
 	abstract public SalMediaDescription createSalMediaDescription();
+	
+	abstract public  void setDebugMode(boolean enable);
 
 }

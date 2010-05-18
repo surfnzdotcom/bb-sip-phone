@@ -23,6 +23,8 @@ import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalMediaDescription;
 
+import sip4me.gov.nist.core.LogWriter;
+
 public class SalFactoryImpl extends SalFactory {
 
 	public Sal createSal() {
@@ -35,5 +37,12 @@ public class SalFactoryImpl extends SalFactory {
 
 	public SalMediaDescription createSalMediaDescription() {
 		return new SdpSalMediaDescription();
+	}
+	public void setDebugMode(boolean enable) {
+		if (enable) {
+			LogWriter.setTraceLevel(LogWriter.TRACE_MESSAGES);
+		} else {
+			LogWriter.setTraceLevel(LogWriter.TRACE_EXCEPTION);
+		}
 	}
 }

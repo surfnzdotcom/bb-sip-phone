@@ -6,8 +6,10 @@ import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneCore;
+import org.linphone.core.LinphoneLogHandler;
 import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.jortp.Logger;
+import org.linphone.sal.SalFactory;
 
 
 
@@ -36,6 +38,7 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 		if (enable) {
 			Logger.setGlobalLogLevel(Logger.Info);
 		}
+		SalFactory.instance().setDebugMode(enable);
 		
 	}
 	public LinphoneFactoryImpl(){
@@ -50,5 +53,16 @@ public class LinphoneFactoryImpl extends LinphoneCoreFactory {
 			
 		}
 		return ret;
+	}
+
+	public void setLogHandler(final LinphoneLogHandler handler) {
+		Logger.setLogHandler(new Logger.Handler() {
+			
+			public void log(String loggerName, int level, String levelName, String msg, Throwable e) {
+				handler.log(loggerName, level, levelName, msg, e);
+				
+			}
+		});
+		
 	}
 }

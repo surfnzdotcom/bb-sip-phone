@@ -21,7 +21,9 @@ package org.linphone.jlinphone.sal.jsr180;
 
 
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -197,8 +199,20 @@ class SalOpImpl extends SalOpBase {
 	}
 
 	public void callDecline(Reason r, String redirectUri) {
-		// TODO Auto-generated method stub
+			if (mInviteServerTransaction != null) {
+				try {
+					mInviteServerTransaction.initResponse(603);
+					mInviteServerTransaction.send();
+					mSalListener.onCallTerminated(this);
+					mInviteServerTransaction=null;
+					
+					
 
+				} catch (Exception e) {
+					mLog.error("cannot cancel call", e);
+				} 
+			}
+		
 	}
 
 	public void callSetLocalMediaDescription(SalMediaDescription md) {
@@ -252,5 +266,20 @@ class SalOpImpl extends SalOpBase {
 	}
 	public SalMediaDescription getFinalMediaDescription() {
 		return mFinalSalMediaDescription;
+	}
+	public void callRinging() throws SalException{
+		try { 
+			if (mInviteServerTransaction != null) {
+				mInviteServerTransaction.initResponse(180);
+				mInviteServerTransaction.send();
+			} else {
+				throw new SalException("no in a proper state");
+			}
+		} catch (Exception e) {
+			throw new SalException(e);
+		}
+
+
+
 	}
 }

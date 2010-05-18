@@ -21,23 +21,56 @@ package org.linphone.jlinphone.gui;
 
 
 
+import java.util.Vector;
+
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.component.RichTextField;
 import net.rim.device.api.ui.container.MainScreen;
 
 public class ConsoleScreen extends MainScreen {
+	Vector mLogs = new Vector(2048);
+	int writePointer=0;
 	private RichTextField mLogField = new RichTextField();
 
 	public ConsoleScreen() {
 		setTitle("Linphone Console");
-		
+		for (int i=0;i<mLogs.capacity();i++) {
+			mLogs.addElement(null);
+		}
 		Font f = mLogField.getFont();
 		mLogField.setFont(f.derive(f.getStyle(), f.getHeight() * 3 / 5));
 		add(mLogField);
 	}
-	public void log(String message) {
-		mLogField.insert(message);
+	public synchronized void log(String message) {
+		mLogs.setElementAt(message, writePointer);
+		if (writePointer < mLogs.capacity()) {
+			writePointer++;
+		} else {
+			writePointer=0;
+		}
 	}
+	protected synchronized void  onUiEngineAttached(boolean attached) {
+		super.onUiEngineAttached(attached);
+		if (attached) {
+			int i=writePointer;
+			do  {
+				String lMessage = (String) mLogs.elementAt(i);
+				if (lMessage !=null) {
+					mLogField.insert(lMessage + "\n");
+				}
+				if (i < mLogs.size()-1) {
+					i++;
+				} else {
+					i=0;
+				}
+
+			} while (i!=writePointer);
+		} else {
+			mLogField.clear(0);
+		}
+	}
+	
+	
 
 	
 }

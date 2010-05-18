@@ -86,6 +86,11 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		((SalOpImpl)op).callTerminate();
 		mIncallOp=null;
 	}
+	
+	public void callRinging(SalOp op) throws SalException {
+		((SalOpImpl)op).callRinging();
+		
+	}
 
 	public void close() {
 		if (mConnectionNotifier != null) {
@@ -122,7 +127,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
         
 		Debug.enableDebug(false);
 		LogWriter.needsLogging = true;
-		LogWriter.setTraceLevel(LogWriter.TRACE_EXCEPTION);
+		
 		ServerLog.setTraceLevel(ServerLog.TRACE_NONE);
 		
         StackConnector.properties.setProperty ("javax.sip.RETRANSMISSION_FILTER", "on");
@@ -245,7 +250,10 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 				SalAddress lTo = SalFactory.instance().createSalAddress(lCnx.getHeader(Header.TO));
 				lOp.setFrom(lFrom.asStringUriOnly());
 				lOp.setTo(lTo.asStringUriOnly());
+				lCnx.initResponse(100);
+				lCnx.send();
 				mSalListener.onCallReceived(lOp);
+				
 			} else if ("BYE".equals(lCnx.getMethod())) {
 				mSalListener.onCallTerminated(mIncallOp);
 				lCnx.initResponse(200);
