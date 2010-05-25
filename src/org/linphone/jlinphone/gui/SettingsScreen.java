@@ -22,25 +22,55 @@ import java.util.Hashtable;
 
 import org.linphone.core.LinphoneCoreFactory;
 
+import net.rim.device.api.system.PersistentObject;
+import net.rim.device.api.system.PersistentStore;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
+import net.rim.device.api.ui.component.BasicEditField;
 import net.rim.device.api.ui.component.CheckboxField;
+import net.rim.device.api.ui.component.EditField;
+import net.rim.device.api.ui.component.LabelField;
+import net.rim.device.api.ui.component.SeparatorField;
 
 import net.rim.device.api.ui.container.MainScreen;
+import net.rim.device.api.ui.container.VerticalFieldManager;
 
 public class SettingsScreen extends MainScreen {
 	 
-	//PersistentObject mPersistentObject;
+	PersistentObject mPersistentObject;
 	Hashtable lSettingsMap;
 	SettingsScreen() {
 			
-			//mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.settings".hashCode() );
-			//if (mPersistentObject.getContents() != null) {
-			//	lSettingsMap = (Hashtable) mPersistentObject.getContents();
-			//} else {
+			mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.settings".hashCode() );
+			if (mPersistentObject.getContents() != null) {
+				lSettingsMap = (Hashtable) mPersistentObject.getContents();
+			} else {
 				lSettingsMap = new Hashtable();
-			//}
+			}
 			setTitle("Linphone Settings");
+
+			
+			VerticalFieldManager lMainFiedManager = new VerticalFieldManager();
+			
+			add (lMainFiedManager);
+			
+			VerticalFieldManager lSipAccount = new VerticalFieldManager();
+			lMainFiedManager.add(lSipAccount);
+			LabelField lSipAccountLabelField = new LabelField("SIP account");
+			lSipAccount.add(lSipAccountLabelField);
+			BasicEditField lUserNameField = new BasicEditField("Username*: ", "", 128, EditField.FILTER_LOWERCASE);
+			lSipAccount.add(lUserNameField);
+			BasicEditField lUserPasswd = new BasicEditField("Passwd*: ", "", 128, EditField.FILTER_LOWERCASE);
+			lSipAccount.add(lUserPasswd);
+			BasicEditField lDomain = new BasicEditField("Domain*: ", "", 128, EditField.FILTER_LOWERCASE);
+			lSipAccount.add(lDomain);
+			
+			SeparatorField lSipAccountSeparator = new SeparatorField();
+			lMainFiedManager.add(lSipAccountSeparator);
+			
+			VerticalFieldManager lAdvanced = new VerticalFieldManager();
+			lMainFiedManager.add(lAdvanced);
+			
 			CheckboxField lDebugMode = new CheckboxField("Enable debug mode", false);
 			lDebugMode.setChangeListener(new FieldChangeListener() {
 	
@@ -50,7 +80,8 @@ public class SettingsScreen extends MainScreen {
 				}
 				
 			});
-			add(lDebugMode);
+			lAdvanced.add(lDebugMode);
+
 			
 	}
 	

@@ -6,6 +6,9 @@ import java.util.Vector;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.SocketConnection;
+import javax.microedition.media.Manager;
+import javax.microedition.media.MediaException;
+import javax.microedition.media.Player;
 
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
@@ -45,6 +48,8 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	LinphoneCoreListener mListener;
 	AudioStream mAudioStream;
 	Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
+	Player mRingPlayer;
+	
 	static class CallState {
 		static CallState Init = new CallState ("Init");
 		static CallState Ringing = new CallState ("Ringing");
@@ -86,8 +91,15 @@ public class LinphoneCoreImpl implements LinphoneCore {
 							op.getFrom());
 					mListener.generalState(LinphoneCoreImpl.this, LinphoneCore.GeneralState.GSTATE_CALL_IN_INVITE);
 					mSal.callRinging(op);
+					mRingPlayer = Manager.createPlayer(getClass().getResourceAsStream("/oldphone.wav"),"audio/wav");
+					mRingPlayer.realize();
+					mRingPlayer.prefetch();
+					mRingPlayer.setLoopCount(Integer.MAX_VALUE);
+					mRingPlayer.start();
+					
+					
 				} 
-			}catch (SalException e) {
+			}catch (Exception e) {
 				mLog.error("Cannot create incoming call",e);
 				mSal.callDecline(op, Sal.Reason.Unknown, null);
 				return;
@@ -314,6 +326,9 @@ public class LinphoneCoreImpl implements LinphoneCore {
 				mCall.mState=CallState.Running;
 				mListener.displayStatus(LinphoneCoreImpl.this,"Connected");
 				mListener.generalState(this, GeneralState.GSTATE_CALL_IN_CONNECTED);
+				mRingPlayer.stop();
+				mRingPlayer.close();
+				mRingPlayer=null;
 				startMediaStreams(mCall);
 			} catch (Exception e) {
 				throw new LinphoneCoreException("cannot accept call from ["+getRemoteAddress()+"]");
@@ -467,6 +482,13 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	public void terminateCall() {
 		if (mCall!=null){
 			if (isInComingInvitePending()) {
+				try {
+					mRingPlayer.stop();
+					mRingPlayer.close();
+					mRingPlayer=null;
+				} catch (MediaException e) {
+					mLog.error("cannot stop ringer", e);
+				}
 				mSal.callDecline(mCall.mOp, Reason.Declined, null);
 			} else {
 				mSal.callTerminate(mCall.mOp);
