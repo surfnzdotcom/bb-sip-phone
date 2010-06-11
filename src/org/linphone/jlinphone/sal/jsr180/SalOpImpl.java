@@ -21,9 +21,8 @@ package org.linphone.jlinphone.sal.jsr180;
 
 
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
+
 
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -112,6 +111,9 @@ class SalOpImpl extends SalOpBase {
 			mInviteTransaction.setHeader(Header.FROM, getFrom());
 			mInviteTransaction.setRequestURI("sip:" + getTo());
 			mInviteTransaction.setHeader(Header.CONTENT_TYPE, "application/sdp");
+			if (getRoute() != null && getRoute().length()>0) {
+				mInviteTransaction.setHeader(Header.ROUTE, getRoute());
+			}
 			
 			String lSdp = mLocalSalMediaDescription.toString();
 			mInviteTransaction.setHeader(Header.CONTENT_LENGTH, String.valueOf(lSdp.length()));

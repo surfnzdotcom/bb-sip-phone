@@ -52,7 +52,12 @@ class SalAddressImpl implements SalAddress {
 	}
 
 	public int getPortInt() {
-		return mAddress.getPort();
+		int lPort=mAddress.getPort();
+		if (lPort >0) {
+			return lPort;
+		} else {
+			return PORT_NOT_SET;
+		}
 	}
 
 	public String getUserName() {

@@ -1,5 +1,5 @@
 /*
-LinphoneAddress.java
+SalFactory.java
 Copyright (C) 2010  Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
@@ -50,6 +50,8 @@ abstract public class SalFactory {
 	 * @return
 	 */
 	abstract public SalAddress createSalAddress(String address) throws IllegalArgumentException ;
+	
+	abstract public SalAddress createSalAddress(String displayName, String username,String domain, int port) throws IllegalArgumentException ;
 	
 	abstract public SalMediaDescription createSalMediaDescription();
 	

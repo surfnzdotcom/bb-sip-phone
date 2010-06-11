@@ -1,3 +1,21 @@
+/*
+LinphoneCoreImpl.java
+Copyright (C) 2010  Belledonne Communications, Grenoble, France
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
 package org.linphone.jlinphone.core;
 
 
@@ -10,6 +28,9 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
 
+import net.rim.device.api.system.PersistentObject;
+import net.rim.device.api.system.PersistentStore;
+
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneAuthInfo;
@@ -20,7 +41,6 @@ import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.jlinphone.media.AudioStream;
-import org.linphone.jlinphone.media.AudioStreamEchoImpl;
 import org.linphone.jlinphone.media.AudioStreamParameters;
 import org.linphone.jlinphone.media.jsr135.AudioStreamImpl;
 import org.linphone.jortp.JOrtpFactory;
@@ -31,11 +51,13 @@ import org.linphone.jortp.RtpProfile;
 import org.linphone.jortp.SocketAddress;
 import org.linphone.sal.Sal;
 import org.linphone.sal.SalAuthInfo;
+import org.linphone.sal.SalError;
 import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
+import org.linphone.sal.SalReason;
 import org.linphone.sal.SalStreamDescription;
 import org.linphone.sal.Sal.Reason;
 
@@ -49,6 +71,8 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	AudioStream mAudioStream;
 	Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
 	Player mRingPlayer;
+	Vector mCallLogs;
+	private PersistentObject mPersistentObject;
 	
 	static class CallState {
 		static CallState Init = new CallState ("Init");
@@ -80,6 +104,11 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 		public void onCallReceived(SalOp op) {
 			try {
+				LinphoneCallLog lCallLog = new LinphoneCallLogImpl(CallDirection.Incoming
+																, null
+																, LinphoneCoreFactory.instance().createLinphoneAddress(op.getFrom()));
+				mCallLogs.addElement(lCallLog);
+				
 				if (mCall!=null){
 					mSal.callDecline(op, Sal.Reason.Busy, null);
 				}else{
@@ -138,14 +167,28 @@ public class LinphoneCoreImpl implements LinphoneCore {
 
 		public void onAuthSuccess(SalOp lSalOp, String realm, String username) {
 			mProxyCfg.setRegistered(true);
-			mListener.generalState(LinphoneCoreImpl.this, GeneralState.GSTATE_REG_OK);
+			mListener.displayStatus(LinphoneCoreImpl.this,"Registered to "+lSalOp.getTo());
+			
 			
 		}
 
 		public void onCallFailure(SalOp op, String reasonPhrase) {
+			stopMediaStreams(mCall);
 			mListener.displayStatus(LinphoneCoreImpl.this,"Call failure ["+reasonPhrase+"]");
 			mListener.generalState(LinphoneCoreImpl.this,  LinphoneCore.GeneralState.GSTATE_CALL_ERROR);
 			mCall=null;
+			
+		}
+
+		public void OnRegisterFailure(SalOp op, SalError error,
+				SalReason reason, String details) {
+			mListener.displayStatus(LinphoneCoreImpl.this,"Registration failure ["+details+"]");
+			mListener.generalState(LinphoneCoreImpl.this, GeneralState.GSTATE_REG_FAILED);
+			
+		}
+
+		public void OnRegisterSuccess(SalOp op, boolean registered) {
+			mListener.generalState(LinphoneCoreImpl.this, GeneralState.GSTATE_REG_OK);
 			
 		}
 		
@@ -222,6 +265,11 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 	private Call createOutgoingCall(LinphoneAddress addr) throws SalException{
 		SalOp op= mSal.createSalOp();
+		//is route header required ?
+		if (getDefaultProxyConfig() != null
+				&& getDefaultProxyConfig().getDomain().equalsIgnoreCase(addr.getDomain())) {
+			op.setRoute(getDefaultProxyConfig().getProxy());
+		}
 		Call c=new Call(op,CallDirection.Outgoing);
 		c.mOp.setFrom(LinphoneCoreImpl.this.getIdentity());
 		c.mOp.setTo(addr.asString());
@@ -301,6 +349,17 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			throw new LinphoneCoreException("Network unreachable, please enable wifi");
 		}
 		try {
+			mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.logs".hashCode() );
+			if (mPersistentObject.getContents() != null) {
+				mCallLogs = (Vector) mPersistentObject.getContents();
+				//limit Call logs number
+				while (mCallLogs.size()>30) {
+					mCallLogs.removeElementAt(0);
+				}
+			} else {
+				mCallLogs = new Vector();
+			}
+			
 			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(localAdd, mSipPort);
 			mSal=SalFactory.instance().createSal();
 			mSal.setUserAgent("jLinphone/0.0.1");
@@ -367,12 +426,15 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			mSal.close();
 			mSal=null;
 		}
+		if (mPersistentObject != null) {
+			mPersistentObject.setContents(mCallLogs);
+			mPersistentObject.commit();
+		}
 		if (mListener !=null) mListener.generalState(this, GeneralState.GSTATE_POWER_OFF);
 	}
 
 	public Vector getCallLogs() {
-		// TODO Auto-generated method stub
-		return null;
+		return mCallLogs;
 	}
 
 	public LinphoneProxyConfig getDefaultProxyConfig() {
@@ -429,6 +491,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			mCall=c;
 			mListener.displayStatus(LinphoneCoreImpl.this,"Calling  "+getRemoteAddress());
 			mListener.generalState(this, GeneralState.GSTATE_CALL_OUT_INVITE);
+			mCallLogs.addElement(new LinphoneCallLogImpl(CallDirection.Outgoing, null, to));
 		} catch (Exception e) {
 			terminateCall();
 			throw new LinphoneCoreException("Cannot place call to ["+to+"]",e);

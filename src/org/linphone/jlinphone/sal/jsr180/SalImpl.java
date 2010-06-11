@@ -28,11 +28,13 @@ import org.linphone.jortp.SocketAddress;
 import org.linphone.sal.Sal;
 import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalAuthInfo;
+import org.linphone.sal.SalError;
 import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
+import org.linphone.sal.SalReason;
 
 
 import sip4me.gov.nist.core.Debug;
@@ -155,23 +157,29 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	public void register(SalOp op, String proxy, String from, int expires) throws SalException{
 		// save from
 		op.setFrom(from);
+		op.setTo(from);
+		op.setRoute(proxy);
 
 		final SalOpImpl lSalOp = (SalOpImpl) op;
 		try {
 			
-			mRegisterCnx = (SipClientConnection) SipConnector.open(from);
+			final SalAddress lAddress = SalFactory.instance().createSalAddress(from);
+			mRegisterCnx = (SipClientConnection) SipConnector.open(lAddress.asStringUriOnly());
 			lSalOp.setRegisterSipCnx(mRegisterCnx);
 			mRegisterCnx.initRequest(Request.REGISTER, mConnectionNotifier);
 			mRegisterCnx.setHeader(Header.FROM, from);
 			mRegisterCnx.setHeader(Header.EXPIRES, String.valueOf(expires));
-
-			final SalAddress lAddress = SalFactory.instance().createSalAddress(from);
-			String contactHdr = lAddress.getUserName() 	+ "@"
+			if (proxy != null && proxy.length()>0) {
+				mRegisterCnx.setHeader(Header.ROUTE, proxy);
+			}
+			
+			
+			String contactHdr = "sip:"+lAddress.getUserName() 	+ "@"
 														+ mConnectionNotifier.getLocalAddress() + ":"
 														+ mConnectionNotifier.getLocalPort();
 			mRegisterCnx.setHeader(Header.CONTACT, contactHdr);
 
-			mRegisterCnx.setRequestURI("sip:" + lAddress.getDomain());
+			mRegisterCnx.setRequestURI("sip:"+lAddress.getDomain());
 			mRegisterCnx.setListener(new SipClientConnectionListener() {
 
 				public void notifyResponse(SipClientConnection scc) {
@@ -181,29 +189,20 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 						switch (scc.getStatusCode()) {
 						case 407:
 							SipHeader lAuthHeader = new SipHeader(Header.AUTHORIZATION,scc.getHeader(Header.PROXY_AUTHENTICATE));
-							/*
-							String lStringAuthHeader = lAuthHeader.getValue(); 
-							String lRealm=null;
-							String lDigestToken = "Digest realm=\"";
-							int disgestIndex = lStringAuthHeader.indexOf(lDigestToken);
-							if (disgestIndex < 0) {
-								mLog.error("cannot find Digest realm");
-							} else {
-								lRealm = lStringAuthHeader.substring(disgestIndex+lDigestToken.length()+1, lStringAuthHeader.indexOf("=\"", disgestIndex+lDigestToken.length()+1));
-								 if (lRealm == null) {
-									mLog.error("cannot find Digest ream");
-								}
-							}
-							*/
-							
 							mSalListener.onAuthRequested(lSalOp,lAuthHeader.getParameter("realm"),lAddress.getUserName());
 							break;
 							
 						case 200:
 							mSalListener.onAuthSuccess(lSalOp,lSalOp.getAuthInfo().getRealm(),lSalOp.getAuthInfo().getUsername());
+							mSalListener.OnRegisterSuccess(lSalOp, true);
 							break;
 						default: 
-							mLog.error("Unexpected answer ["+scc+"]");
+							if (scc.getStatusCode()>=500) {
+								mSalListener.OnRegisterFailure(lSalOp, SalError.Failure, SalReason.Unknown, scc.getReasonPhrase());
+							} else {
+								mLog.error("Unexpected answer ["+scc+"]");
+								
+							}
 						}
 					} catch (Exception e) {
 						mLog.error("Cannot process REGISTER answer", e);

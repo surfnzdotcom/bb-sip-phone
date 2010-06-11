@@ -1,16 +1,35 @@
+/*
+LinphoneProxyConfigImpl.java
+Copyright (C) 2010  Belledonne Communications, Grenoble, France
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+*/
 package org.linphone.jlinphone.core;
 
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
+import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalOp;
 
 class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	private String mProxy;
-	private String mIdentity;
+	
 	private String mDialPrefix;
 	private int mExpires;
 	private boolean mEscapePlus;
@@ -19,6 +38,7 @@ class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	private boolean mCommit;
 	private SalOp mOp;
 	private LinphoneCoreImpl mCore;
+	private SalAddress mIdentityAddress;
 	static Logger mLog = JOrtpFactory.instance().createLogger("LinphoneCore");
 	
 	LinphoneProxyConfigImpl(){
@@ -29,9 +49,10 @@ class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	}
 	
 	LinphoneProxyConfigImpl(String identity, String proxy, String route,
-			boolean enableRegister) {
+			boolean enableRegister) throws LinphoneCoreException {
 		this();
-		mIdentity = identity;
+
+		setIdentity(identity);
 		mProxy = proxy;
 		mEnableRegister = enableRegister;
 	}
@@ -52,8 +73,7 @@ class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	}
 
 	public String getDomain() {
-		// TODO Auto-generated method stub
-		return null;
+		return mIdentityAddress.getDomain();
 	}
 
 	public String normalizePhoneNumber(String number) {
@@ -69,7 +89,7 @@ class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	}
 
 	public void setIdentity(String identity) throws LinphoneCoreException {
-		mIdentity=identity;
+		mIdentityAddress = SalFactory.instance().createSalAddress(identity);
 	}
 
 	public void setProxy(String proxyUri) throws LinphoneCoreException {
@@ -77,7 +97,7 @@ class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 	}
 
 	public String getIdentity() {
-		return mIdentity;
+		return mIdentityAddress.asStringUriOnly();
 	}
 
 	public String getProxy() {
@@ -100,7 +120,7 @@ class LinphoneProxyConfigImpl implements LinphoneProxyConfig {
 			if (mEnableRegister){
 				mOp=core.getSal().createSalOp();
 				try {
-					core.getSal().register(mOp, mProxy, mIdentity, mExpires);
+					core.getSal().register(mOp, mProxy, getIdentity(), mExpires);
 				} catch (SalException e) {
 					mLog.error("Registration Error",e);
 				}

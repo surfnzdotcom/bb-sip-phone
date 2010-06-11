@@ -45,4 +45,13 @@ public class SalFactoryImpl extends SalFactory {
 			LogWriter.setTraceLevel(LogWriter.TRACE_EXCEPTION);
 		}
 	}
+
+	public SalAddress createSalAddress(String displayName, String username,
+			String domain, int port) throws IllegalArgumentException {
+		SalAddressImpl lAddress = new SalAddressImpl("sip:"+domain);
+		if (displayName!=null) lAddress.setDisplayName(displayName);
+		if (username!=null) lAddress.setUserName(username);
+		if (port>0) lAddress.setPortInt(port);
+		return lAddress;
+	}
 }

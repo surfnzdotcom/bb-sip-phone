@@ -1,5 +1,5 @@
 /*
-SalAddress.java
+SalError.java
 Copyright (C) 2010  Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
@@ -18,25 +18,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.sal;
 
-public interface SalAddress {
-	public static int PORT_NOT_SET = -1;
-	public String getDisplayName();
-	public String getUserName();
-	public String getDomain();
-	public String getPort();
-	public int getPortInt();
-	
-	public void setDisplayName(String displayName);
-	public void setUserName(String username);
-	public void setDomain(String domain);
-	public void setPort(String port);
-	public void setPortInt(int port);
-	
-	/**
-	 * Removes uri parameters.
-	 */
-	public void clean();
-	
-	public String asString();
-	public String asStringUriOnly();
+public class SalError {
+		static public final SalError NoResponse = new SalError("NoResponse");
+		static public final SalError Protocol = new SalError("Protocol");
+		static public final SalError Failure= new SalError("Failure");
+		static public final SalError Unknown= new SalError("Unknown");
+		private final String mValue;
+		private SalError(String value) {
+			mValue = value;
+		}
+		public String toString () {
+			return mValue;
+		}
 }
