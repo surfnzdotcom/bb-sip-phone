@@ -31,6 +31,7 @@ import javax.microedition.media.protocol.DataSource;
 import javax.microedition.media.protocol.SourceStream;
 
 import net.rim.device.api.media.control.AudioPathControl;
+import net.rim.device.api.system.DeviceInfo;
 
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -240,7 +241,9 @@ public class RecvStream implements /*Runnable,*/ PlayerListener {
 			lPathCtr.setAudioPath(AudioPathControl.AUDIO_PATH_HANDSET);
 			
 			//((VolumeControl)mPlayer.getControl("VolumeControl")).setLevel(50);
-			mPlayer.start();
+			if (DeviceInfo.isSimulator() == false) { //only start player on real device
+				mPlayer.start();
+			}
 	
 		}catch (Exception e){
 			sLogger.error("player error:",e);

@@ -20,7 +20,6 @@ package org.linphone.jlinphone.sal.jsr180;
 
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -28,13 +27,11 @@ import org.linphone.jortp.SocketAddress;
 import org.linphone.sal.Sal;
 import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalAuthInfo;
-import org.linphone.sal.SalError;
 import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
 import org.linphone.sal.SalOp;
-import org.linphone.sal.SalReason;
 
 
 import sip4me.gov.nist.core.Debug;
@@ -42,18 +39,13 @@ import sip4me.gov.nist.core.LogWriter;
 import sip4me.gov.nist.microedition.sip.SipConnector;
 import sip4me.gov.nist.microedition.sip.StackConnector;
 import sip4me.gov.nist.siplite.header.Header;
-import sip4me.gov.nist.siplite.message.Request;
 import sip4me.gov.nist.siplite.stack.ServerLog;
 import sip4me.nist.javax.microedition.sip.SipClientConnection;
-import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
 import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
-import sip4me.nist.javax.microedition.sip.SipException;
-import sip4me.nist.javax.microedition.sip.SipHeader;
-import sip4me.nist.javax.microedition.sip.SipRefreshListener;
 import sip4me.nist.javax.microedition.sip.SipServerConnection;
 import sip4me.nist.javax.microedition.sip.SipServerConnectionListener;
 
-class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
+class SalImpl implements Sal, SipServerConnectionListener {
 	private SipConnectionNotifier mConnectionNotifier;
 	Logger mLog = JOrtpFactory.instance().createLogger("Sal");
 	SipClientConnection mRegisterCnx;
@@ -93,7 +85,10 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 		((SalOpImpl)op).callRinging();
 		
 	}
-
+	public void register(SalOp op, String proxy, String from, int expires) throws SalException{
+		((SalOpImpl)op).register(proxy, from, expires);
+	}
+	
 	public void close() {
 		if (mConnectionNotifier != null) {
 			try {
@@ -154,76 +149,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
         }
 	}
 
-	public void register(SalOp op, String proxy, String from, int expires) throws SalException{
-		// save from
-		op.setFrom(from);
-		op.setTo(from);
-		op.setRoute(proxy);
 
-		final SalOpImpl lSalOp = (SalOpImpl) op;
-		try {
-			
-			final SalAddress lAddress = SalFactory.instance().createSalAddress(from);
-			mRegisterCnx = (SipClientConnection) SipConnector.open(lAddress.asStringUriOnly());
-			lSalOp.setRegisterSipCnx(mRegisterCnx);
-			mRegisterCnx.initRequest(Request.REGISTER, mConnectionNotifier);
-			mRegisterCnx.setHeader(Header.FROM, from);
-			mRegisterCnx.setHeader(Header.EXPIRES, String.valueOf(expires));
-			if (proxy != null && proxy.length()>0) {
-				mRegisterCnx.setHeader(Header.ROUTE, proxy);
-			}
-			
-			
-			String contactHdr = "sip:"+lAddress.getUserName() 	+ "@"
-														+ mConnectionNotifier.getLocalAddress() + ":"
-														+ mConnectionNotifier.getLocalPort();
-			mRegisterCnx.setHeader(Header.CONTACT, contactHdr);
-
-			mRegisterCnx.setRequestURI("sip:"+lAddress.getDomain());
-			mRegisterCnx.setListener(new SipClientConnectionListener() {
-
-				public void notifyResponse(SipClientConnection scc) {
-					// positione credential
-					try {
-						scc.receive(0);
-						switch (scc.getStatusCode()) {
-						case 407:
-							SipHeader lAuthHeader = new SipHeader(Header.AUTHORIZATION,scc.getHeader(Header.PROXY_AUTHENTICATE));
-							mSalListener.onAuthRequested(lSalOp,lAuthHeader.getParameter("realm"),lAddress.getUserName());
-							break;
-							
-						case 200:
-							mSalListener.onAuthSuccess(lSalOp,lSalOp.getAuthInfo().getRealm(),lSalOp.getAuthInfo().getUsername());
-							mSalListener.OnRegisterSuccess(lSalOp, true);
-							break;
-						default: 
-							if (scc.getStatusCode()>=500) {
-								mSalListener.OnRegisterFailure(lSalOp, SalError.Failure, SalReason.Unknown, scc.getReasonPhrase());
-							} else {
-								mLog.error("Unexpected answer ["+scc+"]");
-								
-							}
-						}
-					} catch (Exception e) {
-						mLog.error("Cannot process REGISTER answer", e);
-					} 
-					
-				}
-				
-			});
-
-			 
-			mRegisterCnx.enableRefresh(this);
-
-			// Finally, send register
-			mRegisterCnx.send();
-			mLog.info("REGISTER sent from ["+lAddress+"] to ["+proxy+"]");
-		} catch (Exception e) {
-			throw new SalException("cannot send register  from ["+from+"] to ["+proxy+"]",e);
-		}
-
-
-	}
 
 	public void setListener(SalListener listener) {
 		mSalListener = listener;
@@ -275,10 +201,7 @@ class SalImpl implements Sal, SipServerConnectionListener,SipRefreshListener {
 	public SalOp createSalOp() {
 		return new SalOpImpl(this,mConnectionNotifier,mSalListener);
 	}
-	public void refreshEvent(int refreshID, int statusCode, String reasonPhrase) {
-		// TODO Auto-generated method stub
-		
-	}
+
 
 
 }

@@ -121,7 +121,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		}
 
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-		LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
+		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
 		LinphoneCoreFactory.instance().setLogHandler(new LinphoneLogHandler() {
 
 			public void log(String loggerName, int level, String levelName, String msg, Throwable e) {

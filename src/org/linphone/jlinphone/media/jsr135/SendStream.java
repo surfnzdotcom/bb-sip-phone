@@ -111,10 +111,8 @@ public class SendStream implements PlayerListener{
 			RecordControl recordControl = (RecordControl) mPlayer.getControl("RecordControl");
 			recordControl.setRecordStream(mOutput);
 
-			if (DeviceInfo.isSimulator() == false) { //only start record on real device
-				recordControl.startRecord();
-				mPlayer.start();
-			}
+			recordControl.startRecord();
+			mPlayer.start();
 
 		} catch (IOException e) {
 			sLogger.error("IOException in SendStream !",e);

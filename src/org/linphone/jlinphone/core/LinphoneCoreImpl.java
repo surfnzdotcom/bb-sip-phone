@@ -137,9 +137,18 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		}
 
 		public void onCallRinging(SalOp op) {
+			Call c=(Call)op.getUserContext();
+			if (mCall==null || mCall!=c){
+				mSal.callTerminate(op);
+			}
 			if (mCall!=null){
 				mCall.mState=CallState.Ringing;
 				mListener.displayStatus(LinphoneCoreImpl.this,"Remote ringing...");
+			}
+			if (mSal.getFinalMediaDescription(op) !=null) {
+				mListener.displayStatus(LinphoneCoreImpl.this,"Early Media");
+				c.mFinal=mSal.getFinalMediaDescription(op);
+				startMediaStreams(c);
 			}
 		}
 

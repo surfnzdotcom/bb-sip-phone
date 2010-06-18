@@ -21,6 +21,7 @@ package org.linphone.jlinphone.sal.jsr180;
 
 
 
+import java.io.IOException;
 import java.io.InputStream;
 
 
@@ -30,35 +31,40 @@ import org.linphone.sal.OfferAnswerHelper;
 import org.linphone.sal.Sal;
 import org.linphone.sal.SalAddress;
 import org.linphone.sal.SalAuthInfo;
+import org.linphone.sal.SalError;
 import org.linphone.sal.SalException;
 import org.linphone.sal.SalFactory;
 import org.linphone.sal.SalListener;
 import org.linphone.sal.SalMediaDescription;
+import org.linphone.sal.SalReason;
 
 import org.linphone.sal.SalOpBase;
 
 import org.linphone.sal.OfferAnswerHelper.AnswerResult;
 import org.linphone.sal.Sal.Reason;
 
+import sip4me.gov.nist.javax.sdp.SdpException;
 import sip4me.gov.nist.javax.sdp.SdpFactory;
+import sip4me.gov.nist.javax.sdp.SdpParseException;
 import sip4me.gov.nist.javax.sdp.SessionDescription;
 import sip4me.gov.nist.microedition.sip.SipConnector;
 import sip4me.gov.nist.siplite.header.Header;
 import sip4me.gov.nist.siplite.message.Request;
 import sip4me.nist.javax.microedition.sip.SipClientConnection;
 import sip4me.nist.javax.microedition.sip.SipClientConnectionListener;
-import sip4me.nist.javax.microedition.sip.SipConnection;
+
 import sip4me.nist.javax.microedition.sip.SipConnectionNotifier;
 import sip4me.nist.javax.microedition.sip.SipDialog;
 import sip4me.nist.javax.microedition.sip.SipException;
+import sip4me.nist.javax.microedition.sip.SipHeader;
+import sip4me.nist.javax.microedition.sip.SipRefreshListener;
 import sip4me.nist.javax.microedition.sip.SipServerConnection;
 
 
-class SalOpImpl extends SalOpBase {
+class SalOpImpl extends SalOpBase implements SipRefreshListener {
 	static Logger mLog = JOrtpFactory.instance().createLogger("Sal");
-	SalAuthInfo mAutInfo;
-	SipClientConnection mSipRegisterCnx;
-	SipClientConnection mInviteTransaction;
+	SalAuthInfo mAuthInfo;
+	SipClientConnection mClientCnx;
 	SipServerConnection mInviteServerTransaction;
 	final SipConnectionNotifier mConnectionNotifier;
 	SalMediaDescription mLocalSalMediaDescription;
@@ -75,18 +81,13 @@ class SalOpImpl extends SalOpBase {
 		this(sal,aConnectionNotifier,aSalListener);
 		mInviteServerTransaction = aServerInviteTransaction;
 	}
-	public void setRegisterSipCnx(SipClientConnection cnx) {
-		mSipRegisterCnx=cnx;
-	}
-	public SipConnection getSipCnx() {
-		return mSipRegisterCnx;
-	}
+
 	public void authenticate(SalAuthInfo info) throws SalException {
-		mAutInfo = info;
+		mAuthInfo = info;
 		try {
-			if (mSipRegisterCnx != null) {
+			if (mClientCnx != null) {
 				if ( info != null) {
-					mSipRegisterCnx.setCredentials(info.getUserid(), info.getPassword(),info.getRealm());
+					mClientCnx.setCredentials(info.getUserid(), info.getPassword(),info.getRealm());
 				} else {
 					throw new Exception("Bad auth info ["+info+"]");
 				}
@@ -98,50 +99,140 @@ class SalOpImpl extends SalOpBase {
 		}
 	}
 
+	 void register(String proxy, String from, int expires) throws SalException {
+			// save from
+			setFrom(from);
+			setTo(from);
+			setRoute(proxy);
+
+			
+			
+			try {
+				
+				final SalAddress lAddress = SalFactory.instance().createSalAddress(from);
+				mClientCnx = (SipClientConnection) SipConnector.open(lAddress.asStringUriOnly());
+				
+				mClientCnx.initRequest(Request.REGISTER, mConnectionNotifier);
+				mClientCnx.setHeader(Header.FROM, from);
+				mClientCnx.setHeader(Header.EXPIRES, String.valueOf(expires));
+				if (proxy != null && proxy.length()>0) {
+					mClientCnx.setHeader(Header.ROUTE, proxy);
+				}
+				
+				
+				String contactHdr = "sip:"+lAddress.getUserName() 	+ "@"
+															+ mConnectionNotifier.getLocalAddress() + ":"
+															+ mConnectionNotifier.getLocalPort();
+				mClientCnx.setHeader(Header.CONTACT, contactHdr);
+
+				mClientCnx.setRequestURI("sip:"+lAddress.getDomain());
+				mClientCnx.setListener(new SipClientConnectionListener() {
+
+					public void notifyResponse(SipClientConnection scc) {
+						// positione credential
+						try {
+							scc.receive(0);
+							switch (scc.getStatusCode()) {
+							case 407:
+								SipHeader lAuthHeader = new SipHeader(Header.AUTHORIZATION,scc.getHeader(Header.PROXY_AUTHENTICATE));
+								mSalListener.onAuthRequested(SalOpImpl.this,lAuthHeader.getParameter("realm"),lAddress.getUserName());
+								break;
+								
+							case 200:
+								mSalListener.onAuthSuccess(SalOpImpl.this,getAuthInfo().getRealm(),getAuthInfo().getUsername());
+								mSalListener.OnRegisterSuccess(SalOpImpl.this, true);
+								break;
+							default: 
+								if (scc.getStatusCode()>=500) {
+									mSalListener.OnRegisterFailure(SalOpImpl.this, SalError.Failure, SalReason.Unknown, scc.getReasonPhrase());
+								} else {
+									mLog.error("Unexpected answer ["+scc+"]");
+									
+								}
+							}
+						} catch (Exception e) {
+							mLog.error("Cannot process REGISTER answer", e);
+						} 
+						
+					}
+					
+				});
+
+				 
+				mClientCnx.enableRefresh(this);
+
+				// Finally, send register
+				mClientCnx.send();
+				mLog.info("REGISTER sent from ["+lAddress+"] to ["+proxy+"]");
+			} catch (Exception e) {
+				throw new SalException("cannot send register  from ["+from+"] to ["+proxy+"]",e);
+			}
+
+
+	}
 	public void call() throws SalException {
 		
 		try {
 			SalAddress lToAddress = SalFactory.instance().createSalAddress(getTo());
+			
 			/*if (lToAddress.getPortInt() < 0) {
 				lToAddress.setPortInt(5060);
 			}
 			*/
-			mInviteTransaction = (SipClientConnection) SipConnector.open(lToAddress.asString());
-			mInviteTransaction.initRequest(Request.INVITE,mConnectionNotifier);
-			mInviteTransaction.setHeader(Header.FROM, getFrom());
-			mInviteTransaction.setRequestURI("sip:" + getTo());
-			mInviteTransaction.setHeader(Header.CONTENT_TYPE, "application/sdp");
+			mClientCnx = (SipClientConnection) SipConnector.open(lToAddress.asString());
+			mClientCnx.initRequest(Request.INVITE,mConnectionNotifier);
+			mClientCnx.setHeader(Header.FROM, getFrom());
+			mClientCnx.setRequestURI(getTo());
+			mClientCnx.setHeader(Header.CONTENT_TYPE, "application/sdp");
 			if (getRoute() != null && getRoute().length()>0) {
-				mInviteTransaction.setHeader(Header.ROUTE, getRoute());
+				mClientCnx.setHeader(Header.ROUTE, getRoute());
 			}
+			final SalAddress lFromAddress = SalFactory.instance().createSalAddress(getFrom());
+			String contactHdr = "sip:"+lFromAddress.getUserName() 	+ "@"
+									+ mConnectionNotifier.getLocalAddress() + ":"
+									+ mConnectionNotifier.getLocalPort();
+			mClientCnx.setHeader(Header.CONTACT, contactHdr);
 			
+			if (mAuthInfo !=null) {
+				mClientCnx.setCredentials(mAuthInfo.getUserid(), mAuthInfo.getPassword(),mAuthInfo.getRealm());
+			}
+
 			String lSdp = mLocalSalMediaDescription.toString();
-			mInviteTransaction.setHeader(Header.CONTENT_LENGTH, String.valueOf(lSdp.length()));
-			mInviteTransaction.openContentOutputStream().write(lSdp.getBytes("US-ASCII"));
-			mInviteTransaction.setListener(new SipClientConnectionListener() {
-			
+			mClientCnx.setHeader(Header.CONTENT_LENGTH, String.valueOf(lSdp.length()));
+			mClientCnx.openContentOutputStream().write(lSdp.getBytes("US-ASCII"));
+			mClientCnx.setListener(new SipClientConnectionListener() {
+				private void computeFinalSalMediaDesc() throws SipException, IOException, SdpParseException, SdpException, SalException {
+					InputStream lSdpInputStream = mClientCnx.openContentInputStream();
+					byte [] lRawSdp = new byte [lSdpInputStream.available()];
+					lSdpInputStream.read(lRawSdp);
+					
+					SessionDescription lSessionDescription  = SdpFactory.getInstance().createSessionDescription(new String(lRawSdp)) ;
+					SalMediaDescription lRemote = SdpUtils.toSalMediaDescription(lSessionDescription);
+					mFinalSalMediaDescription = OfferAnswerHelper.computeOutgoing(mLocalSalMediaDescription, lRemote);
+				}
 				public void notifyResponse(SipClientConnection scc) {
 					try {
 						scc.receive(0);
 						switch (scc.getStatusCode()) {
-						case 200:
-							//SipClientConnection lAckTransaction  = scc.getDialog().getNewClientConnection(Request.ACK);
-							//lAckTransaction.initAck();
-							InputStream lSdpInputStream = mInviteTransaction.openContentInputStream();
-							byte [] lRawSdp = new byte [lSdpInputStream.available()];
-							lSdpInputStream.read(lRawSdp);
 							
-							SessionDescription lSessionDescription  = SdpFactory.getInstance().createSessionDescription(new String(lRawSdp)) ;
-							SalMediaDescription lRemote = SdpUtils.toSalMediaDescription(lSessionDescription);
-							mFinalSalMediaDescription = OfferAnswerHelper.computeOutgoing(mLocalSalMediaDescription, lRemote);
-							mDialog=mInviteTransaction.getDialog(); 
-							mInviteTransaction.initAck();
-							mInviteTransaction.send();
+						case 200:
+							computeFinalSalMediaDesc();
+							mDialog=mClientCnx.getDialog(); 
+							mClientCnx.initAck();
+							mClientCnx.send();
 							
 							mSalListener.onCallAccepted(SalOpImpl.this);
 							break;
+						case 183:
+							//computeFinalSalMediaDesc();
 						case 180:
 							mSalListener.onCallRinging(SalOpImpl.this);
+							break;
+						case 407:
+							if (mAuthInfo == null) {
+								SipHeader lAuthHeader = new SipHeader(Header.AUTHORIZATION,scc.getHeader(Header.PROXY_AUTHENTICATE));
+								mSalListener.onAuthRequested(SalOpImpl.this,lAuthHeader.getParameter("realm"),lFromAddress.getUserName());
+							}
 							break;
 						default:
 							if (scc.getStatusCode() > 300) {
@@ -156,7 +247,7 @@ class SalOpImpl extends SalOpBase {
 					
 				}
 			});
-			mInviteTransaction.send();
+			mClientCnx.send();
 		} catch (Exception e) {
 			throw new SalException(e);
 		}
@@ -239,9 +330,9 @@ class SalOpImpl extends SalOpBase {
 					}});
 				lByeConnection.send();
 
-			} else if (mInviteTransaction != null) {
+			} else if (mClientCnx != null) {
 				try {
-					SipClientConnection mSipRegisterCnx = mInviteTransaction.initCancel();
+					SipClientConnection mSipRegisterCnx = mClientCnx.initCancel();
 					mSipRegisterCnx.setListener(new SipClientConnectionListener() {
 
 						public void notifyResponse(SipClientConnection scc) {
@@ -264,7 +355,7 @@ class SalOpImpl extends SalOpBase {
 		}
 	}
 	public SalAuthInfo getAuthInfo() {
-		return mAutInfo;
+		return mAuthInfo;
 	}
 	public SalMediaDescription getFinalMediaDescription() {
 		return mFinalSalMediaDescription;
@@ -283,5 +374,10 @@ class SalOpImpl extends SalOpBase {
 
 
 
+	}
+
+	public void refreshEvent(int refreshID, int statusCode, String reasonPhrase) {
+		// TODO Auto-generated method stub
+		
 	}
 }
