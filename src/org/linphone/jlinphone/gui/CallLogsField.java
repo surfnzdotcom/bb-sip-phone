@@ -47,13 +47,16 @@ public class CallLogsField extends ListField {
 		    	}
 		    } 
 		    public Object get(ListField list, int index) {
-		        return mCore.getCallLogs().elementAt(index); 
+		        return mCore.getCallLogs().elementAt(getLenth()-index-1); 
 		    } 
 		    public int indexOfList(ListField list, String prefix, int string) { 
 		        return mCore.getCallLogs().indexOf(prefix, string); 
 		    } 
 		    public int getPreferredWidth(ListField list) { 
 		        return Display.getWidth(); 
+		    }
+		    private int getLenth() {
+		    	return  mCore.getCallLogs().size();
 		    }
 		});
 		refresh();

@@ -28,6 +28,8 @@ import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
 
+import net.rim.device.api.io.transport.TransportDescriptor;
+import net.rim.device.api.io.transport.TransportInfo;
 import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
 
@@ -73,6 +75,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	Player mRingPlayer;
 	Vector mCallLogs;
 	private PersistentObject mPersistentObject;
+	boolean mNetworkIsUp=false;
 	
 	static class CallState {
 		static CallState Init = new CallState ("Init");
@@ -347,16 +350,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	
 	public LinphoneCoreImpl(LinphoneCoreListener listener, String userConfig,
 			String factoryConfig, Object userdata) throws LinphoneCoreException{
-		String localAdd=null;
-		try {
-			String dummyConnString = "socket://www.linphone.org:80;deviceside=true;interface=wifi";
-			mLog.info("Opening dummy socket connection to : " + dummyConnString);
-			SocketConnection dummyCon = (SocketConnection) Connector.open(dummyConnString);
-			localAdd = dummyCon.getLocalAddress();
-			dummyCon.close();
-		} catch (IOException ioexp) {
-			throw new LinphoneCoreException("Network unreachable, please enable wifi");
-		}
+
 		try {
 			mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.logs".hashCode() );
 			if (mPersistentObject.getContents() != null) {
@@ -369,13 +363,7 @@ public class LinphoneCoreImpl implements LinphoneCore {
 				mCallLogs = new Vector();
 			}
 			
-			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(localAdd, mSipPort);
-			mSal=SalFactory.instance().createSal();
-			mSal.setUserAgent("jLinphone/0.0.1");
-			mSal.listenPort(addr, Sal.Transport.Datagram, false);
-			mSal.setListener(mSalListener);
 			mListener=listener;
-			mListener.displayStatus(LinphoneCoreImpl.this,"Ready");
 			mListener.generalState(this, GeneralState.GSTATE_POWER_ON);
 		} catch (Exception e ) {
 			destroy();
@@ -523,7 +511,43 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void iterate() {
-		if (mProxyCfg!=null)
+		if (mSal == null && mNetworkIsUp ==true) {
+			//create Sal
+			String localAdd=null;
+			try {
+				String dummyConnString = "socket://www.linphone.org:80;deviceside=true";
+				if (TransportInfo.isTransportTypeAvailable(TransportInfo.TRANSPORT_TCP_WIFI)) {
+					dummyConnString+=";interface=wifi";
+				}
+
+				mLog.info("Opening dummy socket connection to : " + dummyConnString);
+				SocketConnection dummyCon = (SocketConnection) Connector.open(dummyConnString);
+				localAdd = dummyCon.getLocalAddress();
+				dummyCon.close();
+			} catch (IOException ioexp) {
+				mLog.error("Network unreachable, please enable wifi/or 3G");
+			}
+			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(localAdd, mSipPort);
+			mSal=SalFactory.instance().createSal();
+			mSal.setUserAgent("jLinphone/0.0.1");
+			try {
+				mSal.listenPort(addr, Sal.Transport.Datagram, false);
+			} catch (SalException e) {
+				mLog.error("Cannot listen of on ["+addr+"]",e);
+			}
+			mSal.setListener(mSalListener);
+			
+			mListener.displayStatus(LinphoneCoreImpl.this,"Ready");
+			
+			
+		} else if (mSal !=null && mNetworkIsUp == false) {
+			if (isIncall()) {
+				terminateCall();
+			}
+			mSal.close();
+			mSal=null;
+		}
+		if (mSal!=null && mProxyCfg!=null)
 			((LinphoneProxyConfigImpl)mProxyCfg).check(this);
 	}
 
@@ -542,7 +566,11 @@ public class LinphoneCoreImpl implements LinphoneCore {
 	}
 
 	public void setNetworkStateReachable(boolean isReachable) {
-		// TODO Auto-generated method stub
+		
+		if (mNetworkIsUp != isReachable) {
+			mLog.warn("New network state is ["+isReachable+"]");
+		}
+		mNetworkIsUp=isReachable;
 
 	}
 

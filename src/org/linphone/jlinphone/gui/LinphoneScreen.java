@@ -54,8 +54,19 @@ import org.linphone.jortp.Logger;
 
 import net.rim.device.api.collection.util.BasicFilteredList;
 import net.rim.device.api.collection.util.BasicFilteredListResult;
+import net.rim.device.api.io.transport.ConnectionFactory;
+import net.rim.device.api.io.transport.TransportInfo;
+import net.rim.device.api.system.Application;
 import net.rim.device.api.system.Bitmap;
+import net.rim.device.api.system.CoverageInfo;
+import net.rim.device.api.system.CoverageStatusListener;
 import net.rim.device.api.system.Display;
+import net.rim.device.api.system.RadioInfo;
+import net.rim.device.api.system.RadioListener;
+import net.rim.device.api.system.RadioStatusListener;
+import net.rim.device.api.system.WLANConnectionListener;
+import net.rim.device.api.system.WLANInfo;
+import net.rim.device.api.system.WLANListener;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.FocusChangeListener;
@@ -98,8 +109,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	private ConsoleScreen mConsoleScreen = new ConsoleScreen();
 	private SettingsScreen  mSettingsScreen ;
 	private ListField mCallLogs;
-;
-
+	private int mCurrentTransportType=0; 
 	
 	LinphoneScreen()  {
 
@@ -204,6 +214,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		Border border=BorderFactory.createRoundedBorder(edges);
 		mInputAddress.setBorder(border);
 		mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,30));
+		
 		//mInputAddress.setText("0033952636505");
 		mCall=new ButtonField("      ",Field.USE_ALL_WIDTH|Field.FIELD_LEFT|ButtonField.CONSUME_CLICK);
 		Bitmap bitmap=Bitmap.getBitmapResource("startcall-green.png");
@@ -228,9 +239,6 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		// parameter to make the field non-focusable.
 		add(v);
 
-		//mLayout.add(mCall);
-		//mLayout.add(mHangup);
-		v.add(new LabelField("SIP address or phone number:"));
 		v.add(mInputAddress);
 		v.add(mLayout);
 		mLayout.add(mCall);
@@ -249,6 +257,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		try {
 
 			mCore=LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
+			mCore.setNetworkStateReachable(false); //we don't know yet network state
 		} catch (final LinphoneCoreException e) {
 			sLogger.fatal("Cannot create LinphoneCore", e);
 			UiApplication.getUiApplication().invokeLater(new Runnable() {
@@ -303,6 +312,68 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 		};
 		mTimer.scheduleAtFixedRate(task, 0, 200);
+		
+		class NetworkManager implements RadioStatusListener,WLANConnectionListener{
+			public void baseStationChange() {}
+			public void networkScanComplete(boolean success) {}
+			public void networkServiceChange(int networkId, int service) {}
+			public void networkStarted(int networkId, int service) {
+				handleCnxStateChange();
+			}
+			public void networkStateChange(int state) {
+				handleCnxStateChange();
+			}
+			public void pdpStateChange(int apn, int state, int cause) {}
+			public void radioTurnedOff() {
+				handleCnxStateChange();
+			}
+			public void signalLevel(int level) {}
+			public void networkConnected() {
+				handleCnxStateChange();
+			}
+			public void networkDisconnected(int reason) {
+				handleCnxStateChange();
+			}
+			public void handleCnxStateChange() {
+				boolean lIsWifi= CoverageInfo.getCoverageStatus(RadioInfo.WAF_WLAN, true) == CoverageInfo.COVERAGE_DIRECT; 
+				boolean lIsCellular=CoverageInfo.getCoverageStatus(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA, true) == CoverageInfo.COVERAGE_DIRECT;;
+				
+				if (lIsWifi == false && lIsCellular == false) {
+					mCore.setNetworkStateReachable(false);
+					mCurrentTransportType = 0;
+					return;
+				}
+				if (lIsWifi == true) {
+					if( mCurrentTransportType != TransportInfo.TRANSPORT_TCP_WIFI) {
+						//wifi is now available, togeling
+						mCore.setNetworkStateReachable(false);
+						mCore.iterate();
+						mCurrentTransportType = TransportInfo.TRANSPORT_TCP_WIFI;
+						mCore.setNetworkStateReachable(true);
+						return;
+					}
+				} else if (lIsCellular == true && mCurrentTransportType != TransportInfo.TRANSPORT_TCP_CELLULAR) {
+					//cellular is now available, togeling
+					mCore.setNetworkStateReachable(false);
+					mCore.iterate();
+					mCurrentTransportType = TransportInfo.TRANSPORT_TCP_CELLULAR;
+					mCore.setNetworkStateReachable(true);
+					return;
+				}				
+			}
+			
+		}
+		NetworkManager lNetworkManager = new NetworkManager();
+		//to kick off network state
+		lNetworkManager.handleCnxStateChange();
+		Application.getApplication().addRadioListener(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA,lNetworkManager );
+		WLANInfo.addListener(lNetworkManager);
+		//to kick off network state
+		//lCoverageStatusListener.coverageStatusChanged(CoverageInfo.getCoverageStatus());
+		
+		
+
+
 	}
 
     
