@@ -471,7 +471,9 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 
 	public void inviteReceived(LinphoneCore lc, String from) {
-		// TODO Auto-generated method stub
+		if (!UiApplication.getUiApplication().isForeground()) {
+			UiApplication.getUiApplication().requestForeground();
+		}
 		
 	}
 
