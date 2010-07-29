@@ -1,9 +1,3 @@
-[submodule "submodules/jortp"]
-	path = submodules/jortp
-	url = gitosis@git.linphone.org:jortp
-[submodule "submodules/linphone"]
-	path = submodules/linphone
-	url = gitosis@git.linphone.org:linphone-private
-[submodule "submodules/externals/sip-for-me"]
-	path = submodules/externals/sip-for-me
-	url = gitosis@git.linphone.org:sip-for-me
+[submodule "submodules/jliblinphone"]
+	path = submodules/jliblinphone
+	url = gitosis@git.linphone.org:jliblinphone.git

@@ -3,7 +3,7 @@
   <Application Type="BlackBerry Application" MainMIDletName="" MainArgs="" HomeScreenPosition="0" StartupTier="7" IsSystemModule="false" IsAutostartup="false"/>
   <Resources hasTitleResource="false" TitleResourceBundleName="" TitleResourceBundleRelativePath="" TitleResourceBundleClassName="" TitleResourceBundleKey="" DescriptionId="">
     <Icons>
-      <Icon CanonicalFileName="submodules/linphone/pixmaps/linphone.png" IsFocus="false"/>
+      <Icon CanonicalFileName="submodules/jliblinphone/submodules/linphone/pixmaps/linphone.png" IsFocus="false"/>
     </Icons>
   </Resources>
   <Compile OutputCompilerMessages="false" ConvertImages="false" CreateWarningForNoExportedRoutine="true" CompressResources="false" AliasList="">
