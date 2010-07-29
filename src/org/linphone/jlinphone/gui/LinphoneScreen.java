@@ -20,25 +20,16 @@ package org.linphone.jlinphone.gui;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 
 import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
 import javax.microedition.media.control.RecordControl;
-import javax.microedition.pim.Contact;
-import javax.microedition.pim.ContactList;
-import javax.microedition.pim.PIM;
-import javax.microedition.pim.PIMException;
-import javax.microedition.pim.PIMList;
 
 
 import org.linphone.core.CallDirection;
-import org.linphone.core.LinphoneAuthInfo;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
@@ -54,38 +45,30 @@ import org.linphone.jortp.Logger;
 
 import net.rim.device.api.collection.util.BasicFilteredList;
 import net.rim.device.api.collection.util.BasicFilteredListResult;
-import net.rim.device.api.io.transport.ConnectionFactory;
 import net.rim.device.api.io.transport.TransportInfo;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.CoverageInfo;
-import net.rim.device.api.system.CoverageStatusListener;
-import net.rim.device.api.system.Display;
+import net.rim.device.api.system.KeyListener;
 import net.rim.device.api.system.RadioInfo;
-import net.rim.device.api.system.RadioListener;
 import net.rim.device.api.system.RadioStatusListener;
 import net.rim.device.api.system.WLANConnectionListener;
 import net.rim.device.api.system.WLANInfo;
-import net.rim.device.api.system.WLANListener;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.FocusChangeListener;
 import net.rim.device.api.ui.Font;
-import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.MenuItem;
+import net.rim.device.api.ui.Touchscreen;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.AutoCompleteField;
-import net.rim.device.api.ui.component.BasicEditField;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Dialog;
-import net.rim.device.api.ui.component.EditField;
 import net.rim.device.api.ui.component.KeywordFilterField;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
-import net.rim.device.api.ui.component.ListFieldCallback;
 import net.rim.device.api.ui.component.SeparatorField;
-import net.rim.device.api.ui.component.TextField;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
@@ -171,6 +154,32 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 			  sLogger.error("Cannot open contact list",e);
 		  }
 */
+		addKeyListener(new KeyListener() {
+			final static int GREEN_BUTTON_KEY=1114112;
+			final static int RED_BUTTON_KEY=1179648;
+			public boolean keyChar(char key, int status, int time) {return false;}
+			public boolean keyDown(int keycode, int time) {
+				if (keycode == GREEN_BUTTON_KEY || keycode == RED_BUTTON_KEY) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+			public boolean keyRepeat(int keycode, int time) {return false;}
+			public boolean keyStatus(int keycode, int time) {return false;}
+			public boolean keyUp(int keycode, int time) {
+				if (keycode == GREEN_BUTTON_KEY) {
+					callButtonPressed();
+					return true;
+				} else if (keycode == RED_BUTTON_KEY) {
+					hangupButtonPressed();
+					return true;
+				} else {
+					return false;
+				}
+			}
+			
+		});
 		BasicFilteredList filterList = new BasicFilteredList();
 	    int uniqueID = 0;
 	    int srcType = BasicFilteredList.DATA_SOURCE_CONTACTS;
@@ -241,8 +250,10 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 		v.add(mInputAddress);
 		v.add(mLayout);
-		mLayout.add(mCall);
-		mLayout.add(mHangup);
+		if (Touchscreen.isSupported()) {
+			mLayout.add(mCall);
+			mLayout.add(mHangup);
+		}
 		v.add(mStatus);
 		v.add(new SeparatorField());
 
@@ -314,6 +325,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		mTimer.scheduleAtFixedRate(task, 0, 200);
 		
 		class NetworkManager implements RadioStatusListener,WLANConnectionListener{
+			boolean isRadioOn=CoverageInfo.getCoverageStatus(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA, true) == CoverageInfo.COVERAGE_DIRECT;
 			public void baseStationChange() {}
 			public void networkScanComplete(boolean success) {}
 			public void networkServiceChange(int networkId, int service) {}
@@ -325,6 +337,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 			}
 			public void pdpStateChange(int apn, int state, int cause) {}
 			public void radioTurnedOff() {
+				isRadioOn=false;
 				handleCnxStateChange();
 			}
 			public void signalLevel(int level) {}
@@ -335,7 +348,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 				handleCnxStateChange();
 			}
 			public void handleCnxStateChange() {
-				boolean lIsWifi= CoverageInfo.getCoverageStatus(RadioInfo.WAF_WLAN, true) == CoverageInfo.COVERAGE_DIRECT; 
+				boolean lIsWifi= WLANInfo.getWLANState() == WLANInfo.WLAN_STATE_CONNECTED;
 				boolean lIsCellular=CoverageInfo.getCoverageStatus(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA, true) == CoverageInfo.COVERAGE_DIRECT;;
 				
 				if (lIsWifi == false && lIsCellular == false) {
@@ -368,12 +381,6 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		lNetworkManager.handleCnxStateChange();
 		Application.getApplication().addRadioListener(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA,lNetworkManager );
 		WLANInfo.addListener(lNetworkManager);
-		//to kick off network state
-		//lCoverageStatusListener.coverageStatusChanged(CoverageInfo.getCoverageStatus());
-		
-		
-
-
 	}
 
     
@@ -401,29 +408,35 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 	public void fieldChanged(Field field, int context) {
 		if (field==mCall){
-			sLogger.info("Called button pressed.");
-			try {
-				if (mCore.isInComingInvitePending()){
-					mCore.acceptCall();
-				}else{
-					mCore.invite(mInputAddress.getEditField().getText());
-				}
-			} catch (final LinphoneCoreException e) {
-				sLogger.error("call error",e);
-				UiApplication.getUiApplication().invokeLater(new Runnable() {
-					public void run() {
-						Dialog.alert(e.getMessage());
-						
-					}
-				});
-			}
+			callButtonPressed();
 		}else if (field==mHangup){
-			sLogger.info("Hangup button pressed");
-			mCore.terminateCall();
+			hangupButtonPressed();
 		}
 	}
 
-
+	private void callButtonPressed() {
+		sLogger.info("Called button pressed.");
+		try {
+			if (mCore.isInComingInvitePending()){
+				mCore.acceptCall();
+			}else{
+				mCore.invite(mInputAddress.getEditField().getText());
+			}
+		} catch (final LinphoneCoreException e) {
+			sLogger.error("call error",e);
+			UiApplication.getUiApplication().invokeLater(new Runnable() {
+				public void run() {
+					Dialog.alert(e.getMessage());
+					
+				}
+			});
+		}
+		
+	}
+	public void hangupButtonPressed() {
+		sLogger.info("Hangup button pressed");
+		mCore.terminateCall();		
+	}
 	public void focusChanged(Field field, int eventType) {
 		// TODO Auto-generated method stub
 		

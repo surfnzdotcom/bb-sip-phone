@@ -40,9 +40,9 @@ public class CallLogsField extends ListField {
 		    public void drawListRow(ListField list, Graphics g, int index, int y, int w) { 
 		        LinphoneCallLog lCallLog = (LinphoneCallLog) get(list,index);
 		    	if (lCallLog.getDirection() == CallDirection.Incoming) {
-		    		g.drawText("IN "+ lCallLog.getFrom().getUserName() , 0,y,0,w);
+		    		g.drawText("IN "+ (lCallLog.getFrom()!=null?lCallLog.getFrom().getUserName():"unknown"), 0,y,0,w);
 		    	} else {
-		    		g.drawText("OUT "+ lCallLog.getTo().getUserName() , 0,y,0,w);
+		    		g.drawText("OUT "+ (lCallLog.getTo()!=null?lCallLog.getTo().getUserName():"unknown"), 0,y,0,w);
 		    		
 		    	}
 		    } 

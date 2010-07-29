@@ -32,6 +32,7 @@ import net.rim.device.api.io.transport.TransportDescriptor;
 import net.rim.device.api.io.transport.TransportInfo;
 import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
+import net.rim.device.api.system.WLANInfo;
 
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
@@ -108,8 +109,8 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		public void onCallReceived(SalOp op) {
 			try {
 				LinphoneCallLog lCallLog = new LinphoneCallLogImpl(CallDirection.Incoming
-																, null
-																, LinphoneCoreFactory.instance().createLinphoneAddress(op.getFrom()));
+																, LinphoneCoreFactory.instance().createLinphoneAddress(op.getFrom())
+																, null);
 				mCallLogs.addElement(lCallLog);
 				
 				if (mCall!=null){
@@ -510,13 +511,13 @@ public class LinphoneCoreImpl implements LinphoneCore {
 		return false;
 	}
 
-	public void iterate() {
+	public synchronized void iterate() {
 		if (mSal == null && mNetworkIsUp ==true) {
 			//create Sal
 			String localAdd=null;
 			try {
 				String dummyConnString = "socket://www.linphone.org:80;deviceside=true";
-				if (TransportInfo.isTransportTypeAvailable(TransportInfo.TRANSPORT_TCP_WIFI)) {
+				if (WLANInfo.getWLANState() == WLANInfo.WLAN_STATE_CONNECTED) {
 					dummyConnString+=";interface=wifi";
 				}
 
@@ -527,6 +528,14 @@ public class LinphoneCoreImpl implements LinphoneCore {
 			} catch (IOException ioexp) {
 				mLog.error("Network unreachable, please enable wifi/or 3G");
 			}
+			// check if local port is available
+//			try {
+//				Connector.open("datagram://:"+mSipPort);
+//			} catch (IOException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+			
 			SocketAddress addr=JOrtpFactory.instance().createSocketAddress(localAdd, mSipPort);
 			mSal=SalFactory.instance().createSal();
 			mSal.setUserAgent("jLinphone/0.0.1");
