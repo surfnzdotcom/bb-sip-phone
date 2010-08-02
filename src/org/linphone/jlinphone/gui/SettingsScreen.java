@@ -37,6 +37,7 @@ import net.rim.device.api.ui.component.BasicEditField;
 import net.rim.device.api.ui.component.CheckboxField;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.LabelField;
+import net.rim.device.api.ui.component.ObjectChoiceField;
 import net.rim.device.api.ui.component.SeparatorField;
 
 import net.rim.device.api.ui.container.MainScreen;
@@ -49,7 +50,10 @@ public class SettingsScreen extends MainScreen implements Settings {
 	private BasicEditField mUserPasswd;
 	private BasicEditField mDomain;
 	private BasicEditField mProxy;
+	public final String[] SIP_TRANSPORT_TYPE={"udp","tcp"};  
 	private CheckboxField mDebugMode;
+
+	private ObjectChoiceField mTransPort;
 	private final LinphoneCore mCore;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	
@@ -92,7 +96,8 @@ public class SettingsScreen extends MainScreen implements Settings {
 
 		VerticalFieldManager lAdvanced = new VerticalFieldManager();
 		lMainFiedManager.add(lAdvanced);
-
+		mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
+		lAdvanced.add(mTransPort); 
 		mDebugMode = new CheckboxField("Enable debug mode", false);
 		mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
 		mDebugMode.setChangeListener(new FieldChangeListener() {
@@ -118,6 +123,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 		lSettingsMap.put(SIP_PASSWORD, mUserPasswd.getText());
 		lSettingsMap.put(SIP_DOMAIN, mDomain.getText());
 		lSettingsMap.put(SIP_PROXY, mProxy.getText());
+		lSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
 		lSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
 		try {
 			initFromConf();
@@ -190,7 +196,10 @@ public class SettingsScreen extends MainScreen implements Settings {
 			throw new LinphoneConfigException("No domain configured");
 		}
 
-
+		String lTransport = getString(Settings.SIP_TRANSPORT, null);
+		if (lTransport != null && "tcp".equalsIgnoreCase(lTransport)) {
+			mCore.setSignalingTransport(LinphoneCore.Transport.tcp);	
+		}
 		//auth
 		mCore.clearAuthInfos();
 		LinphoneAuthInfo lAuthInfo =  LinphoneCoreFactory.instance().createAuthInfo(lUserName, lPasswd,null);

@@ -28,7 +28,8 @@ public class LinphoneMain extends UiApplication{
      */ 
     public static void main(String[] args)
     {
-        // Create a new instance of the application and make the currently
+
+    	// Create a new instance of the application and make the currently
         // running thread the application's event dispatch thread.
     	LinphoneMain theApp = new LinphoneMain();       
     	theApp.enterEventDispatcher();

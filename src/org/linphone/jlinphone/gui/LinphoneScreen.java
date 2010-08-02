@@ -29,6 +29,7 @@ import javax.microedition.media.Player;
 import javax.microedition.media.control.RecordControl;
 
 
+import org.linphone.bb.NetworkManager;
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
@@ -92,7 +93,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	private ConsoleScreen mConsoleScreen = new ConsoleScreen();
 	private SettingsScreen  mSettingsScreen ;
 	private ListField mCallLogs;
-	private int mCurrentTransportType=0; 
+	 
 	
 	LinphoneScreen()  {
 
@@ -157,6 +158,9 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		addKeyListener(new KeyListener() {
 			final static int GREEN_BUTTON_KEY=1114112;
 			final static int RED_BUTTON_KEY=1179648;
+			final static int VOLUME_DOWN=268500992;
+			final static int VOLUME_UP=268500992;
+			
 			public boolean keyChar(char key, int status, int time) {return false;}
 			public boolean keyDown(int keycode, int time) {
 				if (keycode == GREEN_BUTTON_KEY || keycode == RED_BUTTON_KEY) {
@@ -324,59 +328,8 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		};
 		mTimer.scheduleAtFixedRate(task, 0, 200);
 		
-		class NetworkManager implements RadioStatusListener,WLANConnectionListener{
-			boolean isRadioOn=CoverageInfo.getCoverageStatus(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA, true) == CoverageInfo.COVERAGE_DIRECT;
-			public void baseStationChange() {}
-			public void networkScanComplete(boolean success) {}
-			public void networkServiceChange(int networkId, int service) {}
-			public void networkStarted(int networkId, int service) {
-				handleCnxStateChange();
-			}
-			public void networkStateChange(int state) {
-				handleCnxStateChange();
-			}
-			public void pdpStateChange(int apn, int state, int cause) {}
-			public void radioTurnedOff() {
-				isRadioOn=false;
-				handleCnxStateChange();
-			}
-			public void signalLevel(int level) {}
-			public void networkConnected() {
-				handleCnxStateChange();
-			}
-			public void networkDisconnected(int reason) {
-				handleCnxStateChange();
-			}
-			public void handleCnxStateChange() {
-				boolean lIsWifi= WLANInfo.getWLANState() == WLANInfo.WLAN_STATE_CONNECTED;
-				boolean lIsCellular=CoverageInfo.getCoverageStatus(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA, true) == CoverageInfo.COVERAGE_DIRECT;;
-				
-				if (lIsWifi == false && lIsCellular == false) {
-					mCore.setNetworkStateReachable(false);
-					mCurrentTransportType = 0;
-					return;
-				}
-				if (lIsWifi == true) {
-					if( mCurrentTransportType != TransportInfo.TRANSPORT_TCP_WIFI) {
-						//wifi is now available, togeling
-						mCore.setNetworkStateReachable(false);
-						mCore.iterate();
-						mCurrentTransportType = TransportInfo.TRANSPORT_TCP_WIFI;
-						mCore.setNetworkStateReachable(true);
-						return;
-					}
-				} else if (lIsCellular == true && mCurrentTransportType != TransportInfo.TRANSPORT_TCP_CELLULAR) {
-					//cellular is now available, togeling
-					mCore.setNetworkStateReachable(false);
-					mCore.iterate();
-					mCurrentTransportType = TransportInfo.TRANSPORT_TCP_CELLULAR;
-					mCore.setNetworkStateReachable(true);
-					return;
-				}				
-			}
-			
-		}
-		NetworkManager lNetworkManager = new NetworkManager();
+
+		NetworkManager lNetworkManager = new NetworkManager(mCore);
 		//to kick off network state
 		lNetworkManager.handleCnxStateChange();
 		Application.getApplication().addRadioListener(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA,lNetworkManager );
