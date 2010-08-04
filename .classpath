@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="org/linphone/jortp/RtpJ2seTransport.java" kind="src" path="submodules/jliblinphone/submodules/jortp/src"/>
-	<classpathentry excluding="org/linphone/jlinphone/core/test/" kind="src" path="submodules/jliblinphone/src"/>
+	<classpathentry excluding="org/linphone/jlinphone/core/test/|org/linphone/jlinphoneMidlet.java|org/linphone/DisplayManager.java" kind="src" path="submodules/jliblinphone/src"/>
 	<classpathentry kind="src" path="submodules/jliblinphone/submodules/linphone/java/common"/>
 	<classpathentry kind="src" path="submodules/jliblinphone/submodules/linphone/java/j2me"/>
 	<classpathentry excluding="org/linphone/jlinphone/core/test/LinphoneCoreTester.java|org/linphone/jlinphoneMidlet.java|org/linphone/DisplayManager.java|org/linphone/jlinphone/gui/Demo.java" kind="src" path="src"/>

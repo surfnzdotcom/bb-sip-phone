@@ -48,8 +48,10 @@ import net.rim.device.api.collection.util.BasicFilteredList;
 import net.rim.device.api.collection.util.BasicFilteredListResult;
 import net.rim.device.api.io.transport.TransportInfo;
 import net.rim.device.api.system.Application;
+import net.rim.device.api.system.Audio;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.CoverageInfo;
+import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.KeyListener;
 import net.rim.device.api.system.RadioInfo;
 import net.rim.device.api.system.RadioStatusListener;
@@ -66,10 +68,12 @@ import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.AutoCompleteField;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Dialog;
+import net.rim.device.api.ui.component.GaugeField;
 import net.rim.device.api.ui.component.KeywordFilterField;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.SeparatorField;
+import net.rim.device.api.ui.component.Status;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
@@ -90,10 +94,9 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	private LinphoneCore mCore;
 	private Timer mTimer;
-	private ConsoleScreen mConsoleScreen = new ConsoleScreen();
 	private SettingsScreen  mSettingsScreen ;
 	private ListField mCallLogs;
-	 
+ 
 	
 	LinphoneScreen()  {
 
@@ -117,20 +120,30 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
 		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
 		LinphoneCoreFactory.instance().setLogHandler(new LinphoneLogHandler() {
+		    {
+		    	EventLogger.register(jlinphone, "jlinphone", EventLogger.VIEWER_STRING);
+			}
+			static final long jlinphone = 0x2c9c1cec186c8bcdL;   
 
 			public void log(String loggerName, int level, String levelName, String msg, Throwable e) {
 				StringBuffer sb=new StringBuffer();
 				sb.append(loggerName);
-				sb.append("-");
-				sb.append(levelName);
-				sb.append(":");
 				sb.append(msg);
 				if (e!=null) {
 					sb.append(" ["+e.getMessage()+"]");
 				}
+				EventLogger.logEvent(jlinphone,sb.toString().getBytes(),jLevel2BBlevel(level));
 
-				mConsoleScreen.log(sb.toString());
-
+			}
+			private int jLevel2BBlevel(int level) {
+				switch (level) {
+				case LinphoneLogHandler.Debug: return EventLogger.DEBUG_INFO;
+				case LinphoneLogHandler.Info: return EventLogger.INFORMATION;
+				case LinphoneLogHandler.Warn: return EventLogger.WARNING;
+				case LinphoneLogHandler.Error: return EventLogger.ERROR;
+				case LinphoneLogHandler.Fatal: return EventLogger.SEVERE_ERROR;
+				}
+				return EventLogger.ERROR;
 			}
 
 		});
@@ -159,11 +172,32 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 			final static int GREEN_BUTTON_KEY=1114112;
 			final static int RED_BUTTON_KEY=1179648;
 			final static int VOLUME_DOWN=268500992;
-			final static int VOLUME_UP=268500992;
-			
+			final static int VOLUME_UP=268435456;
+			private int mLastVolumeEvent; 
 			public boolean keyChar(char key, int status, int time) {return false;}
 			public boolean keyDown(int keycode, int time) {
 				if (keycode == GREEN_BUTTON_KEY || keycode == RED_BUTTON_KEY) {
+					return true;
+				} else if (time != mLastVolumeEvent && (keycode == VOLUME_DOWN || keycode == VOLUME_UP)) {
+					mLastVolumeEvent=time;
+					// change volume
+					int lLeveltoDisplay=100;
+					if (mCore.isIncall() ) {
+						if (keycode == VOLUME_DOWN && mCore.getPlayLevel() >= 0) {
+							lLeveltoDisplay=Math.max(0,(mCore.getPlayLevel() - 10));
+						} else if (keycode == VOLUME_UP) {
+							lLeveltoDisplay=Math.min(100,mCore.getPlayLevel() + 10);
+						}
+						mCore.setPlayLevel(lLeveltoDisplay);
+					}else {
+						if (keycode == VOLUME_DOWN ) {
+							lLeveltoDisplay=Math.max(0,(Audio.getVolume() - 10));
+						} else if (keycode == VOLUME_UP) {
+							lLeveltoDisplay=Math.min(100,Audio.getVolume() + 10);
+						}
+						Audio.setVolume(lLeveltoDisplay);
+					}
+					Status.show("Volume ["+lLeveltoDisplay+"]",500);
 					return true;
 				} else {
 					return false;
@@ -314,7 +348,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		{
 			public void run() 
 			{
-				UiApplication.getUiApplication().pushScreen(mConsoleScreen);
+				EventLogger.startEventLogViewer();
 			}
 		});
 
@@ -430,10 +464,6 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	}
 
 
-	public void generalState(LinphoneCore lc, GeneralState state) {
-		// TODO Auto-generated method stub
-		
-	}
 
 
 	public void inviteReceived(LinphoneCore lc, String from) {
@@ -445,6 +475,12 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 
 	public void show(LinphoneCore lc) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void generalState(LinphoneCore lc, GeneralState state, String message) {
 		// TODO Auto-generated method stub
 		
 	}
