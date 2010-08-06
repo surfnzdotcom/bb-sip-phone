@@ -205,6 +205,9 @@ public class SettingsScreen extends MainScreen implements Settings {
 		String lTransport = getString(Settings.SIP_TRANSPORT, null);
 		if (lTransport != null && "tcp".equalsIgnoreCase(lTransport)) {
 			mCore.setSignalingTransport(LinphoneCore.Transport.tcp);	
+		} else {
+			mCore.setSignalingTransport(LinphoneCore.Transport.udp);	
+			
 		}
 		//auth
 		mCore.clearAuthInfos();

@@ -20,13 +20,19 @@ package org.linphone.jlinphone.gui;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 
 import javax.microedition.media.Manager;
 import javax.microedition.media.Player;
 import javax.microedition.media.control.RecordControl;
+import javax.microedition.pim.Contact;
+import javax.microedition.pim.ContactList;
+import javax.microedition.pim.PIM;
+import javax.microedition.pim.PIMException;
 
 
 import org.linphone.bb.NetworkManager;
@@ -66,6 +72,7 @@ import net.rim.device.api.ui.Touchscreen;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.AutoCompleteField;
+import net.rim.device.api.ui.component.BitmapField;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.GaugeField;
@@ -74,6 +81,7 @@ import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.Status;
+import net.rim.device.api.ui.component.TextField;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
@@ -91,7 +99,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	private ButtonField mHangup;
 	private HorizontalFieldManager mLayout;
 	private LabelField mStatus;
-	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
+	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	private LinphoneCore mCore;
 	private Timer mTimer;
 	private SettingsScreen  mSettingsScreen ;
@@ -148,7 +156,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 		});
 		VerticalFieldManager v=new VerticalFieldManager();
-/*		ContactList contacts = null;
+		ContactList contacts = null;
 		  try {
 		     contacts = (ContactList) PIM.getInstance().openPIMList(PIM.CONTACT_LIST, PIM.READ_WRITE);
 		     Enumeration items = contacts.items();
@@ -167,7 +175,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		  } catch (PIMException e) {
 			  sLogger.error("Cannot open contact list",e);
 		  }
-*/
+
 		addKeyListener(new KeyListener() {
 			final static int GREEN_BUTTON_KEY=1114112;
 			final static int RED_BUTTON_KEY=1179648;
@@ -278,6 +286,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		mLayout=new HorizontalFieldManager(Field.FIELD_HCENTER|HorizontalFieldManager.NO_HORIZONTAL_SCROLL);
 
 		mStatus=new LabelField("",Field.FIELD_BOTTOM);
+		mStatus.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,20));
 		// Set the displayed title of the screen       
 		setTitle("Linphone");
 
@@ -287,6 +296,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		add(v);
 
 		v.add(mInputAddress);
+
 		v.add(mLayout);
 		if (Touchscreen.isSupported()) {
 			mLayout.add(mCall);
@@ -295,7 +305,43 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		v.add(mStatus);
 		v.add(new SeparatorField());
 
+		HorizontalFieldManager lTabController = new HorizontalFieldManager();
 		
+		ButtonField mDialerButton = new ButtonField("",/*Field.USE_ALL_WIDTH|Field.FIELD_RIGHT|*/ButtonField.CONSUME_CLICK) {
+			public int getPreferredHeight() {
+				return 50;
+			}
+			public int getPreferredWidth() {
+				return 50;
+			}
+		};
+		bitmap=Bitmap.getBitmapResource("dialer_orange.png");
+		b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
+		mDialerButton.setBackground(b);
+		lTabController.add(mDialerButton);
+		BitmapField mHistoryButton = new BitmapField(Bitmap.getBitmapResource("history_orange.png"),Field.FOCUSABLE){
+			public int getPreferredHeight() {
+				return 50;
+			}
+			public int getPreferredWidth() {
+				return 50;
+			}
+		};
+		lTabController.add(mHistoryButton);
+		TextField mSettingsButton = new TextField(Field.FOCUSABLE){
+			public int getPreferredHeight() {
+				return 50;
+			}
+			public int getPreferredWidth() {
+				return 50;
+			}
+		};
+		bitmap=Bitmap.getBitmapResource("settings_orange.png");
+		b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
+		mSettingsButton.setBackground(b);
+		lTabController.add(mSettingsButton);
+
+		//v.add(lTabController);
 		
 		
 
@@ -308,7 +354,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 			mCore=LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
 			mCore.setNetworkStateReachable(false); //we don't know yet network state
 		} catch (final LinphoneCoreException e) {
-			sLogger.fatal("Cannot create LinphoneCore", e);
+			//sLogger.fatal("Cannot create LinphoneCore", e);
 			UiApplication.getUiApplication().invokeLater(new Runnable() {
 				public void run() {
 					Dialog.alert(e.getMessage());
@@ -402,7 +448,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	}
 
 	private void callButtonPressed() {
-		sLogger.info("Called button pressed.");
+		sLogger.info("Call button pressed.");
 		try {
 			if (mCore.isInComingInvitePending()){
 				mCore.acceptCall();
