@@ -36,6 +36,7 @@ import javax.microedition.pim.PIMException;
 
 
 import org.linphone.bb.NetworkManager;
+import org.linphone.bb.LogHandler;
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
@@ -54,6 +55,7 @@ import net.rim.device.api.collection.util.BasicFilteredList;
 import net.rim.device.api.collection.util.BasicFilteredListResult;
 import net.rim.device.api.io.transport.TransportInfo;
 import net.rim.device.api.system.Application;
+import net.rim.device.api.system.ApplicationDescriptor;
 import net.rim.device.api.system.Audio;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.CoverageInfo;
@@ -127,34 +129,8 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
 		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
-		LinphoneCoreFactory.instance().setLogHandler(new LinphoneLogHandler() {
-		    {
-		    	EventLogger.register(jlinphone, "jlinphone", EventLogger.VIEWER_STRING);
-			}
-			static final long jlinphone = 0x2c9c1cec186c8bcdL;   
-
-			public void log(String loggerName, int level, String levelName, String msg, Throwable e) {
-				StringBuffer sb=new StringBuffer();
-				sb.append(loggerName);
-				sb.append(msg);
-				if (e!=null) {
-					sb.append(" ["+e.getMessage()+"]");
-				}
-				EventLogger.logEvent(jlinphone,sb.toString().getBytes(),jLevel2BBlevel(level));
-
-			}
-			private int jLevel2BBlevel(int level) {
-				switch (level) {
-				case LinphoneLogHandler.Debug: return EventLogger.DEBUG_INFO;
-				case LinphoneLogHandler.Info: return EventLogger.INFORMATION;
-				case LinphoneLogHandler.Warn: return EventLogger.WARNING;
-				case LinphoneLogHandler.Error: return EventLogger.ERROR;
-				case LinphoneLogHandler.Fatal: return EventLogger.SEVERE_ERROR;
-				}
-				return EventLogger.ERROR;
-			}
-
-		});
+		LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
+		sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
 		VerticalFieldManager v=new VerticalFieldManager();
 		ContactList contacts = null;
 		  try {

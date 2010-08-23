@@ -180,12 +180,13 @@ public class SettingsScreen extends MainScreen implements Settings {
 		//traces
 		boolean lIsDebug = getBoolean(Settings.ADVANCED_DEBUG, false);
 		LinphoneCoreFactory.instance().setDebugMode(lIsDebug);
-		if (lIsDebug) {
+		/*if (lIsDebug) {
 			EventLogger.setMinimumLevel(EventLogger.DEBUG_INFO);
-		} else {
+		} else {*/
 			EventLogger.setMinimumLevel(EventLogger.WARNING);
-		}
-
+		/*}
+		 */
+		
 		//1 read proxy config from preferences
 		String lUserName = getString(Settings.SIP_USERNAME, null);
 		if (lUserName == null || lUserName.length()==0) {
