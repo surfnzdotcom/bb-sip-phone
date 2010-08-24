@@ -58,6 +58,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 	private final LinphoneCore mCore;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	
+	
 	SettingsScreen(LinphoneCore lc) {
 
 		mCore = lc;	
@@ -70,52 +71,8 @@ public class SettingsScreen extends MainScreen implements Settings {
 		setTitle("Linphone Settings");
 
 
-		VerticalFieldManager lMainFiedManager = new VerticalFieldManager();
-
-		add (lMainFiedManager);
-
-		VerticalFieldManager lSipAccount = new VerticalFieldManager();
-		lMainFiedManager.add(lSipAccount);
-		LabelField lSipAccountLabelField = new LabelField("SIP account");
-		lSipAccount.add(lSipAccountLabelField);
-		mUserNameField = new BasicEditField("Username*: ", "", 128, 0);
-		mUserNameField.setText(getString(SIP_USERNAME,""));
-		lSipAccount.add(mUserNameField);
-		mUserPasswd = new BasicEditField("Passwd*: ", "", 128, 0);
-		mUserPasswd.setText(getString(SIP_PASSWORD,""));
-		lSipAccount.add(mUserPasswd);
-		mDomain = new BasicEditField("Domain*: ", "", 128, 0);
-		mDomain.setText(getString(SIP_DOMAIN,""));
-		lSipAccount.add(mDomain);
-		mProxy = new BasicEditField("Proxy: ", "", 128, 0);
-		mProxy.setText(getString(SIP_PROXY,""));
-		lSipAccount.add(mProxy);
-
 		
-		SeparatorField lSipAccountSeparator = new SeparatorField();
-		lMainFiedManager.add(lSipAccountSeparator);
-
-		VerticalFieldManager lAdvanced = new VerticalFieldManager();
-		lMainFiedManager.add(lAdvanced);
-		mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
-		lAdvanced.add(mTransPort); 
-		mDebugMode = new CheckboxField("Enable debug mode", false);
-		mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
-		mDebugMode.setChangeListener(new FieldChangeListener() {
-
-			public void fieldChanged(Field field, int context) {
-				LinphoneCoreFactory.instance().setDebugMode(((CheckboxField)field).getChecked());
-
-			}
-
-		});
-		lAdvanced.add(mDebugMode);
-		try {
-			initFromConf();
-		} catch (LinphoneConfigException e) {
-			sLogger.warn("no configuration ready yet", e);
-		}
-
+		add(createSettingsFields()); 
 
 	}
 	
@@ -247,4 +204,52 @@ public class SettingsScreen extends MainScreen implements Settings {
 			throw new LinphoneConfigException("Wrong settings",e);
 		}
 	}
-}
+	public Field createSettingsFields() {
+		VerticalFieldManager lMainFiedManager = new VerticalFieldManager();
+		
+
+		VerticalFieldManager lSipAccount = new VerticalFieldManager();
+		lMainFiedManager.add(lSipAccount);
+		LabelField lSipAccountLabelField = new LabelField("SIP account");
+		lSipAccount.add(lSipAccountLabelField);
+		mUserNameField = new BasicEditField("Username*: ", "", 128, 0);
+		mUserNameField.setText(getString(SIP_USERNAME,""));
+		lSipAccount.add(mUserNameField);
+		mUserPasswd = new BasicEditField("Passwd*: ", "", 128, 0);
+		mUserPasswd.setText(getString(SIP_PASSWORD,""));
+		lSipAccount.add(mUserPasswd);
+		mDomain = new BasicEditField("Domain*: ", "", 128, 0);
+		mDomain.setText(getString(SIP_DOMAIN,""));
+		lSipAccount.add(mDomain);
+		mProxy = new BasicEditField("Proxy: ", "", 128, 0);
+		mProxy.setText(getString(SIP_PROXY,""));
+		lSipAccount.add(mProxy);
+
+		
+		SeparatorField lSipAccountSeparator = new SeparatorField();
+		lMainFiedManager.add(lSipAccountSeparator);
+
+		VerticalFieldManager lAdvanced = new VerticalFieldManager();
+		lMainFiedManager.add(lAdvanced);
+		mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
+		lAdvanced.add(mTransPort); 
+		mDebugMode = new CheckboxField("Enable debug mode", false);
+		mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
+		mDebugMode.setChangeListener(new FieldChangeListener() {
+
+			public void fieldChanged(Field field, int context) {
+				LinphoneCoreFactory.instance().setDebugMode(((CheckboxField)field).getChecked());
+
+			}
+
+		});
+		lAdvanced.add(mDebugMode);
+		try {
+			initFromConf();
+		} catch (LinphoneConfigException e) {
+			sLogger.warn("no configuration ready yet", e);
+		}
+
+	return lMainFiedManager;
+	}
+ }

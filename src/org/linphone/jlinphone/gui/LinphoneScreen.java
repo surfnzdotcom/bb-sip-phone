@@ -69,6 +69,7 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.FocusChangeListener;
 import net.rim.device.api.ui.Font;
+import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.Touchscreen;
 import net.rim.device.api.ui.UiApplication;
@@ -81,6 +82,7 @@ import net.rim.device.api.ui.component.GaugeField;
 import net.rim.device.api.ui.component.KeywordFilterField;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
+import net.rim.device.api.ui.component.ListFieldCallback;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.Status;
 import net.rim.device.api.ui.component.TextField;
@@ -93,7 +95,7 @@ import net.rim.device.api.ui.decor.Border;
 import net.rim.device.api.ui.decor.BorderFactory;
 
 public class LinphoneScreen extends MainScreen implements FieldChangeListener, FocusChangeListener, LinphoneCoreListener{
-	private AutoCompleteField  mInputAddress;
+	private TextField  mInputAddress;
 	private KeywordFilterField mkeyWordField;    
     private PhoneNumberList mPhoneNumberList;
     
@@ -140,13 +142,30 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		     Vector lPhoneNumbers = new Vector();
 		     while (items.hasMoreElements()) {
 		    	 lContact = (Contact) items.nextElement();
-		    	 int phoneNumbers = lContact.countValues(Contact.TEL);
+		    	 int phoneNumbers = lContact.countValues(Contact.NAME);
 		    	 for(int i = 0; i < phoneNumbers; i++) {
-		    		 lPhoneNumbers.addElement(lContact.getString(Contact.TEL, i));
+		    		 String[] lNameArray;
+		    		 String lName;
+		    		 lNameArray = lContact.getStringArray(Contact.NAME, i);
+	    			 lName = lNameArray[Contact.NAME_GIVEN];
+			         if (lNameArray[Contact.NAME_FAMILY] != null) lName+= " "+lNameArray[Contact.NAME_FAMILY];
+		    		 if (lName != null) {
+			    		 lPhoneNumbers.addElement(lName);
+		    		 }
+
 		    	 }
 		     }
 		     mPhoneNumberList = new PhoneNumberList(lPhoneNumbers);
-		     mkeyWordField = new KeywordFilterField();
+		     mkeyWordField = new KeywordFilterField() {
+
+				protected boolean navigationClick(int status, int time) {
+					getKeywordField().setText(getSelectedElement().toString());
+					return true;
+				}
+
+
+		    	 
+		     };
 		     mkeyWordField.setSourceList(mPhoneNumberList, mPhoneNumberList);
 		  } catch (PIMException e) {
 			  sLogger.error("Cannot open contact list",e);
@@ -236,9 +255,36 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 	    	  }
 	      };
 	     
-	    mInputAddress = autoCompleteField;
+	    //mInputAddress = autoCompleteField;
 	    //add(autoCompleteField);
-		//mInputAddress = mkeyWordField.getKeywordField();
+//	    mkeyWordField.setCallback(new ListFieldCallback() {
+//
+//			public void drawListRow(ListField listField, Graphics graphics,
+//					int index, int y, int width) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//
+//			public Object get(ListField listField, int index) {
+//				// TODO Auto-generated method stub
+//				return null;
+//			}
+//
+//			public int getPreferredWidth(ListField listField) {
+//				// TODO Auto-generated method stub
+//				return 0;
+//			}
+//
+//			public int indexOfList(ListField listField, String prefix, int start) {
+//				// TODO Auto-generated method stub
+//				return 0;
+//			}
+//	    	
+//	    });
+	    
+	    mkeyWordField.setKeywordField(new TextField(Field.FOCUSABLE));
+		mInputAddress = mkeyWordField.getKeywordField();
+		
 		//mInputAddress=new BasicEditField(null,null);
 		//mkeyWordField.setKeywordField(mInputAddress);
 		XYEdges edges = new XYEdges(8,8,8,8);
@@ -281,46 +327,12 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		v.add(mStatus);
 		v.add(new SeparatorField());
 
-		HorizontalFieldManager lTabController = new HorizontalFieldManager();
-		
-		ButtonField mDialerButton = new ButtonField("",/*Field.USE_ALL_WIDTH|Field.FIELD_RIGHT|*/ButtonField.CONSUME_CLICK) {
-			public int getPreferredHeight() {
-				return 50;
-			}
-			public int getPreferredWidth() {
-				return 50;
-			}
-		};
-		bitmap=Bitmap.getBitmapResource("dialer_orange.png");
-		b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
-		mDialerButton.setBackground(b);
-		lTabController.add(mDialerButton);
-		BitmapField mHistoryButton = new BitmapField(Bitmap.getBitmapResource("history_orange.png"),Field.FOCUSABLE){
-			public int getPreferredHeight() {
-				return 50;
-			}
-			public int getPreferredWidth() {
-				return 50;
-			}
-		};
-		lTabController.add(mHistoryButton);
-		TextField mSettingsButton = new TextField(Field.FOCUSABLE){
-			public int getPreferredHeight() {
-				return 50;
-			}
-			public int getPreferredWidth() {
-				return 50;
-			}
-		};
-		bitmap=Bitmap.getBitmapResource("settings_orange.png");
-		b=BackgroundFactory.createBitmapBackground(bitmap,Background.POSITION_X_CENTER,Background.POSITION_Y_CENTER,Background.REPEAT_SCALE_TO_FIT);
-		mSettingsButton.setBackground(b);
-		lTabController.add(mSettingsButton);
-
-		//v.add(lTabController);
-		
+		TabField lTabField = new TabField();
 		
 
+		lTabField.addTab(Bitmap.getBitmapResource("dialer_orange.png"), mkeyWordField);
+		v.add(lTabField);
+		
 		mCall.setChangeListener(this);
 		mHangup.setChangeListener(this);
 
@@ -352,13 +364,16 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 				} else {
 					lAddress = selected.getTo().getUserName();
 				}
-				mInputAddress.getEditField().setText(lAddress);
+				mInputAddress/*.getEditField()*/.setText(lAddress);
 				
 			}
 		});
-		v.add(mCallLogs);
+		
+		lTabField.addTab(Bitmap.getBitmapResource("history_orange.png"), mCallLogs);
 		
 		mSettingsScreen = new SettingsScreen(mCore);
+		lTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), mSettingsScreen.createSettingsFields());
+		
 		addMenuItem(new MenuItem("Settings", 110, 10)
 		{
 			public void run() 
@@ -429,7 +444,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 			if (mCore.isInComingInvitePending()){
 				mCore.acceptCall();
 			}else{
-				mCore.invite(mInputAddress.getEditField().getText());
+				mCore.invite(mInputAddress.getText());
 			}
 		} catch (final LinphoneCoreException e) {
 			sLogger.error("call error",e);

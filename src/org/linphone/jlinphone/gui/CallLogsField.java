@@ -27,15 +27,14 @@ import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.ListFieldCallback;
 
-public class CallLogsField extends ListField {
-	interface Listener {
-		public void onSelected(LinphoneCallLog selected);
-	}
+public class CallLogsField extends SelectableListField {
+
 	final LinphoneCore mCore;
-	final Listener mListener; 
+	
 	CallLogsField(LinphoneCore aCore,Listener aListener) {
+		super (aListener);
 		mCore = aCore;
-		mListener = aListener;
+		
 		setCallback(new ListFieldCallback() { 
 		    public void drawListRow(ListField list, Graphics g, int index, int y, int w) { 
 		        LinphoneCallLog lCallLog = (LinphoneCallLog) get(list,index);
@@ -65,21 +64,7 @@ public class CallLogsField extends ListField {
 		setSize(mCore.getCallLogs().size());
 	}
 	
-	protected boolean keyChar(char key, int status, int time) {
-		if (key !='\n') {
-			return super.keyChar(key, status, time);
-		} else {
-			return navigationClick(0,0);
-		}
-	}
-	
 
-	protected boolean navigationClick(int status, int time) {
-		if (mListener != null ) {
-			mListener.onSelected((LinphoneCallLog) this.getCallback().get(this, getSelectedIndex()));
-		}
-		return true;
-	}
 
 	
 }
