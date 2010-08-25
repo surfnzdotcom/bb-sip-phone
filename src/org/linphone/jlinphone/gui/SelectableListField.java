@@ -24,7 +24,7 @@ import net.rim.device.api.ui.component.ListField;
 
 public abstract class SelectableListField extends ListField {
 	interface Listener {
-		public void onSelected(LinphoneCallLog selected);
+		public void onSelected(Object selected);
 	}
 	final Listener mListener;
 	SelectableListField(Listener aListener) {
@@ -41,7 +41,7 @@ public abstract class SelectableListField extends ListField {
 
 	protected boolean navigationClick(int status, int time) {
 		if (mListener != null ) {
-			mListener.onSelected((LinphoneCallLog) this.getCallback().get(this, getSelectedIndex()));
+			mListener.onSelected( this.getCallback().get(this, getSelectedIndex()));
 		}
 		return true;
 	}

@@ -43,8 +43,6 @@ import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
-import org.linphone.core.LinphoneLogHandler;
-import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.core.LinphoneCore.GeneralState;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
@@ -53,36 +51,28 @@ import org.linphone.jortp.Logger;
 
 import net.rim.device.api.collection.util.BasicFilteredList;
 import net.rim.device.api.collection.util.BasicFilteredListResult;
-import net.rim.device.api.io.transport.TransportInfo;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.ApplicationDescriptor;
 import net.rim.device.api.system.Audio;
 import net.rim.device.api.system.Bitmap;
-import net.rim.device.api.system.CoverageInfo;
 import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.KeyListener;
 import net.rim.device.api.system.RadioInfo;
-import net.rim.device.api.system.RadioStatusListener;
-import net.rim.device.api.system.WLANConnectionListener;
 import net.rim.device.api.system.WLANInfo;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.FocusChangeListener;
 import net.rim.device.api.ui.Font;
-import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.Touchscreen;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.AutoCompleteField;
-import net.rim.device.api.ui.component.BitmapField;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Dialog;
-import net.rim.device.api.ui.component.GaugeField;
 import net.rim.device.api.ui.component.KeywordFilterField;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
-import net.rim.device.api.ui.component.ListFieldCallback;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.Status;
 import net.rim.device.api.ui.component.TextField;
@@ -134,42 +124,7 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
 		sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
 		VerticalFieldManager v=new VerticalFieldManager();
-		ContactList contacts = null;
-		  try {
-		     contacts = (ContactList) PIM.getInstance().openPIMList(PIM.CONTACT_LIST, PIM.READ_WRITE);
-		     Enumeration items = contacts.items();
-		     Contact lContact;
-		     Vector lPhoneNumbers = new Vector();
-		     while (items.hasMoreElements()) {
-		    	 lContact = (Contact) items.nextElement();
-		    	 int phoneNumbers = lContact.countValues(Contact.NAME);
-		    	 for(int i = 0; i < phoneNumbers; i++) {
-		    		 String[] lNameArray;
-		    		 String lName;
-		    		 lNameArray = lContact.getStringArray(Contact.NAME, i);
-	    			 lName = lNameArray[Contact.NAME_GIVEN];
-			         if (lNameArray[Contact.NAME_FAMILY] != null) lName+= " "+lNameArray[Contact.NAME_FAMILY];
-		    		 if (lName != null) {
-			    		 lPhoneNumbers.addElement(lName);
-		    		 }
 
-		    	 }
-		     }
-		     mPhoneNumberList = new PhoneNumberList(lPhoneNumbers);
-		     mkeyWordField = new KeywordFilterField() {
-
-				protected boolean navigationClick(int status, int time) {
-					getKeywordField().setText(getSelectedElement().toString());
-					return true;
-				}
-
-
-		    	 
-		     };
-		     mkeyWordField.setSourceList(mPhoneNumberList, mPhoneNumberList);
-		  } catch (PIMException e) {
-			  sLogger.error("Cannot open contact list",e);
-		  }
 
 		addKeyListener(new KeyListener() {
 			final static int GREEN_BUTTON_KEY=1114112;
@@ -221,67 +176,12 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 			}
 			
 		});
-		BasicFilteredList filterList = new BasicFilteredList();
-	    int uniqueID = 0;
-	    int srcType = BasicFilteredList.DATA_SOURCE_CONTACTS;
-	    long searchField = BasicFilteredList.DATA_FIELD_CONTACTS_NAME_FULL|BasicFilteredList.DATA_FIELD_CONTACTS_PHONE_ALL;
-	    long requestedFields = /*BasicFilteredList.DATA_FIELD_CONTACTS_NAME_FULL|*/BasicFilteredList.DATA_FIELD_CONTACTS_PHONE_ALL;
-	    long primaryField = BasicFilteredList.DATA_FIELD_CONTACTS_PHONE_ALL;
-	    long secondaryField = BasicFilteredList.DATA_FIELD_CONTACTS_PHONE_ALL;
-	    filterList.addDataSource(uniqueID,
-	    							srcType,
-	    							searchField,
-	    							requestedFields,
-	    							primaryField,
-	    							-1, //no secondary specified
-	      							"Contact");
-	      long style = AutoCompleteField.LIST_EXPAND_ON_HIGHLIGHT ;
-	      AutoCompleteField autoCompleteField = new AutoCompleteField(filterList, style)  {
-	    	  protected void onSelect(Object selection,
-                      int type) {
-	    		  
-	    		  BasicFilteredListResult lResult =((BasicFilteredListResult)selection);
-	    		  Field toto = getLeafFieldWithFocus();
-	    		  String lSelectedNumber;
-	    		  for (int i = 0; i<getListField().getSelectedIndex();i++) {
-	    			  //lSelectedNumber
-	    			 // toto = getListField()
-	    		  }
-	    		  super.onSelect(selection,type);
-	    	  }
-	    	  public Object get(ListField listField,
-	                  int index) {
-	    		  return super.get(listField, index);
-	    	  }
-	      };
-	     
-	    //mInputAddress = autoCompleteField;
-	    //add(autoCompleteField);
-//	    mkeyWordField.setCallback(new ListFieldCallback() {
-//
-//			public void drawListRow(ListField listField, Graphics graphics,
-//					int index, int y, int width) {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//
-//			public Object get(ListField listField, int index) {
-//				// TODO Auto-generated method stub
-//				return null;
-//			}
-//
-//			public int getPreferredWidth(ListField listField) {
-//				// TODO Auto-generated method stub
-//				return 0;
-//			}
-//
-//			public int indexOfList(ListField listField, String prefix, int start) {
-//				// TODO Auto-generated method stub
-//				return 0;
-//			}
-//	    	
-//	    });
-	    
+
+		try {
+		    mkeyWordField = new SearchableContactList().getKeywordFilterField();
+		  } catch (PIMException e) {
+			  sLogger.error("Cannot open contact list",e);
+		  }
 	    mkeyWordField.setKeywordField(new TextField(Field.FOCUSABLE));
 		mInputAddress = mkeyWordField.getKeywordField();
 		
@@ -357,12 +257,12 @@ public class LinphoneScreen extends MainScreen implements FieldChangeListener, F
 		//call logs
 		mCallLogs = new CallLogsField(mCore, new CallLogsField.Listener() {
 			
-			public void onSelected(LinphoneCallLog selected) {
+			public void onSelected(Object selected) {
 				String lAddress;
 				if (selected == CallDirection.Incoming) {
-					lAddress = selected.getFrom().getUserName();
+					lAddress = ((LinphoneCallLog)selected).getFrom().getUserName();
 				} else {
-					lAddress = selected.getTo().getUserName();
+					lAddress = ((LinphoneCallLog)selected).getTo().getUserName();
 				}
 				mInputAddress/*.getEditField()*/.setText(lAddress);
 				
