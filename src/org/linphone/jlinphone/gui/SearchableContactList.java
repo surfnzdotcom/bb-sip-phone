@@ -76,7 +76,7 @@ class ContactListSource extends SortedReadableList implements KeywordProvider{
 	}
 }
 
-public class SearchableContactList extends KeywordFilterField implements ListFieldCallback{
+public class SearchableContactList implements ListFieldCallback{
 	interface Listener {
 		public void onSelected(Contact selected);
 	}
@@ -84,7 +84,22 @@ public class SearchableContactList extends KeywordFilterField implements ListFie
 	
 
 	ContactListSource mContactList;
-	KeywordFilterField mKeywordFilterField = new KeywordFilterField();
+	KeywordFilterField mKeywordFilterField = new KeywordFilterField() {
+		protected boolean keyChar(char key, int status, int time) {
+			if (key !='\n') {
+				return super.keyChar(key, status, time);
+			} else {
+				return navigationClick(0,0);
+			}
+		}
+		
+		protected boolean navigationClick(int status, int time) {
+			if (mListener != null ) {
+				mListener.onSelected( (Contact) this.getCallback().get(this, getSelectedIndex()));
+			}
+			return true;
+		}
+	};
 	
 	public SearchableContactList(Listener aListener) throws PIMException {
 		mListener = aListener;
@@ -95,21 +110,7 @@ public class SearchableContactList extends KeywordFilterField implements ListFie
 	public SearchableContactList() throws PIMException {
 		this(null);
 	}
-	protected boolean keyChar(char key, int status, int time) {
-		if (key !='\n') {
-			return super.keyChar(key, status, time);
-		} else {
-			return navigationClick(0,0);
-		}
-	}
-	
 
-	protected boolean navigationClick(int status, int time) {
-		if (mListener != null ) {
-			mListener.onSelected( (Contact) this.getCallback().get(this, getSelectedIndex()));
-		}
-		return true;
-	}
 	public KeywordFilterField getKeywordFilterField() {
 		return mKeywordFilterField;
 	}

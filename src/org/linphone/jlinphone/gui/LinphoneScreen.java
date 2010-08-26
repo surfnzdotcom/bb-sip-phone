@@ -195,6 +195,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 
 		//dialer
 		mDialer = new DialerField();
+		
 		mTabField.addTab(Bitmap.getBitmapResource("dialer_orange.png"), mDialer);
 		//call logs
 		mCallLogs = new CallLogsField(mCore, new CallLogsField.Listener() {

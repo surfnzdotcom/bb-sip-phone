@@ -1,5 +1,6 @@
 package org.linphone.jlinphone.gui;
 
+import javax.microedition.pim.Contact;
 import javax.microedition.pim.PIMException;
 
 import org.linphone.jortp.JOrtpFactory;
@@ -21,7 +22,13 @@ public class DialerField extends VerticalFieldManager {
 	public DialerField() {
 		try {
 		    
-			mkeyWordField = new SearchableContactList().getKeywordFilterField();
+			mkeyWordField = new SearchableContactList(new SearchableContactList.Listener() {
+				
+				public void onSelected(Contact selected) {
+					setAddress( selected.getString(Contact.TEL, 0));
+					
+				}
+			}).getKeywordFilterField();
 		  } catch (PIMException e) {
 			  sLogger.error("Cannot open contact list",e);
 		  }
