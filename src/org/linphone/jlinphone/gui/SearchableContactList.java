@@ -18,18 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
-import java.util.Vector;
-
 import javax.microedition.pim.Contact;
 import javax.microedition.pim.ContactList;
 import javax.microedition.pim.PIM;
 import javax.microedition.pim.PIMException;
-import javax.microedition.pim.PIMList;
-
-import org.linphone.jlinphone.gui.SelectableListField.Listener;
-
-
-import net.rim.device.api.collection.ReadableList;
 import net.rim.device.api.collection.util.SortedReadableList;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Field;
@@ -40,19 +32,20 @@ import net.rim.device.api.ui.component.KeywordProvider;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.ListFieldCallback;
 import net.rim.device.api.util.Comparator;
+import net.rim.device.api.util.StringUtilities;
 
 class ContactListSource extends SortedReadableList implements KeywordProvider{
    
 	static String getComparableString(Contact aContact) {
     	StringBuffer lcomparablestring = new StringBuffer();
     	String[] lContactArray = aContact.getStringArray(Contact.NAME,0);
-    	for (int i=0;i<lContactArray.length;i++) {
-    		if (lContactArray[i] !=null) {
-    			lcomparablestring.append(lContactArray[i]);
-    			break;
-    		}
+    	if (lContactArray[Contact.NAME_GIVEN] != null) {
+    		lcomparablestring.append(lContactArray[Contact.NAME_GIVEN]);
     	}
-		if (false && aContact.countValues(Contact.TEL) > 0) {
+    	if (lContactArray[Contact.NAME_FAMILY] != null) {
+    		lcomparablestring.append(lContactArray[Contact.NAME_FAMILY]);
+    	}
+		if (aContact.countValues(Contact.TEL) > 0) {
 			lcomparablestring.append(aContact.getString(Contact.TEL, 0));
 		}
 		return lcomparablestring.toString();
@@ -76,18 +69,7 @@ class ContactListSource extends SortedReadableList implements KeywordProvider{
 	}
 
 	public String[] getKeywords(Object element) {
-	    Contact lContact = (Contact) element;
-    	Vector lKeywords = new Vector();
-    	String[] lcontacNames = lContact.getStringArray(Contact.NAME,0);
-	    for (int i=0;i<lcontacNames.length;i++) {
-	    	if (lcontacNames[i] !=null) {
-	    		lKeywords.addElement(lcontacNames[i]);
-	    		break;
-	    	}
-     	 }
-	    String[] lKeywordsStringArray = new String[lKeywords.size()];
-	    lKeywords.copyInto(lKeywordsStringArray);
-	    return lKeywordsStringArray;
+	    return StringUtilities.stringToWords(ContactListSource.getComparableString((Contact) element));
 	}
 	ContactList getContactList() {
 		return mContacts;
@@ -169,7 +151,7 @@ public class SearchableContactList extends KeywordFilterField implements ListFie
 		return((KeywordFilterField) listField).getResultList().getAt(index);
 	}
 	public int getPreferredWidth(ListField listField) {
-		return Display.getWidth();
+		return Display.getWidth(); 
 	}
 	public int indexOfList(ListField listField, String prefix, int start) {
 		return -1;

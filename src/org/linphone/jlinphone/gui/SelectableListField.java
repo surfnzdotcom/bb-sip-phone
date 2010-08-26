@@ -39,7 +39,7 @@ public abstract class SelectableListField extends ListField {
 	}
 	
 
-	protected boolean navigationClick(int status, int time) {
+	protected boolean navigationUnclick(int status, int time) {
 		if (mListener != null ) {
 			mListener.onSelected( this.getCallback().get(this, getSelectedIndex()));
 		}

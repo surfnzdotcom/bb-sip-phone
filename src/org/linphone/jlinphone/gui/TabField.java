@@ -40,11 +40,15 @@ public class TabField extends VerticalFieldManager {
 	void setDefault(int index) {
 		mDefault=index;
 		if (mDefault <= mTabFields.size()-1) {
-			delete(mCurrentField);
-			mCurrentField=(Field) mTabFields.elementAt(mDefault);
-			add(mCurrentField);
-			setDirty(true);
+			display(mDefault);
 		}
+	}
+	public void display(int index) {
+		delete(mCurrentField);
+		mCurrentField=(Field) mTabFields.elementAt(index);
+		add(mCurrentField);
+		setDirty(true);
+	
 	}
 	public void addTab(Bitmap aBitmap, final Field aTabField) {
 		Bitmap lBitmapScaled = new Bitmap(50, 50);

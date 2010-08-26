@@ -46,46 +46,89 @@ import net.rim.device.api.ui.container.VerticalFieldManager;
 
 public class SettingsScreen extends MainScreen implements Settings {
 	private PersistentObject mPersistentObject;
-	private Hashtable lSettingsMap;
-	private BasicEditField mUserNameField;
-	private BasicEditField mUserPasswd;
-	private BasicEditField mDomain;
-	private BasicEditField mProxy;
-	public final String[] SIP_TRANSPORT_TYPE={"udp","tcp"};  
-	private CheckboxField mDebugMode;
-
-	private ObjectChoiceField mTransPort;
+	private Hashtable mSettingsMap;
 	private final LinphoneCore mCore;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
+	SettingsFields mSettingsFields;
 	
-	
-	SettingsScreen(LinphoneCore lc) {
+	class SettingsFields {
+		private BasicEditField mUserNameField;
+		private BasicEditField mUserPasswd;
+		private BasicEditField mDomain;
+		private BasicEditField mProxy;
+		public final String[] SIP_TRANSPORT_TYPE={"udp","tcp"};  
+		private CheckboxField mDebugMode;
+		private ObjectChoiceField mTransPort;
+		VerticalFieldManager mMainFiedManager = new VerticalFieldManager();
 
+		public SettingsFields (){
+			VerticalFieldManager lSipAccount = new VerticalFieldManager();
+			mMainFiedManager.add(lSipAccount);
+			LabelField lSipAccountLabelField = new LabelField("SIP account");
+			lSipAccount.add(lSipAccountLabelField);
+			mUserNameField = new BasicEditField("Username*: ", "", 128, 0);
+			mUserNameField.setText(getString(SIP_USERNAME,""));
+			lSipAccount.add(mUserNameField);
+			mUserPasswd = new BasicEditField("Passwd*: ", "", 128, 0);
+			mUserPasswd.setText(getString(SIP_PASSWORD,""));
+			lSipAccount.add(mUserPasswd);
+			mDomain = new BasicEditField("Domain*: ", "", 128, 0);
+			mDomain.setText(getString(SIP_DOMAIN,""));
+			lSipAccount.add(mDomain);
+			mProxy = new BasicEditField("Proxy: ", "", 128, 0);
+			mProxy.setText(getString(SIP_PROXY,""));
+			lSipAccount.add(mProxy);
+
+			
+			SeparatorField lSipAccountSeparator = new SeparatorField();
+			mMainFiedManager.add(lSipAccountSeparator);
+
+			VerticalFieldManager lAdvanced = new VerticalFieldManager();
+			mMainFiedManager.add(lAdvanced);
+			mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
+			lAdvanced.add(mTransPort); 
+			mDebugMode = new CheckboxField("Enable debug mode", false);
+			mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
+			lAdvanced.add(mDebugMode);
+		}
+		public void save() {
+			mSettingsMap.put(SIP_USERNAME, mUserNameField.getText());
+			mSettingsMap.put(SIP_PASSWORD, mUserPasswd.getText());
+			mSettingsMap.put(SIP_DOMAIN, mDomain.getText());
+			mSettingsMap.put(SIP_PROXY, mProxy.getText());
+			mSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
+			mSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
+		}
+		public Field getRootField() {
+			return mMainFiedManager;
+		}
+	}
+	SettingsScreen(LinphoneCore lc) {
 		mCore = lc;	
 		mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.settings".hashCode() );
 		if (mPersistentObject.getContents() != null) {
-			lSettingsMap = (Hashtable) mPersistentObject.getContents();
+			mSettingsMap = (Hashtable) mPersistentObject.getContents();
 		} else {
-			lSettingsMap = new Hashtable();
+			mSettingsMap = new Hashtable();
 		}
 		setTitle("Linphone Settings");
+		mSettingsFields = new SettingsFields(); 
+		add(mSettingsFields.getRootField());
+		try {
+			initFromConf();
+		} catch (LinphoneConfigException e) {
+			sLogger.warn("no configuration ready yet", e);
+		}
 
-
-		
-		add(createSettingsFields()); 
 
 	}
 	
 	protected boolean onSave() {
-		lSettingsMap.put(SIP_USERNAME, mUserNameField.getText());
-		lSettingsMap.put(SIP_PASSWORD, mUserPasswd.getText());
-		lSettingsMap.put(SIP_DOMAIN, mDomain.getText());
-		lSettingsMap.put(SIP_PROXY, mProxy.getText());
-		lSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
-		lSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
+
 		try {
+			mSettingsFields.save();
 			initFromConf();
-			mPersistentObject.setContents(lSettingsMap);
+			mPersistentObject.setContents(mSettingsMap);
 			mPersistentObject.commit();
 			
 		} catch (final LinphoneConfigException e) {
@@ -108,8 +151,8 @@ public class SettingsScreen extends MainScreen implements Settings {
 	 */
 	public boolean getBoolean(String key,boolean defaultValue) {
 		boolean lResult = defaultValue;
-		if (lSettingsMap != null) {
-			Boolean value = (Boolean) lSettingsMap.get(key);
+		if (mSettingsMap != null) {
+			Boolean value = (Boolean) mSettingsMap.get(key);
 			if (value != null) {
 				return value.booleanValue();
 			}
@@ -122,8 +165,8 @@ public class SettingsScreen extends MainScreen implements Settings {
 	 */
 	public String getString(String key,String defaultValue) {
 		String lResult = defaultValue;
-		if (lSettingsMap != null) {
-			String value = (String) lSettingsMap.get(key);
+		if (mSettingsMap != null) {
+			String value = (String) mSettingsMap.get(key);
 			if (value != null) {
 				return value;
 			}
@@ -205,51 +248,6 @@ public class SettingsScreen extends MainScreen implements Settings {
 		}
 	}
 	public Field createSettingsFields() {
-		VerticalFieldManager lMainFiedManager = new VerticalFieldManager();
-		
-
-		VerticalFieldManager lSipAccount = new VerticalFieldManager();
-		lMainFiedManager.add(lSipAccount);
-		LabelField lSipAccountLabelField = new LabelField("SIP account");
-		lSipAccount.add(lSipAccountLabelField);
-		mUserNameField = new BasicEditField("Username*: ", "", 128, 0);
-		mUserNameField.setText(getString(SIP_USERNAME,""));
-		lSipAccount.add(mUserNameField);
-		mUserPasswd = new BasicEditField("Passwd*: ", "", 128, 0);
-		mUserPasswd.setText(getString(SIP_PASSWORD,""));
-		lSipAccount.add(mUserPasswd);
-		mDomain = new BasicEditField("Domain*: ", "", 128, 0);
-		mDomain.setText(getString(SIP_DOMAIN,""));
-		lSipAccount.add(mDomain);
-		mProxy = new BasicEditField("Proxy: ", "", 128, 0);
-		mProxy.setText(getString(SIP_PROXY,""));
-		lSipAccount.add(mProxy);
-
-		
-		SeparatorField lSipAccountSeparator = new SeparatorField();
-		lMainFiedManager.add(lSipAccountSeparator);
-
-		VerticalFieldManager lAdvanced = new VerticalFieldManager();
-		lMainFiedManager.add(lAdvanced);
-		mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
-		lAdvanced.add(mTransPort); 
-		mDebugMode = new CheckboxField("Enable debug mode", false);
-		mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
-		mDebugMode.setChangeListener(new FieldChangeListener() {
-
-			public void fieldChanged(Field field, int context) {
-				LinphoneCoreFactory.instance().setDebugMode(((CheckboxField)field).getChecked());
-
-			}
-
-		});
-		lAdvanced.add(mDebugMode);
-		try {
-			initFromConf();
-		} catch (LinphoneConfigException e) {
-			sLogger.warn("no configuration ready yet", e);
-		}
-
-	return lMainFiedManager;
+		return new SettingsFields().getRootField();
 	}
  }
