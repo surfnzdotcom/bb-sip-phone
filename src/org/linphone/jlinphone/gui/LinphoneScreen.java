@@ -50,6 +50,7 @@ import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.KeyListener;
 import net.rim.device.api.system.RadioInfo;
 import net.rim.device.api.system.WLANInfo;
+import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.MenuItem;
@@ -62,11 +63,11 @@ import net.rim.device.api.ui.component.Status;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
+import net.rim.device.api.ui.decor.BackgroundFactory;
 
 public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 
- 	private HorizontalFieldManager mLayout;
-	private LabelField mStatus;
+ 	private LabelField mStatus;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	private LinphoneCore mCore;
 	private Timer mTimer;
@@ -81,6 +82,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	LinphoneScreen()  {
 
 		try {
+			//ask for recorder permission at startup
 			Player lDummyRecorder = Manager.createPlayer("capture://audio?encoding=audio/amr");
 
 			lDummyRecorder.realize();
@@ -98,12 +100,9 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		}
 
 		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-		//LinphoneCoreFactory.instance().setDebugMode(true);//Logger.setGlobalLogLevel(Logger.Debug);
 		LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
 		sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
-		VerticalFieldManager v=new VerticalFieldManager();
-
-
+		// volume control keys
 		addKeyListener(new KeyListener() {
 			final static int GREEN_BUTTON_KEY=1114112;
 			final static int RED_BUTTON_KEY=1179648;
@@ -156,29 +155,16 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		});
 
 
-		mLayout=new HorizontalFieldManager(Field.FIELD_HCENTER|HorizontalFieldManager.NO_HORIZONTAL_SCROLL);
 
 		mStatus=new LabelField("",Field.FIELD_BOTTOM);
 		mStatus.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,20));
 		// Set the displayed title of the screen       
-		setTitle("Linphone");
+		setTitle(mStatus);
 
-		// Add a read only text field (RichTextField) to the screen.  The
-		// RichTextField is focusable by default. Here we provide a style
-		// parameter to make the field non-focusable.
-		add(v);
-
-
-
-		v.add(mLayout);
-		v.add(mStatus);
-		v.add(new SeparatorField());
-
-
+		// init liblinphone
 		try {
 			mCore=LinphoneCoreFactory.instance().createLinphoneCore(this, null, null, this);
 		} catch (final LinphoneCoreException e) {
-			//sLogger.fatal("Cannot create LinphoneCore", e);
 			UiApplication.getUiApplication().invokeLater(new Runnable() {
 				public void run() {
 					Dialog.alert(e.getMessage());
@@ -188,10 +174,10 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 
 			return;
 		}
-		
+		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));
 		
 		mTabField = new TabField();
-		v.add(mTabField);		
+		add(mTabField);		
 
 		//dialer
 		mDialer = new DialerField();
@@ -218,6 +204,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		mSettingsScreen = new SettingsScreen(mCore);
 		mTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), mSettingsScreen.createSettingsFields());
 		
+		//menu
 		addMenuItem(new MenuItem("Settings", 110, 10)
 		{
 			public void run() 
@@ -252,13 +239,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	}
 
     
-    protected boolean keyControl(char c, int status, int time) {
-		// TODO Auto-generated method stub
-		return super.keyControl(c, status, time);
-	}
-
-
-	/**
+ 	/**
      * Displays a dialog box to the user with the text "Goodbye!" when the
      * application is closed.
      * 
@@ -297,11 +278,6 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		sLogger.info("Hangup button pressed");
 		mCore.terminateCall();		
 	}
-	public void focusChanged(Field field, int eventType) {
-		// TODO Auto-generated method stub
-		
-	}
-
 
 	public void authInfoRequested(LinphoneCore lc, String realm, String username) {
 		// TODO Auto-generated method stub
@@ -324,7 +300,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	public void displayStatus(LinphoneCore lc, final String message) {
 		UiApplication.getUiApplication().invokeLater(new Runnable() {
 			public void run() {
-				mStatus.setText(message);
+				mStatus.setText("Linphone  "+message);
 			}
 		});
 
@@ -357,6 +333,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		// TODO Auto-generated method stub
 		
 	}
+
 
 		
 }

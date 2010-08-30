@@ -10,6 +10,7 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.XYEdges;
 import net.rim.device.api.ui.component.KeywordFilterField;
+import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.TextField;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.Border;
@@ -33,12 +34,11 @@ public class DialerField extends VerticalFieldManager {
 			  sLogger.error("Cannot open contact list",e);
 		  }
 	    mkeyWordField.setKeywordField(new TextField(Field.FOCUSABLE));
-		mInputAddress = mkeyWordField.getKeywordField();
-		XYEdges edges = new XYEdges(8,8,8,8);
-		Border border=BorderFactory.createRoundedBorder(edges);
-		mInputAddress.setBorder(border);
-		mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,30));
+	    mInputAddress = mkeyWordField.getKeywordField();
+	    mInputAddress.setLabel("sip:");
+	    mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,30));
 		add(mInputAddress);
+		add(new SeparatorField());
 		add(mkeyWordField);
 	}
 	public void setAddress(String aValue) {
@@ -47,4 +47,9 @@ public class DialerField extends VerticalFieldManager {
 	public String getAddress() {
 		return mInputAddress.getText();
 	}
+	protected void onFocus(int direction) {
+		// TODO Auto-generated method stub
+		super.onFocus(direction);
+	}
+	
 }

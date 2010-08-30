@@ -22,7 +22,9 @@ import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
 
+import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.Display;
+import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.ListFieldCallback;
@@ -34,15 +36,27 @@ public class CallLogsField extends SelectableListField {
 	CallLogsField(LinphoneCore aCore,Listener aListener) {
 		super (aListener);
 		mCore = aCore;
+		final Bitmap lOutBitmap = new Bitmap(this.getRowHeight(), this.getRowHeight());
+		lOutBitmap.createAlpha(Bitmap.ALPHA_BITDEPTH_MONO);
+		Bitmap.getBitmapResource("out_call.png").scaleInto( lOutBitmap
+							,Bitmap.FILTER_LANCZOS);
+		final Bitmap lInBitmap = new Bitmap(this.getRowHeight(), this.getRowHeight());
+		lInBitmap.createAlpha(Bitmap.ALPHA_BITDEPTH_MONO);
+		Bitmap.getBitmapResource("in_call.png").scaleInto( lInBitmap
+							,Bitmap.FILTER_LANCZOS);
 		
 		setCallback(new ListFieldCallback() { 
 		    public void drawListRow(ListField list, Graphics g, int index, int y, int w) { 
-		        LinphoneCallLog lCallLog = (LinphoneCallLog) get(list,index);
+		    	g.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
+				g.clear();
+				
+		    	LinphoneCallLog lCallLog = (LinphoneCallLog) get(list,index);
 		    	if (lCallLog.getDirection() == CallDirection.Incoming) {
-		    		g.drawText("IN "+ (lCallLog.getFrom()!=null?lCallLog.getFrom().getUserName():"unknown"), 0,y,0,w);
+		    		g.drawBitmap(0, y,lInBitmap.getWidth(),lInBitmap.getHeight(),lInBitmap, 0, 0);
+		    		g.drawText((lCallLog.getFrom()!=null?lCallLog.getFrom().getUserName():"unknown"), lInBitmap.getWidth()+5,y,0,w);
 		    	} else {
-		    		g.drawText("OUT "+ (lCallLog.getTo()!=null?lCallLog.getTo().getUserName():"unknown"), 0,y,0,w);
-		    		
+		    		g.drawBitmap(0, y,lOutBitmap.getWidth(),lOutBitmap.getHeight(),lOutBitmap, 0, 0);
+		    		g.drawText((lCallLog.getTo()!=null?lCallLog.getTo().getUserName():"unknown"), lOutBitmap.getWidth()+5,y,0,w);
 		    	}
 		    } 
 		    public Object get(ListField list, int index) {

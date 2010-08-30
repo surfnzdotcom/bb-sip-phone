@@ -21,59 +21,84 @@ package org.linphone.jlinphone.gui;
 import java.util.Vector;
 
 import net.rim.device.api.system.Bitmap;
+import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 
 import net.rim.device.api.ui.component.BitmapField;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.VerticalFieldManager;
+import net.rim.device.api.ui.decor.Background;
+import net.rim.device.api.ui.decor.BackgroundFactory;
 
 public class TabField extends VerticalFieldManager {
 	HorizontalFieldManager mTabController = new HorizontalFieldManager();
 	Vector mTabFields = new Vector();
 	Field mCurrentField;
+	int mCurrentIndex=0;
 	int mDefault=0;
+	int PADDING=0;
+	int SIZE=40;
+	Background  CONTROL_NORMAL_BG=BackgroundFactory.createSolidBackground(Color.DARKGRAY);
+	Background  CONTROL_ACTIVE_BG=BackgroundFactory.createSolidBackground(Color.LIGHTGREY);
 	public TabField() {
 		add(mTabController);
 		add(new SeparatorField());
 	}
 	void setDefault(int index) {
 		mDefault=index;
+		mCurrentIndex=index;
 		if (mDefault <= mTabFields.size()-1) {
 			display(mDefault);
 		}
 	}
 	public void display(int index) {
-		delete(mCurrentField);
+		if (mCurrentField !=null) delete(mCurrentField);
 		mCurrentField=(Field) mTabFields.elementAt(index);
 		add(mCurrentField);
 		setDirty(true);
-	
+		mTabController.getField(mCurrentIndex).setBackground(CONTROL_NORMAL_BG);
+		mTabController.getField(mCurrentIndex).setDirty(true);
+		mTabController.getField(index).setBackground(CONTROL_ACTIVE_BG);
+		mTabController.getField(index).setDirty(true);
+		mCurrentIndex = index;
+		mCurrentField.setFocus();
 	}
 	public void addTab(Bitmap aBitmap, final Field aTabField) {
-		Bitmap lBitmapScaled = new Bitmap(50, 50);
+		Bitmap lBitmapScaled = new Bitmap(SIZE, SIZE);
+		
 		lBitmapScaled.createAlpha(Bitmap.ALPHA_BITDEPTH_MONO);
-		aBitmap.scaleInto(lBitmapScaled,  Bitmap.FILTER_LANCZOS);
+	
+		aBitmap.scaleInto(	0
+							,0
+							,aBitmap.getWidth()
+							,aBitmap.getHeight()
+							,lBitmapScaled
+							,PADDING
+							,PADDING
+							,SIZE-2*PADDING
+							,SIZE-2*PADDING
+							,Bitmap.FILTER_LANCZOS);
 		BitmapField lButton = new BitmapField(lBitmapScaled,Field.FOCUSABLE) {
-			 
+
 			protected boolean navigationUnclick(int status, int time) {
 				if (aTabField == null) {
 					return  false; //nop
 				}
-				if (mCurrentField != null) TabField.this.delete(mCurrentField);
-				TabField.this.add(aTabField);
-				TabField.this.setDirty(true);
-				mCurrentField=aTabField;
+				display(getIndex());
 				return true;
 				
 			}
 		};
+		lButton.setBackground(CONTROL_NORMAL_BG);
+		lButton.setSpace(10, 10);
 		mTabController.add(lButton);
 		mTabFields.addElement(aTabField);
 		
 		if (mDefault == mTabFields.size()-1 && aTabField!=null) {
-			this.add(aTabField);
-			mCurrentField=aTabField;
+			display(mDefault);
+			//this.add(aTabField);
+			//mCurrentField=aTabField;
 		}
 	}
 

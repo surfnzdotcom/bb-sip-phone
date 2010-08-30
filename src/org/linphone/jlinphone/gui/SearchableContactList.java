@@ -18,12 +18,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
+import java.util.Enumeration;
+import java.util.Vector;
+
 import javax.microedition.pim.Contact;
 import javax.microedition.pim.ContactList;
 import javax.microedition.pim.PIM;
 import javax.microedition.pim.PIMException;
+import javax.microedition.pim.PIMItem;
+
 import net.rim.device.api.collection.util.SortedReadableList;
 import net.rim.device.api.system.Display;
+import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.Graphics;
@@ -60,11 +66,27 @@ class ContactListSource extends SortedReadableList implements KeywordProvider{
 	        }
 
 	    }    
-	ContactList mContacts;    
+	ContactList mContacts;
+	Vector mFlatContactList = new Vector();
+	
 	public ContactListSource() throws PIMException{
 		super(new ContactComparator());
 		mContacts = (ContactList) PIM.getInstance().openPIMList(PIM.CONTACT_LIST, PIM.READ_ONLY);
-		loadFrom(mContacts.items());
+		Enumeration lContacts = mContacts.items(); 
+		Contact lCurrent;
+		while (lContacts.hasMoreElements()) {
+			lCurrent=(Contact) lContacts.nextElement();
+			for (int i=0;i<lCurrent.countValues(Contact.TEL);i++) {
+				Contact lTargetContact = mContacts.createContact();
+				lTargetContact.addStringArray(Contact.NAME, PIMItem.ATTR_NONE, lCurrent.getStringArray(Contact.NAME, 0));
+				String lContactTel = lCurrent.getString(Contact.TEL, i);
+				lTargetContact.addString(Contact.TEL, lCurrent.getAttributes(Contact.TEL, i), lContactTel);
+				mFlatContactList.addElement(lTargetContact);
+			}
+		}
+		
+		//loadFrom(mContacts.items());
+		loadFrom(mFlatContactList.elements());
 
 	}
 
@@ -116,6 +138,8 @@ public class SearchableContactList implements ListFieldCallback{
 	}
 	public void drawListRow(ListField listField, Graphics graphics, int index,
 			int y, int width) {
+		graphics.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
+		graphics.clear();
 		Contact lContact = (Contact) get(listField,index);
 		String[] lContactNames = lContact.getStringArray(Contact.NAME, 0);
 		int lCurrentX=0;
@@ -133,8 +157,8 @@ public class SearchableContactList implements ListFieldCallback{
 			lCurrentX+= graphics.getFont().getAdvance(" ") +graphics.getFont().getAdvance(lContactNames[Contact.NAME_FAMILY]);
 		}
 		if (lContact.countValues(Contact.TEL) > 0) {
-			graphics.setFont(Font.getDefault().derive(Font.ITALIC));
-			String lType =  mContactList.getContactList().getAttributeLabel(lContact.getAttributes(Contact.TEL, 0));
+			graphics.setFont(Font.getDefault().derive(Font.ITALIC,Font.getDefault().getHeight()-2));
+			String lType =  "["+mContactList.getContactList().getAttributeLabel(lContact.getAttributes(Contact.TEL, 0))+"]";
 			graphics.drawText(lType
 								,lCurrentX + graphics.getFont().getAdvance(" ")
 								,y,0);

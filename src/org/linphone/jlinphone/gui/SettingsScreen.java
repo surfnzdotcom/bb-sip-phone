@@ -240,6 +240,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 				lDefaultProxyConfig.done();
 			}
 			lDefaultProxyConfig = mCore.getDefaultProxyConfig();
+			lDefaultProxyConfig.setDialEscapePlus(true);
 
 			//init network state
 			
