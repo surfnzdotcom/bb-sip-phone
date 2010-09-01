@@ -33,6 +33,7 @@ import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
+import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.BasicEditField;
 import net.rim.device.api.ui.component.CheckboxField;
@@ -49,9 +50,9 @@ public class SettingsScreen extends MainScreen implements Settings {
 	private Hashtable mSettingsMap;
 	private final LinphoneCore mCore;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
-	SettingsFields mSettingsFields;
+	SettingsFieldContent mSettingsFields;
 	
-	class SettingsFields {
+	class SettingsFieldContent {
 		private BasicEditField mUserNameField;
 		private BasicEditField mUserPasswd;
 		private BasicEditField mDomain;
@@ -61,10 +62,11 @@ public class SettingsScreen extends MainScreen implements Settings {
 		private ObjectChoiceField mTransPort;
 		VerticalFieldManager mMainFiedManager = new VerticalFieldManager();
 
-		public SettingsFields (){
+		public SettingsFieldContent (){
 			VerticalFieldManager lSipAccount = new VerticalFieldManager();
 			mMainFiedManager.add(lSipAccount);
 			LabelField lSipAccountLabelField = new LabelField("SIP account");
+			lSipAccountLabelField.setFont(Font.getDefault().derive(Font.BOLD|Font.UNDERLINED));
 			lSipAccount.add(lSipAccountLabelField);
 			mUserNameField = new BasicEditField("Username*: ", "", 128, 0);
 			mUserNameField.setText(getString(SIP_USERNAME,""));
@@ -85,6 +87,10 @@ public class SettingsScreen extends MainScreen implements Settings {
 
 			VerticalFieldManager lAdvanced = new VerticalFieldManager();
 			mMainFiedManager.add(lAdvanced);
+			LabelField lAvancedLabelField = new LabelField("Advanced");
+			lAvancedLabelField.setFont(Font.getDefault().derive(Font.BOLD|Font.UNDERLINED));
+			lAdvanced.add(lAvancedLabelField);
+			
 			mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
 			lAdvanced.add(mTransPort); 
 			mDebugMode = new CheckboxField("Enable debug mode", false);
@@ -112,7 +118,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 			mSettingsMap = new Hashtable();
 		}
 		setTitle("Linphone Settings");
-		mSettingsFields = new SettingsFields(); 
+		mSettingsFields = new SettingsFieldContent(); 
 		add(mSettingsFields.getRootField());
 		try {
 			initFromConf();
@@ -248,7 +254,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 			throw new LinphoneConfigException("Wrong settings",e);
 		}
 	}
-	public Field createSettingsFields() {
-		return new SettingsFields().getRootField();
+	public SettingsFieldContent createSettingsFields() {
+		return new SettingsFieldContent();
 	}
  }

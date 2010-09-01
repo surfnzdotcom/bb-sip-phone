@@ -181,8 +181,5 @@ public class SearchableContactList implements ListFieldCallback{
 	public int indexOfList(ListField listField, String prefix, int start) {
 		return -1;
 	}
-	public void fieldChanged(Field field, int context) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 }

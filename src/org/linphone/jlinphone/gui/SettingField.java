@@ -1,5 +1,5 @@
 /*
-SelectableListField.java
+SettingField.java
 Copyright (C) 2010  Belledonne Communications, Grenoble, France
 
 This program is free software; you can redistribute it and/or
@@ -18,30 +18,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
+import org.linphone.jlinphone.gui.SettingsScreen.SettingsFieldContent;
 
-import net.rim.device.api.ui.component.ListField;
+import net.rim.device.api.ui.Field;
+import net.rim.device.api.ui.component.ButtonField;
+import net.rim.device.api.ui.component.Dialog;
+import net.rim.device.api.ui.component.SeparatorField;
+import net.rim.device.api.ui.container.VerticalFieldManager;
 
-public abstract class SelectableListField extends ListField {
-	interface Listener {
-		public void onSelected(Object selected);
-	}
-	final Listener mListener;
-	SelectableListField(Listener aListener) {
-		mListener = aListener;
-	}
-	protected boolean keyChar(char key, int status, int time) {
-		if (key !='\n') {
-			return super.keyChar(key, status, time);
-		} else {
-			return navigationClick(0,0);
-		}
-	}
-	
-
-	protected boolean navigationUnclick(int status, int time) {
-		if (mListener != null ) {
-			mListener.onSelected( this.getCallback().get(this, getSelectedIndex()));
-		}
-		return true;
+public class SettingField extends VerticalFieldManager {
+	public SettingField(final SettingsFieldContent aContentSettings) {
+		add(aContentSettings.getRootField());
+		add( new SeparatorField());
+		ButtonField lButtonField = new ButtonField("Save",Field.FOCUSABLE);
+		lButtonField.setRunnable(new Runnable() {
+			public void run() {
+				aContentSettings.save();
+				Dialog.alert("Saved");
+			}
+		});
+		add (lButtonField);
 	}
 }

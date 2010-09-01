@@ -19,12 +19,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.gui;
 
 import org.linphone.core.CallDirection;
+import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
 
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Color;
+import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.ListFieldCallback;
@@ -49,15 +51,25 @@ public class CallLogsField extends SelectableListField {
 		    public void drawListRow(ListField list, Graphics g, int index, int y, int w) { 
 		    	g.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
 				g.clear();
-				
+				int lXCurrentPosistion=0;
 		    	LinphoneCallLog lCallLog = (LinphoneCallLog) get(list,index);
+		    	LinphoneAddress lAddressToDisplay;
 		    	if (lCallLog.getDirection() == CallDirection.Incoming) {
 		    		g.drawBitmap(0, y,lInBitmap.getWidth(),lInBitmap.getHeight(),lInBitmap, 0, 0);
-		    		g.drawText((lCallLog.getFrom()!=null?lCallLog.getFrom().getUserName():"unknown"), lInBitmap.getWidth()+5,y,0,w);
+		    		lAddressToDisplay=lCallLog.getFrom();
 		    	} else {
 		    		g.drawBitmap(0, y,lOutBitmap.getWidth(),lOutBitmap.getHeight(),lOutBitmap, 0, 0);
-		    		g.drawText((lCallLog.getTo()!=null?lCallLog.getTo().getUserName():"unknown"), lOutBitmap.getWidth()+5,y,0,w);
+		    		lAddressToDisplay=lCallLog.getTo();
 		    	}
+		    	lXCurrentPosistion=lInBitmap.getWidth()+5;
+		    	if (lAddressToDisplay.getDisplayName() != null) {
+		    		g.setFont(Font.getDefault().derive(Font.BOLD));
+		    		g.drawText(lAddressToDisplay.getDisplayName(),lXCurrentPosistion,y,0,w);
+		    		lXCurrentPosistion+=g.getFont().getAdvance(lAddressToDisplay.getDisplayName())+g.getFont().getAdvance(" ");
+		    		g.setFont(Font.getDefault());
+		    	}
+		    	g.drawText((lAddressToDisplay!=null?lAddressToDisplay.getUserName():"unknown"), lXCurrentPosistion,y,0,w);
+		    	
 		    } 
 		    public Object get(ListField list, int index) {
 		        return mCore.getCallLogs().elementAt(getLenth()-index-1); 

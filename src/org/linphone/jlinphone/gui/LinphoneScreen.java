@@ -31,6 +31,7 @@ import javax.microedition.media.control.RecordControl;
 import org.linphone.bb.NetworkManager;
 import org.linphone.bb.LogHandler;
 import org.linphone.core.CallDirection;
+import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
@@ -187,13 +188,14 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		mCallLogs = new CallLogsField(mCore, new CallLogsField.Listener() {
 			
 			public void onSelected(Object selected) {
-				String lAddress;
+				LinphoneAddress lAddress;
 				if (selected == CallDirection.Incoming) {
-					lAddress = ((LinphoneCallLog)selected).getFrom().getUserName();
+					lAddress = ((LinphoneCallLog)selected).getFrom();
 				} else {
-					lAddress = ((LinphoneCallLog)selected).getTo().getUserName();
+					lAddress = ((LinphoneCallLog)selected).getTo();
 				}
-				mDialer.setAddress(lAddress);
+				mDialer.setAddress(lAddress.getUserName());
+				mDialer.setDisplayName(lAddress.getDisplayName());
 				mTabField.display(DIALER_TAB_INDEX);
 				
 			}
@@ -202,7 +204,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		mTabField.addTab(Bitmap.getBitmapResource("history_orange.png"), mCallLogs);
 		//settings
 		mSettingsScreen = new SettingsScreen(mCore);
-		mTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), mSettingsScreen.createSettingsFields());
+		mTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), new SettingField(mSettingsScreen.createSettingsFields()));
 		
 		//menu
 		addMenuItem(new MenuItem("Settings", 110, 10)
@@ -261,7 +263,9 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 			if (mCore.isInComingInvitePending()){
 				mCore.acceptCall();
 			}else{
-				mCore.invite(mDialer.getAddress());
+				LinphoneAddress lTo = mCore.interpretUrl(mDialer.getAddress());
+				lTo.setDisplayName(mDialer.getDisplayName());
+				mCore.invite(lTo);
 			}
 		} catch (final LinphoneCoreException e) {
 			sLogger.error("call error",e);
