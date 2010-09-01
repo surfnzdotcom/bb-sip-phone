@@ -76,8 +76,8 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	private ListField mCallLogs;
 	private DialerField mDialer;
 	private TabField mTabField;
-	private final int DIALER_TAB_INDEX=0;
-	private final int HISTORY_TAB_INDEX=1;
+	private final int HISTORY_TAB_INDEX=0;
+	private final int DIALER_TAB_INDEX=1;
 	private final int SETTINGS_TAB_INDEX=2;
 	
 	LinphoneScreen()  {
@@ -142,10 +142,10 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 			public boolean keyRepeat(int keycode, int time) {return false;}
 			public boolean keyStatus(int keycode, int time) {return false;}
 			public boolean keyUp(int keycode, int time) {
-				if (keycode == GREEN_BUTTON_KEY) {
+				/*if (keycode == GREEN_BUTTON_KEY) {
 					callButtonPressed();
 					return true;
-				} else if (keycode == RED_BUTTON_KEY) {
+				} else*/ if (keycode == RED_BUTTON_KEY) {
 					hangupButtonPressed();
 					return true;
 				} else {
@@ -180,10 +180,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		mTabField = new TabField();
 		add(mTabField);		
 
-		//dialer
-		mDialer = new DialerField();
-		
-		mTabField.addTab(Bitmap.getBitmapResource("dialer_orange.png"), mDialer);
+
 		//call logs
 		mCallLogs = new CallLogsField(mCore, new CallLogsField.Listener() {
 			
@@ -202,10 +199,13 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		});
 		
 		mTabField.addTab(Bitmap.getBitmapResource("history_orange.png"), mCallLogs);
+		//dialer
+		mDialer = new DialerField(mCore);
+		mTabField.addTab(Bitmap.getBitmapResource("dialer_orange.png"), mDialer);
 		//settings
 		mSettingsScreen = new SettingsScreen(mCore);
 		mTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), new SettingField(mSettingsScreen.createSettingsFields()));
-		
+		mTabField.setDefault(DIALER_TAB_INDEX);
 		//menu
 		addMenuItem(new MenuItem("Settings", 110, 10)
 		{

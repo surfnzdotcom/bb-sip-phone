@@ -47,10 +47,10 @@ public class TabField extends VerticalFieldManager {
 	}
 	void setDefault(int index) {
 		mDefault=index;
-		mCurrentIndex=index;
 		if (mDefault <= mTabFields.size()-1) {
 			display(mDefault);
 		}
+		
 	}
 	public void display(int index) {
 		if (mCurrentField !=null) delete(mCurrentField);

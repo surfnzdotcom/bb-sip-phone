@@ -104,6 +104,20 @@ public class SettingsScreen extends MainScreen implements Settings {
 			mSettingsMap.put(SIP_PROXY, mProxy.getText());
 			mSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
 			mSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
+			try {
+				initFromConf();
+				mPersistentObject.setContents(mSettingsMap);
+				mPersistentObject.commit();
+				
+			} catch (final LinphoneConfigException e) {
+				sLogger.error("Configuration error",e);
+				UiApplication.getUiApplication().invokeLater(new Runnable() {
+					public void run() {
+						Dialog.alert(e.getMessage());
+						
+					}
+				});
+			}
 		}
 		public Field getRootField() {
 			return mMainFiedManager;
@@ -130,25 +144,8 @@ public class SettingsScreen extends MainScreen implements Settings {
 	}
 	
 	protected boolean onSave() {
-
-		try {
-			mSettingsFields.save();
-			initFromConf();
-			mPersistentObject.setContents(mSettingsMap);
-			mPersistentObject.commit();
-			
-		} catch (final LinphoneConfigException e) {
-			sLogger.error("Configuration error",e);
-			UiApplication.getUiApplication().invokeLater(new Runnable() {
-				public void run() {
-					Dialog.alert(e.getMessage());
-					
-				}
-			});
-		}
-
+		mSettingsFields.save();
 		return true;
-		
 	}
 	
 	

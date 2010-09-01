@@ -21,6 +21,9 @@ package org.linphone.jlinphone.gui;
 import javax.microedition.pim.Contact;
 import javax.microedition.pim.PIMException;
 
+import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneCore;
+import org.linphone.core.LinphoneCoreException;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
@@ -28,6 +31,8 @@ import net.rim.device.api.system.Characters;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Font;
+import net.rim.device.api.ui.UiApplication;
+import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.KeywordFilterField;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.TextField;
@@ -36,33 +41,19 @@ import net.rim.device.api.ui.text.PhoneTextFilter;
 
 public class DialerField extends VerticalFieldManager {
 	private TextField  mInputAddress;
-	
 	private KeywordFilterField mkeyWordField;    
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	String mDisplayName;
-	public DialerField() {
+	LinphoneCore mCore;
+	final static int GREEN_BUTTON_KEY=1114112;
+	public DialerField(LinphoneCore aCore) {
+		mCore=aCore;
 		try {
 		    
 			mkeyWordField = new SearchableContactList(new SearchableContactList.Listener() {
 
 				public void onSelected(Contact selected) {
-					setAddress( selected.getString(Contact.TEL, 0));
-					String[] lContactNames = selected.getStringArray(Contact.NAME, 0);
-					StringBuffer lDisplayName = new StringBuffer();
-
-					if (lContactNames[Contact.NAME_GIVEN] != null ) {
-						lDisplayName.append(lContactNames[Contact.NAME_GIVEN]);
-					}
-					if (lContactNames[Contact.NAME_FAMILY] != null ) {
-						if (lDisplayName.length()!= 0) lDisplayName.append(' ');
-						lDisplayName.append(lContactNames[Contact.NAME_FAMILY]);
-					}
-					if (lDisplayName.length()!=0) {
-						setDisplayName(lDisplayName.toString());
-					} else {
-						setDisplayName(null);
-					}
-
+					setAddressAndDisplay(selected);
 				}
 			}).getKeywordFilterField();
 		  } catch (PIMException e) {
@@ -78,7 +69,7 @@ public class DialerField extends VerticalFieldManager {
 			}
 			  
 		  });
-		  mkeyWordField.setKeywordField(new TextField());
+		  mkeyWordField.setKeywordField(new TextField(Field.NON_FOCUSABLE));
 		  mkeyWordField.getKeywordField().setLabel("Find:");
 		  mkeyWordField.getKeywordField().setEditable(false);
 		  mInputAddress = new TextField(Field.FOCUSABLE) {
@@ -89,7 +80,7 @@ public class DialerField extends VerticalFieldManager {
 				StringBuffer lnewKey = new StringBuffer(mkeyWordField.getKeywordField().getText());
 				mkeyWordField.setKeyword(lnewKey.insert(getCursorPosition(), charater).toString());
 				
-				if (mInDigitMode ==true && 0<Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
+				if (mInDigitMode ==true && 0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
 					 return super.insert(lNumber, arg1);
 				} else {
 					if (mInDigitMode==true) {
@@ -109,7 +100,7 @@ public class DialerField extends VerticalFieldManager {
 				return super.backspace();
 			}
 			protected boolean keyChar(char key, int status, int time) {
-				mDisplayName=null; //errase display name if any key is namually entered
+				mDisplayName=null; //Erase display name if any key is manually entered
 				if (getTextLength()!=0) {
 					mInputAddress.setLabel("");
 				} else {
@@ -118,6 +109,9 @@ public class DialerField extends VerticalFieldManager {
 				if (key == Characters.BACKSPACE && getCursorPosition()==0 && getTextLength() !=0) {
 					StringBuffer lnewKey = new StringBuffer(mkeyWordField.getKeywordField().getText());
 					mkeyWordField.setKeyword(lnewKey.delete(0,1).toString());
+				}
+				if (getTextLength() == 0 || (key == Characters.BACKSPACE && getTextLength()==1)) {
+					setLabel("sip:");
 				}
 				return super.keyChar(key, status, time);
 			}
@@ -131,6 +125,53 @@ public class DialerField extends VerticalFieldManager {
 		add(mkeyWordField.getKeywordField());
 		add(new SeparatorField());
 		add(mkeyWordField);
+	}
+	
+	
+	protected boolean keyDown(int keycode, int time) {
+		if (keycode==GREEN_BUTTON_KEY && (mkeyWordField.getSelectedElement()!=null ||mInputAddress.getText().length()>0)) {
+			try {
+				if (mCore.isInComingInvitePending()){
+					throw new LinphoneCoreException("Already in call");
+				}else{
+					if (mkeyWordField.getSelectedElement() != null) {
+						DialerField.this.setAddressAndDisplay((Contact) mkeyWordField.getSelectedElement());
+					}
+					LinphoneAddress lTo = mCore.interpretUrl(getAddress());
+					lTo.setDisplayName(getDisplayName());
+					mCore.invite(lTo);
+					return true;
+				}
+			} catch (final LinphoneCoreException e) {
+				sLogger.error("call error",e);
+				UiApplication.getUiApplication().invokeLater(new Runnable() {
+					public void run() {
+						Dialog.alert(e.getMessage());
+
+					}
+				});
+			}
+		}
+		return super.keyDown(keycode, time);
+	}
+
+	private void setAddressAndDisplay (Contact aContact) {
+		setAddress( aContact.getString(Contact.TEL, 0));
+		String[] lContactNames = aContact.getStringArray(Contact.NAME, 0);
+		StringBuffer lDisplayName = new StringBuffer();
+
+		if (lContactNames[Contact.NAME_GIVEN] != null ) {
+			lDisplayName.append(lContactNames[Contact.NAME_GIVEN]);
+		}
+		if (lContactNames[Contact.NAME_FAMILY] != null ) {
+			if (lDisplayName.length()!= 0) lDisplayName.append(' ');
+			lDisplayName.append(lContactNames[Contact.NAME_FAMILY]);
+		}
+		if (lDisplayName.length()!=0) {
+			setDisplayName(lDisplayName.toString());
+		} else {
+			setDisplayName(null);
+		}
 	}
 	public void setAddress(String aValue) {
 		if (aValue.length()>0) mInputAddress.setLabel(null);
