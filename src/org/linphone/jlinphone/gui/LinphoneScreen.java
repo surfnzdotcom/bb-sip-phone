@@ -221,7 +221,14 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 				EventLogger.startEventLogViewer();
 			}
 		});
-
+		addMenuItem(new MenuItem("About", 110, 10)
+		{
+			public void run() 
+			{
+				UiApplication.getUiApplication().pushScreen(new AboutScreen());
+			}
+		});
+		
 		mTimer=new Timer();
 		TimerTask task=new TimerTask(){
 

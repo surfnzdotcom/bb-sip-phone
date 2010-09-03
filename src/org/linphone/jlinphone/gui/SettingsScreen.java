@@ -31,6 +31,7 @@ import org.linphone.jortp.Logger;
 import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
+import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Font;
@@ -44,6 +45,7 @@ import net.rim.device.api.ui.component.SeparatorField;
 
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
+import net.rim.device.api.ui.decor.BackgroundFactory;
 
 public class SettingsScreen extends MainScreen implements Settings {
 	private PersistentObject mPersistentObject;
@@ -132,6 +134,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 			mSettingsMap = new Hashtable();
 		}
 		setTitle("Linphone Settings");
+		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));
 		mSettingsFields = new SettingsFieldContent(); 
 		add(mSettingsFields.getRootField());
 		try {
