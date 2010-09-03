@@ -134,7 +134,7 @@ public class DialerField extends VerticalFieldManager {
 				if (mCore.isInComingInvitePending()){
 					throw new LinphoneCoreException("Already in call");
 				}else{
-					if (mkeyWordField.getSelectedElement() != null && mkeyWordField.isFocus()) {
+					if (mkeyWordField.getSelectedElement() != null && getFieldWithFocus()==mkeyWordField) {
 						DialerField.this.setAddressAndDisplay((Contact) mkeyWordField.getSelectedElement());
 					}
 					LinphoneAddress lTo = mCore.interpretUrl(getAddress());
