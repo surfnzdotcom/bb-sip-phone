@@ -38,7 +38,7 @@ public class TabField extends VerticalFieldManager {
 	int mCurrentIndex=0;
 	int mDefault=0;
 	int PADDING=0;
-	int SIZE=40;
+	static final public int SIZE=40;
 	Background  CONTROL_NORMAL_BG=BackgroundFactory.createSolidBackground(Color.DARKGRAY);
 	Background  CONTROL_ACTIVE_BG=BackgroundFactory.createSolidBackground(Color.LIGHTGREY);
 	public TabField() {

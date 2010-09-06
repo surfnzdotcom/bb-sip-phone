@@ -341,7 +341,11 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 
 
 	public void generalState(LinphoneCore lc, GeneralState state, String message) {
-		// TODO Auto-generated method stub
+		if (state == GeneralState.GSTATE_CALL_OUT_INVITE || state==GeneralState.GSTATE_CALL_IN_INVITE ) {
+			mDialer.enableIncallFields();
+		} else if (state==GeneralState.GSTATE_CALL_END) {
+			mDialer.enableOutOfCallFields();
+		}
 		
 	}
 

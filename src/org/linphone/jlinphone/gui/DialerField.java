@@ -18,6 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.microedition.pim.Contact;
 import javax.microedition.pim.PIMException;
 
@@ -28,26 +31,43 @@ import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
 import net.rim.device.api.system.Characters;
+import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.KeywordFilterField;
+import net.rim.device.api.ui.component.LabelField;
+import net.rim.device.api.ui.component.RadioButtonField;
+import net.rim.device.api.ui.component.RadioButtonGroup;
+import net.rim.device.api.ui.component.RichTextField;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.TextField;
+import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.text.PhoneTextFilter;
 
 public class DialerField extends VerticalFieldManager {
+	private VerticalFieldManager mOutcallFields = new VerticalFieldManager();
 	private TextField  mInputAddress;
-	private KeywordFilterField mkeyWordField;    
+	private KeywordFilterField mkeyWordField;
+	
+	private VerticalFieldManager mIncallFields = new VerticalFieldManager(Field.USE_ALL_WIDTH);
+	RichTextField mDisplayNameField;
+	TextField mPhoneNumberField;
+	TextField mDurationField;
+	RadioButtonField mMute;
+	RadioButtonField mSpeaker;
+	static final private Timer mTimer = new Timer();
+	TimerTask mCallDurationTask;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	String mDisplayName;
 	LinphoneCore mCore;
 	final static int GREEN_BUTTON_KEY=1114112;
 	public DialerField(LinphoneCore aCore) {
 		mCore=aCore;
+		//outcall fields
 		try {
 		    
 			mkeyWordField = new SearchableContactList(new SearchableContactList.Listener() {
@@ -120,11 +140,82 @@ public class DialerField extends VerticalFieldManager {
 	    };
 	    mInputAddress.setLabel("sip:");
 	    mInputAddress.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,50));
-		add(mInputAddress);
-		add(new SeparatorField());
-		add(mkeyWordField.getKeywordField());
-		add(new SeparatorField());
-		add(mkeyWordField);
+	    mOutcallFields.add(mInputAddress);
+	    mOutcallFields.add(new SeparatorField());
+	    mOutcallFields.add(mkeyWordField.getKeywordField());
+	    mOutcallFields.add(new SeparatorField());
+	    mOutcallFields.add(mkeyWordField);
+	    
+	    //incall fields
+	    mDisplayNameField = new RichTextField(Field.NON_FOCUSABLE|RichTextField.TEXT_ALIGN_HCENTER);
+	    mDisplayNameField.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,50));
+	    mIncallFields.add(mDisplayNameField);
+	    mIncallFields.add(new SeparatorField());
+	    
+	    mPhoneNumberField = new TextField(Field.NON_FOCUSABLE);
+	    mDurationField = new TextField(Field.NON_FOCUSABLE);
+	    
+	    HorizontalFieldManager lNumAndDuration = new HorizontalFieldManager(Field.USE_ALL_WIDTH) {
+	    	{
+	    	    add(mPhoneNumberField);
+	    	    add(mDurationField);	
+	    	}
+			protected void sublayout(int maxWidth, int maxHeight) {
+				layoutChild(mPhoneNumberField, 2*maxWidth/3, maxHeight);   
+				layoutChild(mDurationField, maxWidth/3, maxHeight);   
+				setPositionChild(mPhoneNumberField, 10, 0);    
+				setPositionChild(mDurationField, maxWidth - maxWidth/3, 0);    
+				setExtent(maxWidth, mPhoneNumberField.getHeight());  
+			}
+	    	
+	    };
+	    
+
+
+	    mIncallFields.add(lNumAndDuration);
+	    mMute =  new RadioButtonField("Mute");
+	    RadioButtonGroup mMuteGroup = new RadioButtonGroup();
+	    mMuteGroup.setChangeListener(new FieldChangeListener() {
+			public void fieldChanged(Field field, int context) {
+				mCore.muteMic(((RadioButtonField)field).isSelected());
+			}
+		});
+	    mMuteGroup.add(mMute);
+	    
+	    mSpeaker =  new RadioButtonField("Speaker");
+	    RadioButtonGroup mSpeakerGroup = new RadioButtonGroup();
+	    mSpeakerGroup.setChangeListener(new FieldChangeListener() {
+			public void fieldChanged(Field field, int context) {
+				
+				if (((RadioButtonField)field).isSelected()) {
+					;
+				} else {
+					
+				}
+			}
+		});
+	    mSpeakerGroup.add(mSpeaker);
+	    
+	    HorizontalFieldManager lMuteAndSpeaker = new HorizontalFieldManager(Field.USE_ALL_WIDTH) {
+	    	{
+	    	    add(mMute);
+	    	    add(mSpeaker);	
+	    	}
+			protected void sublayout(int maxWidth, int maxHeight) {
+				layoutChild(mMute, 2*maxWidth/3, maxHeight);   
+				layoutChild(mSpeaker, maxWidth/3, maxHeight);   
+				int lYPosition = Display.getHeight() - 2*TabField.SIZE -mDisplayNameField.getContentHeight() - mPhoneNumberField.getHeight()-60;
+				setPositionChild(mMute, 10, lYPosition);    
+				setPositionChild(mSpeaker, maxWidth - mSpeaker.getWidth()-10, lYPosition);    
+				setExtent(maxWidth, lYPosition+mSpeaker.getHeight());  
+			}
+	    	
+	    };
+	
+
+	    mIncallFields.add(lMuteAndSpeaker);
+	    
+	    enableOutOfCallFields();
 	}
 	
 	
@@ -185,5 +276,38 @@ public class DialerField extends VerticalFieldManager {
 	}
 	public void setDisplayName(String aDisplayName) {
 		mDisplayName=aDisplayName;
+	}
+	public void enableIncallFields() {
+		if (mOutcallFields.getManager() == this ) delete (mOutcallFields);
+		add(mIncallFields);
+		if (mDisplayName !=null) {
+			mDisplayNameField.setText(mDisplayName);
+			mPhoneNumberField.setText(getAddress());
+		} else {
+			mDisplayNameField.setText(getAddress());
+			mPhoneNumberField.setText("");
+		}
+		mCallDurationTask = new TimerTask() {
+			int mDuration=0;
+			{
+				mDurationField.setText("0s");
+			}
+			public void run() {
+				mDuration++;
+				if (mDuration <=60) {
+					mDurationField.setText(mDuration+"s");
+				} else {
+					mDurationField.setText(mDuration/60+":"+(mDuration - mDuration/60)+"s" );
+				}
+			}
+		};
+		mTimer.scheduleAtFixedRate(mCallDurationTask, 0, 1000);
+	}
+	public void enableOutOfCallFields() {
+		if (mIncallFields.getManager() == this ) {
+			mCallDurationTask.cancel();
+			delete (mIncallFields);
+		}
+		add(mOutcallFields);
 	}
 }
