@@ -220,12 +220,12 @@ public class DialerField extends VerticalFieldManager {
 	
 	
 	protected boolean keyDown(int keycode, int time) {
-		if (keycode==GREEN_BUTTON_KEY && (mkeyWordField.getSelectedElement()!=null ||mInputAddress.getText().length()>0)) {
+		if (keycode==GREEN_BUTTON_KEY && (mkeyWordField.getSelectedElement() != null ||mInputAddress.getText().length()>0)) {
 			try {
 				if (mCore.isInComingInvitePending()){
 					throw new LinphoneCoreException("Already in call");
 				}else{
-					if (mkeyWordField.getSelectedElement() != null && getFieldWithFocus()==mkeyWordField) {
+					if (mkeyWordField.getSelectedElement() != null && ((VerticalFieldManager)getFieldWithFocus()).getFieldWithFocus()==mkeyWordField) {
 						DialerField.this.setAddressAndDisplay((Contact) mkeyWordField.getSelectedElement());
 					}
 					LinphoneAddress lTo = mCore.interpretUrl(getAddress());
