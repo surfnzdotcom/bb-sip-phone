@@ -49,8 +49,10 @@ public class CallLogsField extends SelectableListField {
 		
 		setCallback(new ListFieldCallback() { 
 		    public void drawListRow(ListField list, Graphics g, int index, int y, int w) { 
-		    	g.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
-				g.clear();
+				if (list.getSelectedIndex() !=index) {
+					g.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
+					g.clear();
+				}
 				int lXCurrentPosistion=0;
 		    	LinphoneCallLog lCallLog = (LinphoneCallLog) get(list,index);
 		    	LinphoneAddress lAddressToDisplay;

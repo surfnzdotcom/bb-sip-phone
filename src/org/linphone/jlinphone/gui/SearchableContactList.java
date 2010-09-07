@@ -138,8 +138,11 @@ public class SearchableContactList implements ListFieldCallback{
 	}
 	public void drawListRow(ListField listField, Graphics graphics, int index,
 			int y, int width) {
-		graphics.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
-		graphics.clear();
+
+		if (listField.getSelectedIndex() !=index) {
+			graphics.setBackgroundColor(index%2==0?Color.LIGHTGRAY:Color.DARKGRAY);
+			graphics.clear();
+		}
 		Contact lContact = (Contact) get(listField,index);
 		String[] lContactNames = lContact.getStringArray(Contact.NAME, 0);
 		int lCurrentX=0;
