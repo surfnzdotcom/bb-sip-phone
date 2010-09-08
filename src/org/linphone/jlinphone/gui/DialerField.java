@@ -240,7 +240,7 @@ public class DialerField extends VerticalFieldManager {
 
 	protected boolean keyChar(char ch, int status, int time) {
 		char lNumber = mPhoneTextFilter.convert(ch, 0);
-		if (0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
+		if (mCore.isIncall() && 0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
 			 mCore.sendDtmf(lNumber);
 			return true;
 		} else {
