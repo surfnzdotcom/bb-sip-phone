@@ -36,9 +36,9 @@ import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.UiApplication;
+import net.rim.device.api.ui.component.CheckboxField;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.KeywordFilterField;
-import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.RadioButtonField;
 import net.rim.device.api.ui.component.RadioButtonGroup;
 import net.rim.device.api.ui.component.RichTextField;
@@ -57,14 +57,15 @@ public class DialerField extends VerticalFieldManager {
 	RichTextField mDisplayNameField;
 	TextField mPhoneNumberField;
 	TextField mDurationField;
-	RadioButtonField mMute;
-	RadioButtonField mSpeaker;
+	CheckboxField mMute;
+	CheckboxField mSpeaker;
 	static final private Timer mTimer = new Timer();
 	TimerTask mCallDurationTask;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	String mDisplayName;
 	LinphoneCore mCore;
 	final static int GREEN_BUTTON_KEY=1114112;
+	PhoneTextFilter mPhoneTextFilter = new PhoneTextFilter();
 	public DialerField(LinphoneCore aCore) {
 		mCore=aCore;
 		//outcall fields
@@ -93,7 +94,6 @@ public class DialerField extends VerticalFieldManager {
 		  mkeyWordField.getKeywordField().setLabel("Find:");
 		  mkeyWordField.getKeywordField().setEditable(false);
 		  mInputAddress = new TextField(Field.FOCUSABLE) {
-	    	PhoneTextFilter mPhoneTextFilter = new PhoneTextFilter();
 	    	boolean mInDigitMode=true;
 	    	protected boolean insert(char charater, int arg1) {
 				char lNumber = mPhoneTextFilter.convert(charater, 0);
@@ -173,28 +173,20 @@ public class DialerField extends VerticalFieldManager {
 
 
 	    mIncallFields.add(lNumAndDuration);
-	    mMute =  new RadioButtonField("Mute");
-	    RadioButtonGroup mMuteGroup = new RadioButtonGroup();
-	    mMuteGroup.setChangeListener(new FieldChangeListener() {
+	    mMute =  new CheckboxField("Mute",false);
+	    mMute.setChangeListener(new FieldChangeListener() {
 			public void fieldChanged(Field field, int context) {
-				mCore.muteMic(((RadioButtonField)field).isSelected());
+				mCore.muteMic(((CheckboxField)field).getChecked());
 			}
 		});
-	    mMuteGroup.add(mMute);
-	    
-	    mSpeaker =  new RadioButtonField("Speaker");
-	    RadioButtonGroup mSpeakerGroup = new RadioButtonGroup();
-	    mSpeakerGroup.setChangeListener(new FieldChangeListener() {
+
+	    mSpeaker =  new CheckboxField("Speaker",false);
+	    mSpeaker.setChangeListener(new FieldChangeListener() {
 			public void fieldChanged(Field field, int context) {
-				
-				if (((RadioButtonField)field).isSelected()) {
-					;
-				} else {
-					
-				}
+				mCore.enableSpeaker(((CheckboxField)field).getChecked());
 			}
 		});
-	    mSpeakerGroup.add(mSpeaker);
+	   
 	    
 	    HorizontalFieldManager lMuteAndSpeaker = new HorizontalFieldManager(Field.USE_ALL_WIDTH) {
 	    	{
@@ -246,6 +238,17 @@ public class DialerField extends VerticalFieldManager {
 		return super.keyDown(keycode, time);
 	}
 
+	protected boolean keyChar(char ch, int status, int time) {
+		char lNumber = mPhoneTextFilter.convert(ch, 0);
+		if (0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
+			 mCore.sendDtmf(lNumber);
+			return true;
+		} else {
+			return super.keyChar(ch, status, time);
+		}
+	}
+
+
 	private void setAddressAndDisplay (Contact aContact) {
 		setAddress( aContact.getString(Contact.TEL, 0));
 		String[] lContactNames = aContact.getStringArray(Contact.NAME, 0);
@@ -287,6 +290,8 @@ public class DialerField extends VerticalFieldManager {
 			mDisplayNameField.setText(getAddress());
 			mPhoneNumberField.setText("");
 		}
+		mSpeaker.setChecked(mCore.isSpeakerEnabled());
+		mMute.setChecked(mCore.isMicMuted());
 		mCallDurationTask = new TimerTask() {
 			int mDuration=0;
 			{

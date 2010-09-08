@@ -94,7 +94,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 			lDummyRecorder.start();
 			recordControl.commit();
 			lOutput.close();
-			lDummyRecorder.close();
+			lDummyRecorder.deallocate();
 
 		} catch (Exception e) {
 			sLogger.error("Cannot ask for recorder permission",e);
@@ -142,10 +142,9 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 			public boolean keyRepeat(int keycode, int time) {return false;}
 			public boolean keyStatus(int keycode, int time) {return false;}
 			public boolean keyUp(int keycode, int time) {
-				/*if (keycode == GREEN_BUTTON_KEY) {
-					callButtonPressed();
-					return true;
-				} else*/ if (keycode == RED_BUTTON_KEY) {
+				if (keycode == GREEN_BUTTON_KEY) {
+					return callButtonPressed();
+				} else if (keycode == RED_BUTTON_KEY) {
 					hangupButtonPressed();
 					return true;
 				} else {
@@ -264,15 +263,12 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	}
 
 
-	private void callButtonPressed() {
+	private boolean callButtonPressed() {
 		sLogger.info("Call button pressed.");
 		try {
 			if (mCore.isInComingInvitePending()){
 				mCore.acceptCall();
-			}else{
-				LinphoneAddress lTo = mCore.interpretUrl(mDialer.getAddress());
-				lTo.setDisplayName(mDialer.getDisplayName());
-				mCore.invite(lTo);
+				return true;
 			}
 		} catch (final LinphoneCoreException e) {
 			sLogger.error("call error",e);
@@ -283,7 +279,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 				}
 			});
 		}
-		
+		return false;
 	}
 	public void hangupButtonPressed() {
 		sLogger.info("Hangup button pressed");
@@ -340,12 +336,16 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	}
 
 
-	public void generalState(LinphoneCore lc, GeneralState state, String message) {
-		if (state == GeneralState.GSTATE_CALL_OUT_INVITE || state==GeneralState.GSTATE_CALL_IN_INVITE ) {
-			mDialer.enableIncallFields();
-		} else if (state==GeneralState.GSTATE_CALL_END) {
-			mDialer.enableOutOfCallFields();
-		}
+	public void generalState(LinphoneCore lc, final GeneralState state, String message) {
+		UiApplication.getUiApplication().invokeLater(new Runnable() {
+			public void run() {
+				if (state == GeneralState.GSTATE_CALL_OUT_INVITE || state==GeneralState.GSTATE_CALL_IN_INVITE ) {
+					mDialer.enableIncallFields();
+				} else if (state==GeneralState.GSTATE_CALL_END) {
+					mDialer.enableOutOfCallFields();
+				}
+			}
+		});
 		
 	}
 
