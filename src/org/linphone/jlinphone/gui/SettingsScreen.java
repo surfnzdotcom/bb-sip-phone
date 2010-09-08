@@ -61,6 +61,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 		private BasicEditField mProxy;
 		public final String[] SIP_TRANSPORT_TYPE={"udp","tcp"};  
 		private CheckboxField mDebugMode;
+		private CheckboxField mSubstituteZero2Plus;
 		private ObjectChoiceField mTransPort;
 		VerticalFieldManager mMainFiedManager = new VerticalFieldManager();
 
@@ -98,6 +99,9 @@ public class SettingsScreen extends MainScreen implements Settings {
 			mDebugMode = new CheckboxField("Enable debug mode", false);
 			mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
 			lAdvanced.add(mDebugMode);
+			mSubstituteZero2Plus = new CheckboxField("Substitue 00 to +", false);
+			mSubstituteZero2Plus.setChecked(getBoolean(ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS,false));
+			lAdvanced.add(mSubstituteZero2Plus);
 		}
 		public void save() {
 			mSettingsMap.put(SIP_USERNAME, mUserNameField.getText());
@@ -106,6 +110,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 			mSettingsMap.put(SIP_PROXY, mProxy.getText());
 			mSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
 			mSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
+			mSettingsMap.put(ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS, new Boolean(mSubstituteZero2Plus.getChecked()));
 			try {
 				initFromConf();
 				mPersistentObject.setContents(mSettingsMap);
@@ -246,7 +251,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 				lDefaultProxyConfig.done();
 			}
 			lDefaultProxyConfig = mCore.getDefaultProxyConfig();
-			lDefaultProxyConfig.setDialEscapePlus(true);
+			lDefaultProxyConfig.setDialEscapePlus(getBoolean(Settings.ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS, false));
 
 			//init network state
 			

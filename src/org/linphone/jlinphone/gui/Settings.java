@@ -27,6 +27,7 @@ public interface Settings {
 	public static final String SIP_TRANSPORT = "org.jlinphone.settings.sip.transport";
 	
 	public static final String ADVANCED_DEBUG = "org.jlinphone.settings.advanced.debug";
+	public static final String ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS = "org.jlinphone.settings.advanced.zerotoplus";
 	
 
 	public abstract boolean getBoolean(String key, boolean defaultValue);
