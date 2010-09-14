@@ -32,12 +32,16 @@ import org.linphone.bb.NetworkManager;
 import org.linphone.bb.LogHandler;
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneCall;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
-import org.linphone.core.LinphoneCore.GeneralState;
+import org.linphone.core.LinphoneProxyConfig;
+import org.linphone.core.LinphoneCall.State;
+import org.linphone.core.LinphoneCore.GlobalState;
+import org.linphone.core.LinphoneCore.RegistrationState;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
@@ -267,7 +271,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		sLogger.info("Call button pressed.");
 		try {
 			if (mCore.isInComingInvitePending()){
-				mCore.acceptCall();
+				mCore.acceptCall(mCore.getCurrentCall());
 				return true;
 			}
 		} catch (final LinphoneCoreException e) {
@@ -283,7 +287,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	}
 	public void hangupButtonPressed() {
 		sLogger.info("Hangup button pressed");
-		mCore.terminateCall();		
+		mCore.terminateCall(mCore.getCurrentCall());		
 	}
 
 	public void authInfoRequested(LinphoneCore lc, String realm, String username) {
@@ -323,9 +327,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 
 
 	public void inviteReceived(LinphoneCore lc, String from) {
-		if (!UiApplication.getUiApplication().isForeground()) {
-			UiApplication.getUiApplication().requestForeground();
-		}
+
 		
 	}
 
@@ -335,17 +337,32 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		
 	}
 
-
-	public void generalState(LinphoneCore lc, final GeneralState state, String message) {
+	public void callState(LinphoneCore lc, LinphoneCall call, final State state,
+			String message) {
 		UiApplication.getUiApplication().invokeLater(new Runnable() {
 			public void run() {
-				if (state == GeneralState.GSTATE_CALL_OUT_INVITE || state==GeneralState.GSTATE_CALL_IN_INVITE ) {
+				if (state == LinphoneCall.State.IncomingReceived && !UiApplication.getUiApplication().isForeground()) {
+					UiApplication.getUiApplication().requestForeground();
+				}
+				if (state == LinphoneCall.State.OutgoingInit || state == LinphoneCall.State.IncomingReceived ) {
 					mDialer.enableIncallFields();
-				} else if (state==GeneralState.GSTATE_CALL_END) {
+				} else if (state==LinphoneCall.State.CallEnd) {
 					mDialer.enableOutOfCallFields();
 				}
 			}
 		});
+	}
+
+
+	public void globalState(LinphoneCore lc, GlobalState state, String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void registrationState(LinphoneCore lc, LinphoneProxyConfig cfg,
+			RegistrationState cstate, String smessage) {
+		// TODO Auto-generated method stub
 		
 	}
 

@@ -24,6 +24,7 @@ import java.util.TimerTask;
 import javax.microedition.pim.Contact;
 import javax.microedition.pim.PIMException;
 
+import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
@@ -283,11 +284,22 @@ public class DialerField extends VerticalFieldManager {
 	public void enableIncallFields() {
 		if (mOutcallFields.getManager() == this ) delete (mOutcallFields);
 		add(mIncallFields);
-		if (mDisplayName !=null) {
-			mDisplayNameField.setText(mDisplayName);
-			mPhoneNumberField.setText(getAddress());
+		String lDisplay=null;
+		String lNumber="";
+		if (mCore.getCurrentCall().getDirection() == CallDirection.Incoming) {
+			LinphoneAddress lIncallAddress = mCore.getCurrentCall().getRemoteAddress();
+			lDisplay = lIncallAddress.getDisplayName();
+			lNumber = lIncallAddress.getUserName();
 		} else {
-			mDisplayNameField.setText(getAddress());
+			lDisplay = mDisplayName;
+			lNumber = getAddress();
+		
+		}
+		if (lDisplay !=null) {
+			mDisplayNameField.setText(lDisplay);
+			mPhoneNumberField.setText(lNumber);
+		} else {
+			mDisplayNameField.setText(lNumber);
 			mPhoneNumberField.setText("");
 		}
 		mSpeaker.setChecked(mCore.isSpeakerEnabled());
