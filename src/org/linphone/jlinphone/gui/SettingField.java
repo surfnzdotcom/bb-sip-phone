@@ -20,17 +20,19 @@ package org.linphone.jlinphone.gui;
 
 import org.linphone.jlinphone.gui.SettingsScreen.SettingsFieldContent;
 
+import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.component.ButtonField;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 
-public class SettingField extends VerticalFieldManager {
+public class SettingField extends VerticalFieldManager implements LinphoneResource{
+	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	public SettingField(final SettingsFieldContent aContentSettings) {
 		add(aContentSettings.getRootField());
 		add( new SeparatorField());
-		ButtonField lButtonField = new ButtonField("Save",Field.FOCUSABLE);
+		ButtonField lButtonField = new ButtonField(mRes.getString(SAVE),Field.FOCUSABLE);
 		lButtonField.setRunnable(new Runnable() {
 			public void run() {
 				aContentSettings.save();

@@ -20,6 +20,7 @@ package org.linphone.jlinphone.gui;
 
 import net.rim.blackberry.api.browser.Browser;
 import net.rim.blackberry.api.browser.BrowserSession;
+import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.ApplicationDescriptor;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.ui.Color;
@@ -38,8 +39,9 @@ import net.rim.device.api.ui.decor.BackgroundFactory;
 import net.rim.device.api.ui.decor.Border;
 import net.rim.device.api.ui.decor.BorderFactory;
 
-public class AboutScreen extends MainScreen {
+public class AboutScreen extends MainScreen implements LinphoneResource{
 	static final String LINPHONE_WWW="http://www.linphone.org";
+	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	public AboutScreen() {
 		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));
 		Border lBorder = BorderFactory.createSimpleBorder(new XYEdges(40,20,20,20) ); 
@@ -48,7 +50,7 @@ public class AboutScreen extends MainScreen {
 		BitmapField lLinphonebanner = new BitmapField(Bitmap.getBitmapResource("linphone-banner.png"),Field.FIELD_HCENTER|Field.FIELD_VCENTER );
 		add(new TextField(Field.NON_FOCUSABLE));
 		add(lLinphonebanner);
-		add(new RichTextField("Linphone "+ApplicationDescriptor.currentApplicationDescriptor().getVersion()+" SIP (rfc 3261) compatible phone under GNU Public License V2",Field.FIELD_HCENTER|Field.FIELD_VCENTER|RichTextField.TEXT_ALIGN_HCENTER|Field.NON_FOCUSABLE));
+		add(new RichTextField("Linphone "+ApplicationDescriptor.currentApplicationDescriptor().getVersion()+mRes.getString(ABOUT_STRING),Field.FIELD_HCENTER|Field.FIELD_VCENTER|RichTextField.TEXT_ALIGN_HCENTER|Field.NON_FOCUSABLE));
 		
 		ButtonField lLinphoneAddress = new ButtonField(LINPHONE_WWW,Field.FIELD_VCENTER|Field.FIELD_HCENTER) {
 			protected void paint(Graphics graphics){

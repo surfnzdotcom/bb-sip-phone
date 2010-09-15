@@ -31,6 +31,7 @@ import org.linphone.core.LinphoneCoreException;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
+import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.Characters;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Field;
@@ -49,7 +50,7 @@ import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.text.PhoneTextFilter;
 
-public class DialerField extends VerticalFieldManager {
+public class DialerField extends VerticalFieldManager implements LinphoneResource{
 	private VerticalFieldManager mOutcallFields = new VerticalFieldManager();
 	private TextField  mInputAddress;
 	private KeywordFilterField mkeyWordField;
@@ -67,6 +68,7 @@ public class DialerField extends VerticalFieldManager {
 	LinphoneCore mCore;
 	final static int GREEN_BUTTON_KEY=1114112;
 	PhoneTextFilter mPhoneTextFilter = new PhoneTextFilter();
+	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	public DialerField(LinphoneCore aCore) {
 		mCore=aCore;
 		//outcall fields
@@ -92,7 +94,7 @@ public class DialerField extends VerticalFieldManager {
 			  
 		  });
 		  mkeyWordField.setKeywordField(new TextField(Field.NON_FOCUSABLE));
-		  mkeyWordField.getKeywordField().setLabel("Find:");
+		  mkeyWordField.getKeywordField().setLabel(mRes.getString(FIND));
 		  mkeyWordField.getKeywordField().setEditable(false);
 		  mInputAddress = new TextField(Field.FOCUSABLE) {
 	    	boolean mInDigitMode=true;
@@ -174,14 +176,14 @@ public class DialerField extends VerticalFieldManager {
 
 
 	    mIncallFields.add(lNumAndDuration);
-	    mMute =  new CheckboxField("Mute",false);
+	    mMute =  new CheckboxField(mRes.getString(MUTE),false);
 	    mMute.setChangeListener(new FieldChangeListener() {
 			public void fieldChanged(Field field, int context) {
 				mCore.muteMic(((CheckboxField)field).getChecked());
 			}
 		});
 
-	    mSpeaker =  new CheckboxField("Speaker",false);
+	    mSpeaker =  new CheckboxField(mRes.getString(SPEAKER),false);
 	    mSpeaker.setChangeListener(new FieldChangeListener() {
 			public void fieldChanged(Field field, int context) {
 				mCore.enableSpeaker(((CheckboxField)field).getChecked());

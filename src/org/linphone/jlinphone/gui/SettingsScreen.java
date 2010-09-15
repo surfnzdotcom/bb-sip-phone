@@ -28,6 +28,7 @@ import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
+import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
@@ -47,13 +48,13 @@ import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
 
-public class SettingsScreen extends MainScreen implements Settings {
+public class SettingsScreen extends MainScreen implements Settings, LinphoneResource{
 	private PersistentObject mPersistentObject;
 	private Hashtable mSettingsMap;
 	private final LinphoneCore mCore;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	SettingsFieldContent mSettingsFields;
-	
+	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	class SettingsFieldContent {
 		private BasicEditField mUserNameField;
 		private BasicEditField mUserPasswd;
@@ -68,19 +69,19 @@ public class SettingsScreen extends MainScreen implements Settings {
 		public SettingsFieldContent (){
 			VerticalFieldManager lSipAccount = new VerticalFieldManager();
 			mMainFiedManager.add(lSipAccount);
-			LabelField lSipAccountLabelField = new LabelField("SIP account");
+			LabelField lSipAccountLabelField = new LabelField(mRes.getString(SETTING_SIP_ACCOUNT));
 			lSipAccountLabelField.setFont(Font.getDefault().derive(Font.BOLD|Font.UNDERLINED));
 			lSipAccount.add(lSipAccountLabelField);
-			mUserNameField = new BasicEditField("Username*: ", "", 128, 0);
+			mUserNameField = new BasicEditField(mRes.getString(SETTING_USERNAME), "", 128, 0);
 			mUserNameField.setText(getString(SIP_USERNAME,""));
 			lSipAccount.add(mUserNameField);
-			mUserPasswd = new BasicEditField("Passwd*: ", "", 128, 0);
+			mUserPasswd = new BasicEditField(mRes.getString(SETTING_PASSWD), "", 128, 0);
 			mUserPasswd.setText(getString(SIP_PASSWORD,""));
 			lSipAccount.add(mUserPasswd);
-			mDomain = new BasicEditField("Domain*: ", "", 128, 0);
+			mDomain = new BasicEditField(mRes.getString(SETTING_DOMAIN), "", 128, 0);
 			mDomain.setText(getString(SIP_DOMAIN,""));
 			lSipAccount.add(mDomain);
-			mProxy = new BasicEditField("Proxy: ", "", 128, 0);
+			mProxy = new BasicEditField(mRes.getString(SETTING_PROXY), "", 128, 0);
 			mProxy.setText(getString(SIP_PROXY,""));
 			lSipAccount.add(mProxy);
 
@@ -90,17 +91,17 @@ public class SettingsScreen extends MainScreen implements Settings {
 
 			VerticalFieldManager lAdvanced = new VerticalFieldManager();
 			mMainFiedManager.add(lAdvanced);
-			LabelField lAvancedLabelField = new LabelField("Advanced");
+			LabelField lAvancedLabelField = new LabelField(mRes.getString(SETTING_ADVANCED));
 			lAvancedLabelField.setFont(Font.getDefault().derive(Font.BOLD|Font.UNDERLINED));
 			lAdvanced.add(lAvancedLabelField);
 			
-			mTransPort= new ObjectChoiceField("Transport",SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
+			mTransPort= new ObjectChoiceField(mRes.getString(SETTING_TRANSPORT),SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
 			lAdvanced.add(mTransPort); 
-			mDebugMode = new CheckboxField("Enable debug mode", false);
+			mDebugMode = new CheckboxField(mRes.getString(SETTING_DEBUG), false);
 			mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
 			lAdvanced.add(mDebugMode);
-			mSubstituteZero2Plus = new CheckboxField("Substitue 00 to +", false);
-			mSubstituteZero2Plus.setChecked(getBoolean(ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS,false));
+			mSubstituteZero2Plus = new CheckboxField(mRes.getString(SETTING_ESCAPE_PLUS), false);
+			mSubstituteZero2Plus.setChecked(getBoolean(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO,false));
 			lAdvanced.add(mSubstituteZero2Plus);
 		}
 		public void save() {
@@ -110,7 +111,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 			mSettingsMap.put(SIP_PROXY, mProxy.getText());
 			mSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
 			mSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
-			mSettingsMap.put(ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS, new Boolean(mSubstituteZero2Plus.getChecked()));
+			mSettingsMap.put(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, new Boolean(mSubstituteZero2Plus.getChecked()));
 			try {
 				initFromConf();
 				mPersistentObject.setContents(mSettingsMap);
@@ -138,7 +139,7 @@ public class SettingsScreen extends MainScreen implements Settings {
 		} else {
 			mSettingsMap = new Hashtable();
 		}
-		setTitle("Linphone Settings");
+		setTitle("Linphone "+mRes.getString(SETTINGS));
 		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));
 		mSettingsFields = new SettingsFieldContent(); 
 		add(mSettingsFields.getRootField());
@@ -201,17 +202,17 @@ public class SettingsScreen extends MainScreen implements Settings {
 		//1 read proxy config from preferences
 		String lUserName = getString(Settings.SIP_USERNAME, null);
 		if (lUserName == null || lUserName.length()==0) {
-			throw new LinphoneConfigException("No username configured");
+			throw new LinphoneConfigException(mRes.getString(SETTING_ERROR_NO_USER));
 		}
 
 		String lPasswd = getString(Settings.SIP_PASSWORD, null);
 		if (lPasswd == null || lPasswd.length()==0) {
-			throw new LinphoneConfigException("No password configured");
+			throw new LinphoneConfigException(mRes.getString(SETTING_ERROR_NO_PASSWD));
 		}
 
 		String lDomain = getString(Settings.SIP_DOMAIN, null);
 		if (lDomain == null || lDomain.length()==0) {
-			throw new LinphoneConfigException("No domain configured");
+			throw new LinphoneConfigException(mRes.getString(SETTING_DOMAIN));
 		}
 
 		String lTransport = getString(Settings.SIP_TRANSPORT, null);
@@ -251,12 +252,12 @@ public class SettingsScreen extends MainScreen implements Settings {
 				lDefaultProxyConfig.done();
 			}
 			lDefaultProxyConfig = mCore.getDefaultProxyConfig();
-			lDefaultProxyConfig.setDialEscapePlus(getBoolean(Settings.ADVANCED_SUBSTITUTE_DOUBLE_ZERO_TO_PLUS, false));
+			lDefaultProxyConfig.setDialEscapePlus(getBoolean(Settings.ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, false));
 
 			//init network state
 			
 		} catch (LinphoneCoreException e) {
-			throw new LinphoneConfigException("Wrong settings",e);
+			throw new LinphoneConfigException(mRes.getString(SETTING_ERROR_BAD_CONFIG),e);
 		}
 	}
 	public SettingsFieldContent createSettingsFields() {

@@ -47,6 +47,7 @@ import org.linphone.jortp.Logger;
 
 
 
+import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.ApplicationDescriptor;
 import net.rim.device.api.system.Audio;
@@ -70,7 +71,7 @@ import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
 
-public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
+public class LinphoneScreen extends MainScreen implements LinphoneCoreListener , LinphoneResource {
 
  	private LabelField mStatus;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
@@ -83,7 +84,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 	private final int HISTORY_TAB_INDEX=0;
 	private final int DIALER_TAB_INDEX=1;
 	private final int SETTINGS_TAB_INDEX=2;
-	
+	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	LinphoneScreen()  {
 
 		try {
@@ -210,21 +211,21 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
 		mTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), new SettingField(mSettingsScreen.createSettingsFields()));
 		mTabField.setDefault(DIALER_TAB_INDEX);
 		//menu
-		addMenuItem(new MenuItem("Settings", 110, 10)
+		addMenuItem(new MenuItem(mRes.getString(SETTINGS), 110, 10)
 		{
 			public void run() 
 			{
 				UiApplication.getUiApplication().pushScreen(mSettingsScreen);
 			}
 		});
-		addMenuItem(new MenuItem("Console", 110, 10)
+		addMenuItem(new MenuItem(mRes.getString(CONSOLE), 110, 10)
 		{
 			public void run() 
 			{
 				EventLogger.startEventLogViewer();
 			}
 		});
-		addMenuItem(new MenuItem("About", 110, 10)
+		addMenuItem(new MenuItem(mRes.getString(ABOUT), 110, 10)
 		{
 			public void run() 
 			{
@@ -259,7 +260,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener{
      */
 	public void close() {   
 		try {// Display a farewell message before closing the application
-			Dialog.alert("Goodbye!");
+			Dialog.alert(mRes.getString(GOODBYE));
 			if (mCore != null) mCore.destroy();
 		} finally {
 			super.close();
