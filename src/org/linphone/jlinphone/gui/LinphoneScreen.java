@@ -347,7 +347,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 				}
 				if (state == LinphoneCall.State.OutgoingInit || state == LinphoneCall.State.IncomingReceived ) {
 					mDialer.enableIncallFields();
-				} else if (state==LinphoneCall.State.CallEnd) {
+				} else if (state==LinphoneCall.State.CallEnd | state==LinphoneCall.State.Error) {
 					mDialer.enableOutOfCallFields();
 				}
 			}
