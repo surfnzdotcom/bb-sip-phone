@@ -1,6 +1,7 @@
 ABOUT#0="About";
 ABOUT_STRING#0="SIP (rfc 3261) compatible phone under GNU Public License V2";
 CONSOLE#0="Console";
+ERROR_AUDIO_PERMISSION_DENY#0="Audio permission denied ";
 FIND#0="Find:";
 GOODBYE#0="Goodbye !";
 MUTE#0="Mute";

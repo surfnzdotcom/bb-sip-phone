@@ -52,6 +52,7 @@ import net.rim.device.api.system.Application;
 import net.rim.device.api.system.ApplicationDescriptor;
 import net.rim.device.api.system.Audio;
 import net.rim.device.api.system.Bitmap;
+import net.rim.device.api.system.ControlledAccessException;
 import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.KeyListener;
 import net.rim.device.api.system.RadioInfo;
@@ -88,6 +89,12 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	LinphoneScreen()  {
 
 		try {
+
+			LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
+			LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
+			LinphoneCoreFactory.instance().setDebugMode(true);//debug mode until configuration is loaded
+			sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
+			
 			//ask for recorder permission at startup
 			Player lDummyRecorder = Manager.createPlayer("capture://audio?encoding=audio/amr");
 
@@ -99,15 +106,27 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 			lDummyRecorder.start();
 			recordControl.commit();
 			lOutput.close();
-			lDummyRecorder.deallocate();
+			lDummyRecorder.close();
 
-		} catch (Exception e) {
+		} catch (ControlledAccessException e1) {
+			sLogger.error("Recorder permission refused",e1);
+			UiApplication.getUiApplication().invokeLater(new Runnable() {
+				public void run() {
+					Dialog.alert(mRes.getString(ERROR_AUDIO_PERMISSION_DENY));
+					close();
+				}
+			});
+			return;
+		} catch (Throwable e) {
 			sLogger.error("Cannot ask for recorder permission",e);
+			UiApplication.getUiApplication().invokeLater(new Runnable() {
+				public void run() {
+					close();
+				}
+			});
+			return;
 		}
 
-		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-		LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
-		sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
 		// volume control keys
 		addKeyListener(new KeyListener() {
 			final static int GREEN_BUTTON_KEY=1114112;
