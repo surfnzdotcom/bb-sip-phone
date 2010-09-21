@@ -223,9 +223,11 @@ public class DialerField extends VerticalFieldManager implements LinphoneResourc
 					if (mkeyWordField.getSelectedElement() != null && ((VerticalFieldManager)getFieldWithFocus()).getFieldWithFocus()==mkeyWordField) {
 						DialerField.this.setAddressAndDisplay((Contact) mkeyWordField.getSelectedElement());
 					}
-					LinphoneAddress lTo = mCore.interpretUrl(getAddress());
-					lTo.setDisplayName(getDisplayName());
-					mCore.invite(lTo);
+					if (getAddress().length() >0 ) {
+						LinphoneAddress lTo = mCore.interpretUrl(getAddress());
+						lTo.setDisplayName(getDisplayName());
+						mCore.invite(lTo);
+					}
 					return true;
 				}
 			} catch (final LinphoneCoreException e) {
