@@ -47,6 +47,8 @@ import org.linphone.jortp.Logger;
 
 
 
+import net.rim.device.api.applicationcontrol.ApplicationPermissions;
+import net.rim.device.api.applicationcontrol.ApplicationPermissionsManager;
 import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.ApplicationDescriptor;
@@ -85,47 +87,49 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	private final int HISTORY_TAB_INDEX=0;
 	private final int DIALER_TAB_INDEX=1;
 	private final int SETTINGS_TAB_INDEX=2;
+	static int[] sPermissions = { 
+		ApplicationPermissions.PERMISSION_INTERNET
+		,ApplicationPermissions.PERMISSION_MEDIA
+		,ApplicationPermissions.PERMISSION_ORGANIZER_DATA
+		,ApplicationPermissions.PERMISSION_RECORDING
+		,ApplicationPermissions.PERMISSION_WIFI
+		,ApplicationPermissions.PERMISSION_FILE_API
+		,ApplicationPermissions.PERMISSION_SECURITY_DATA};
+	
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	LinphoneScreen()  {
 
-		try {
 
 			LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
 			LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
 			LinphoneCoreFactory.instance().setDebugMode(true);//debug mode until configuration is loaded
 			sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
 			
-			//ask for recorder permission at startup
-			Player lDummyRecorder = Manager.createPlayer("capture://audio?encoding=audio/amr");
-
-			lDummyRecorder.realize();
-			RecordControl recordControl = (RecordControl) lDummyRecorder.getControl("RecordControl");
-			OutputStream lOutput = new ByteArrayOutputStream();
-			recordControl.setRecordStream(lOutput);
-			recordControl.startRecord();
-			lDummyRecorder.start();
-			recordControl.commit();
-			lOutput.close();
-			lDummyRecorder.close();
-
-		} catch (ControlledAccessException e1) {
-			sLogger.error("Recorder permission refused",e1);
-			UiApplication.getUiApplication().invokeLater(new Runnable() {
-				public void run() {
-					Dialog.alert(mRes.getString(ERROR_AUDIO_PERMISSION_DENY));
-					close();
+			ApplicationPermissions lCurentPermission = ApplicationPermissionsManager.getInstance().getApplicationPermissions();
+			boolean lPermissionRequestNeeded = false;
+			for (int i=0;i<sPermissions.length;i++) {
+				if (!lCurentPermission.containsPermissionKey(sPermissions[i]) 
+						|| lCurentPermission.getPermission(sPermissions[i]) != ApplicationPermissions.VALUE_ALLOW) {
+					lPermissionRequestNeeded=true;
 				}
-			});
-			return;
-		} catch (Throwable e) {
-			sLogger.error("Cannot ask for recorder permission",e);
-			UiApplication.getUiApplication().invokeLater(new Runnable() {
-				public void run() {
-					close();
+			}
+			
+			if (lPermissionRequestNeeded) {
+				ApplicationPermissions lLinphonePermission = new ApplicationPermissions();
+				for (int i=0;i<sPermissions.length;i++) {
+					lLinphonePermission.addPermission(sPermissions[i]);
 				}
-			});
-			return;
-		}
+				if (!ApplicationPermissionsManager.getInstance().invokePermissionsRequest(lLinphonePermission)) {
+					sLogger.error("permission refused");
+					UiApplication.getUiApplication().invokeLater(new Runnable() {
+						public void run() {
+							Dialog.alert(mRes.getString(ERROR_AUDIO_PERMISSION_DENY));
+							close();
+						}
+					});
+					return;
+				}
+			}
 
 		// volume control keys
 		addKeyListener(new KeyListener() {
