@@ -53,9 +53,17 @@ public class TabField extends VerticalFieldManager {
 		
 	}
 	public void display(int index) {
-		if (mCurrentField !=null) delete(mCurrentField);
+		if (mCurrentField !=null) {
+			if (mCurrentField instanceof TabFieldItem) {
+				((TabFieldItem) mCurrentField).onUnSelected();
+			};
+			delete(mCurrentField);
+		}
 		mCurrentField=(Field) mTabFields.elementAt(index);
 		add(mCurrentField);
+		if (mCurrentField instanceof TabFieldItem) {
+			((TabFieldItem) mCurrentField).onSelected();
+		};
 		setDirty(true);
 		mTabController.getField(mCurrentIndex).setBackground(CONTROL_NORMAL_BG);
 		mTabController.getField(mCurrentIndex).setDirty(true);
@@ -94,7 +102,7 @@ public class TabField extends VerticalFieldManager {
 		lButton.setSpace(10, 10);
 		mTabController.add(lButton);
 		mTabFields.addElement(aTabField);
-		
+
 		if (mDefault == mTabFields.size()-1 && aTabField!=null) {
 			display(mDefault);
 			//this.add(aTabField);

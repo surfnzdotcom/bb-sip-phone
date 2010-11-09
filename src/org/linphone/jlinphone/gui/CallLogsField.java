@@ -23,18 +23,24 @@ import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCallLog;
 import org.linphone.core.LinphoneCore;
 
+import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Color;
+import net.rim.device.api.ui.ContextMenu;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.Graphics;
+import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.ListFieldCallback;
+import net.rim.device.api.ui.container.MainScreen;
 
-public class CallLogsField extends SelectableListField {
+public class CallLogsField extends SelectableListField implements TabFieldItem, LinphoneResource{
 
 	final LinphoneCore mCore;
-	
+	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
+	MenuItem mClearMenu;
+	boolean isViewable = false;
 	CallLogsField(LinphoneCore aCore,Listener aListener) {
 		super (aListener);
 		mCore = aCore;
@@ -46,6 +52,14 @@ public class CallLogsField extends SelectableListField {
 		lInBitmap.createAlpha(Bitmap.ALPHA_BITDEPTH_MONO);
 		Bitmap.getBitmapResource("in_call.png").scaleInto( lInBitmap
 							,Bitmap.FILTER_LANCZOS);
+		
+		mClearMenu = new MenuItem(mRes.getString(CLEAR_LOGS), 110, 10) {
+			public void run() {
+				mCore.clearCallLogs();
+				refresh();
+				CallLogsField.this.invalidate();
+			}
+		};
 		
 		setCallback(new ListFieldCallback() { 
 		    public void drawListRow(ListField list, Graphics g, int index, int y, int w) { 
@@ -91,8 +105,14 @@ public class CallLogsField extends SelectableListField {
 	public void refresh() {
 		setSize(mCore.getCallLogs().size());
 	}
-	
-
-
+	public void onSelected() {
+		refresh();
+	}
+	public void onUnSelected() {
+	}
+	protected void makeContextMenu(ContextMenu contextMenu) {
+		super.makeContextMenu(contextMenu);
+		contextMenu.addItem(mClearMenu);
+	}
 	
 }
