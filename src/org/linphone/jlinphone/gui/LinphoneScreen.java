@@ -213,7 +213,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 			
 			public void onSelected(Object selected) {
 				LinphoneAddress lAddress;
-				if (selected == CallDirection.Incoming) {
+				if (((LinphoneCallLog)selected).getDirection() == CallDirection.Incoming) {
 					lAddress = ((LinphoneCallLog)selected).getFrom();
 				} else {
 					lAddress = ((LinphoneCallLog)selected).getTo();
