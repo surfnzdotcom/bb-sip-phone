@@ -27,4 +27,7 @@ public interface TabFieldItem {
 	 * Method invoked when the tabField is about to be removed from the display
 	 */
 	public void onUnSelected();
+	
+	public boolean keyChar(char ch, int status, int time);
+	
 }

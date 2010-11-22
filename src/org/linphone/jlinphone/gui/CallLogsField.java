@@ -114,5 +114,7 @@ public class CallLogsField extends SelectableListField implements TabFieldItem, 
 		super.makeContextMenu(contextMenu);
 		contextMenu.addItem(mClearMenu);
 	}
-	
+	public boolean keyChar(char ch, int status, int time) {
+		return super.keyChar(ch, status, time);
+	}
 }

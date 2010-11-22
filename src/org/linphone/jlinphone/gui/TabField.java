@@ -109,6 +109,12 @@ public class TabField extends VerticalFieldManager {
 			//mCurrentField=aTabField;
 		}
 	}
-
+	protected boolean keyChar(char ch, int status, int time) {
+		if (mCurrentField != null && mCurrentField instanceof TabFieldItem) { 
+			return ((TabFieldItem)mCurrentField).keyChar(ch, status, time);
+		} else {
+			return super.keyChar(ch, status, time);
+		}
+	}
 	
 }

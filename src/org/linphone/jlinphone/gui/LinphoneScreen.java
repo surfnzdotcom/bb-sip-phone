@@ -34,10 +34,12 @@ import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCall;
 import org.linphone.core.LinphoneCallLog;
+import org.linphone.core.LinphoneChatRoom;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneCoreListener;
+import org.linphone.core.LinphoneFriend;
 import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.core.LinphoneCall.State;
 import org.linphone.core.LinphoneCore.GlobalState;
@@ -320,10 +322,6 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	}
 
 
-	public void byeReceived(LinphoneCore lc, String from) {
-		// TODO Auto-generated method stub
-		
-	}
 
 
 	public void displayMessage(LinphoneCore lc, String message) {
@@ -350,10 +348,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 
 
-	public void inviteReceived(LinphoneCore lc, String from) {
 
-		
-	}
 
 
 	public void show(LinphoneCore lc) {
@@ -386,6 +381,26 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 	public void registrationState(LinphoneCore lc, LinphoneProxyConfig cfg,
 			RegistrationState cstate, String smessage) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void newSubscriptionRequest(LinphoneCore lc, LinphoneFriend lf,
+			String url) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void notifyPresenceReceived(LinphoneCore lc, LinphoneFriend lf) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void textReceived(LinphoneCore lc, LinphoneChatRoom cr,
+			LinphoneAddress from, String message) {
 		// TODO Auto-generated method stub
 		
 	}

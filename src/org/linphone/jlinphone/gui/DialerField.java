@@ -50,7 +50,7 @@ import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.text.PhoneTextFilter;
 
-public class DialerField extends VerticalFieldManager implements LinphoneResource{
+public class DialerField extends VerticalFieldManager implements TabFieldItem, LinphoneResource{
 	private VerticalFieldManager mOutcallFields = new VerticalFieldManager();
 	private TextField  mInputAddress;
 	private KeywordFilterField mkeyWordField;
@@ -243,7 +243,7 @@ public class DialerField extends VerticalFieldManager implements LinphoneResourc
 		return super.keyDown(keycode, time);
 	}
 
-	protected boolean keyChar(char ch, int status, int time) {
+	public boolean keyChar(char ch, int status, int time) {
 		char lNumber = mPhoneTextFilter.convert(ch, 0);
 		if (mCore.isIncall() && 0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
 			 mCore.sendDtmf(lNumber);
@@ -330,5 +330,17 @@ public class DialerField extends VerticalFieldManager implements LinphoneResourc
 			delete (mIncallFields);
 		}
 		add(mOutcallFields);
+	}
+
+
+	public void onSelected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void onUnSelected() {
+		// TODO Auto-generated method stub
+		
 	}
 }
