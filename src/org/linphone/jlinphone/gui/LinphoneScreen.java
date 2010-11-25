@@ -381,8 +381,8 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 	public void registrationState(LinphoneCore lc, LinphoneProxyConfig cfg,
 			RegistrationState cstate, String smessage) {
-		// TODO Auto-generated method stub
 		
+		sLogger.info("new registration state ["+cstate+"]");
 	}
 
 
