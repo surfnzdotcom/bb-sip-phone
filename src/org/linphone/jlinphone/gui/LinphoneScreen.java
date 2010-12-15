@@ -96,7 +96,8 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		,ApplicationPermissions.PERMISSION_RECORDING
 		,ApplicationPermissions.PERMISSION_WIFI
 		,ApplicationPermissions.PERMISSION_FILE_API
-		,ApplicationPermissions.PERMISSION_SECURITY_DATA};
+		,ApplicationPermissions.PERMISSION_SECURITY_DATA
+		,ApplicationPermissions.PERMISSION_PHONE};
 	
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	LinphoneScreen()  {
