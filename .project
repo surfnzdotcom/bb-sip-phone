@@ -26,4 +26,11 @@
 		<nature>net.rim.ejde.BlackBerryProjectCoreNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>jtunnel</name>
+			<type>2</type>
+			<location>C:/sources/git/jlinphone/submodules/jtunnel/src</location>
+		</link>
+	</linkedResources>
 </projectDescription>

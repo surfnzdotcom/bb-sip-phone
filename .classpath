@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="org/linphone/jortp/RtpJ2seTransport.java" kind="src" path="submodules/jliblinphone/submodules/jortp/src"/>
+	<classpathentry excluding="src/com/belledonne_communications/jtunnel/HelloTunnelDemo.java" kind="src" path="jtunnel"/>
 	<classpathentry excluding="org/linphone/jlinphone/core/test/|org/linphone/jlinphoneMidlet.java|org/linphone/DisplayManager.java" kind="src" path="submodules/jliblinphone/src"/>
 	<classpathentry kind="src" path="submodules/jliblinphone/submodules/linphone/java/common"/>
 	<classpathentry kind="src" path="submodules/jliblinphone/submodules/linphone/java/j2me"/>
