@@ -42,6 +42,7 @@ import org.linphone.core.LinphoneCoreListener;
 import org.linphone.core.LinphoneFriend;
 import org.linphone.core.LinphoneProxyConfig;
 import org.linphone.core.LinphoneCall.State;
+import org.linphone.core.LinphoneCore.EcCalibratorStatus;
 import org.linphone.core.LinphoneCore.GlobalState;
 import org.linphone.core.LinphoneCore.RegistrationState;
 import org.linphone.jortp.JOrtpFactory;
@@ -402,6 +403,13 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 	public void textReceived(LinphoneCore lc, LinphoneChatRoom cr,
 			LinphoneAddress from, String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void ecCalibrationStatus(LinphoneCore lc, EcCalibratorStatus status,
+			int delayMs, Object data) {
 		// TODO Auto-generated method stub
 		
 	}
