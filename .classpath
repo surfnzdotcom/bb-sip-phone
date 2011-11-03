@@ -8,6 +8,6 @@
 	<classpathentry kind="src" path="submodules/jliblinphone/submodules/externals/sip-for-me/src"/>
 	<classpathentry kind="src" path="res"/>
 	<classpathentry kind="src" path=".locale_interfaces"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/net.rim.ejde.BlackBerryVMInstallType/BlackBerry JRE 6.0.0"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/net.rim.ejde.BlackBerryVMInstallType/BlackBerry JRE 7.0.0"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
