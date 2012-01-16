@@ -245,7 +245,9 @@ public class DialerField extends VerticalFieldManager implements TabFieldItem, L
 
 	public boolean keyChar(char ch, int status, int time) {
 		char lNumber = mPhoneTextFilter.convert(ch, 0);
-		if (mCore.isIncall() && 0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10) {
+		if (mCore.isIncall() && 
+				((0<=Character.digit(lNumber,10) && Character.digit(lNumber,10)<10)
+				|| lNumber=='#' || lNumber=='*')) {
 			 mCore.sendDtmf(lNumber);
 			return true;
 		} else {
