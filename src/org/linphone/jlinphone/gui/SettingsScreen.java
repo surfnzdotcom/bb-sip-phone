@@ -48,9 +48,14 @@ import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
 
+
+
 public class SettingsScreen extends MainScreen implements Settings, LinphoneResource{
+	public class LinphonePersistentHashTable extends Hashtable {
+		
+	}
 	private PersistentObject mPersistentObject;
-	private Hashtable mSettingsMap;
+	private LinphonePersistentHashTable mSettingsMap;
 	private final LinphoneCore mCore;
 	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	SettingsFieldContent mSettingsFields;
@@ -134,10 +139,10 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 	SettingsScreen(LinphoneCore lc) {
 		mCore = lc;	
 		mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.settings".hashCode() );
-		if (mPersistentObject.getContents() != null) {
-			mSettingsMap = (Hashtable) mPersistentObject.getContents();
+		if (mPersistentObject.getContents() != null && mPersistentObject.getContents() instanceof LinphonePersistentHashTable ) {
+			mSettingsMap = (LinphonePersistentHashTable) mPersistentObject.getContents();
 		} else {
-			mSettingsMap = new Hashtable();
+			mSettingsMap = new LinphonePersistentHashTable();
 		}
 		setTitle("Linphone "+mRes.getString(SETTINGS));
 		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));

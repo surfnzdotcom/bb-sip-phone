@@ -146,26 +146,17 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 			public boolean keyDown(int keycode, int time) {
 				if (keycode == GREEN_BUTTON_KEY || keycode == RED_BUTTON_KEY) {
 					return true;
-				} else if (time != mLastVolumeEvent && (keycode == VOLUME_DOWN || keycode == VOLUME_UP)) {
+				} else if (time != mLastVolumeEvent && (keycode == VOLUME_DOWN || keycode == VOLUME_UP) && mCore.isIncall()) {
 					mLastVolumeEvent=time;
 					// change volume
 					int lLeveltoDisplay=100;
-					if (mCore.isIncall() ) {
-						if (keycode == VOLUME_DOWN && mCore.getPlayLevel() >= 0) {
-							lLeveltoDisplay=Math.max(0,(mCore.getPlayLevel() - 10));
-						} else if (keycode == VOLUME_UP) {
-							lLeveltoDisplay=Math.min(100,mCore.getPlayLevel() + 10);
-						}
-						mCore.setPlayLevel(lLeveltoDisplay);
-					}else {
-						if (keycode == VOLUME_DOWN ) {
-							lLeveltoDisplay=Math.max(0,(Audio.getVolume() - 10));
-						} else if (keycode == VOLUME_UP) {
-							lLeveltoDisplay=Math.min(100,Audio.getVolume() + 10);
-						}
-						Audio.setVolume(lLeveltoDisplay);
+					if (keycode == VOLUME_DOWN && mCore.getPlayLevel() >= 0) {
+						lLeveltoDisplay=Math.max(0,(mCore.getPlayLevel() - 10));
+					} else if (keycode == VOLUME_UP) {
+						lLeveltoDisplay=Math.min(100,mCore.getPlayLevel() + 10);
 					}
-					Status.show("Volume ["+lLeveltoDisplay+"]",500);
+					mCore.setPlayLevel(lLeveltoDisplay);
+					Status.show("Volume ["+lLeveltoDisplay+"]",500);					
 					return true;
 				} else {
 					return false;
