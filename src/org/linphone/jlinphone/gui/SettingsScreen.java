@@ -47,13 +47,14 @@ import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
+import net.rim.device.api.util.Persistable;
 
 
-
+class LinphonePersistentHashTable extends Hashtable implements Persistable {
+	   
+}
 public class SettingsScreen extends MainScreen implements Settings, LinphoneResource{
-	public class LinphonePersistentHashTable extends Hashtable {
-		
-	}
+
 	private PersistentObject mPersistentObject;
 	private LinphonePersistentHashTable mSettingsMap;
 	private final LinphoneCore mCore;
