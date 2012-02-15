@@ -18,15 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+
 
 import java.util.Timer;
 import java.util.TimerTask;
-
-import javax.microedition.media.Manager;
-import javax.microedition.media.Player;
-import javax.microedition.media.control.RecordControl;
 
 import org.linphone.bb.NetworkManager;
 import org.linphone.bb.LogHandler;
@@ -55,9 +50,7 @@ import net.rim.device.api.applicationcontrol.ApplicationPermissionsManager;
 import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.Application;
 import net.rim.device.api.system.ApplicationDescriptor;
-import net.rim.device.api.system.Audio;
 import net.rim.device.api.system.Bitmap;
-import net.rim.device.api.system.ControlledAccessException;
 import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.KeyListener;
 import net.rim.device.api.system.RadioInfo;
@@ -70,9 +63,7 @@ import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
-import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.component.Status;
-import net.rim.device.api.ui.container.HorizontalFieldManager;
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
