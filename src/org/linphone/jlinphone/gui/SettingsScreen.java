@@ -216,12 +216,17 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		}
 
 		String lTransport = getString(Settings.SIP_TRANSPORT, null);
+		LinphoneCore.Transports transport = new LinphoneCore.Transports();
+		transport.tcp = 0;
+		transport.udp = 0;
+		transport.tls = 0;
 		if (lTransport != null && "tcp".equalsIgnoreCase(lTransport)) {
-			mCore.setSignalingTransport(LinphoneCore.Transport.tcp);	
+			transport.tcp = 5060;
 		} else {
-			mCore.setSignalingTransport(LinphoneCore.Transport.udp);	
-			
+			transport.udp = 5060;
 		}
+		mCore.setSignalingTransportPorts(transport);	
+		
 		//auth
 		mCore.clearAuthInfos();
 		LinphoneAuthInfo lAuthInfo =  LinphoneCoreFactory.instance().createAuthInfo(lUserName, lPasswd,null);

@@ -397,5 +397,12 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	}
 
 
+	public void callEncryptionChanged(LinphoneCore lc, LinphoneCall call,
+			boolean encrypted, String authenticationToken) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
 		
 }
