@@ -258,6 +258,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		lNetworkManager.handleCnxStateChange();
 		Application.getApplication().addRadioListener(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA,lNetworkManager );
 		WLANInfo.addListener(lNetworkManager);
+		mCore.setUploadPtime(20);
 	}
 
     

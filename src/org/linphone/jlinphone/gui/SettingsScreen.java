@@ -70,6 +70,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		private CheckboxField mDebugMode;
 		private CheckboxField mSubstituteZero2Plus;
 		private ObjectChoiceField mTransPort;
+		private BasicEditField mPtime;
 		VerticalFieldManager mMainFiedManager = new VerticalFieldManager();
 
 		public SettingsFieldContent (){
@@ -102,7 +103,11 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			lAdvanced.add(lAvancedLabelField);
 			
 			mTransPort= new ObjectChoiceField(mRes.getString(SETTING_TRANSPORT),SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
-			lAdvanced.add(mTransPort); 
+			lAdvanced.add(mTransPort);
+			mPtime = new BasicEditField(mRes.getString(SETTINGS_PTIME), "20", 3, 0);
+			mPtime.setText(getString(ADVANCED_PTIME,""));
+			lAdvanced.add(mPtime);
+			
 			mDebugMode = new CheckboxField(mRes.getString(SETTING_DEBUG), false);
 			mDebugMode.setChecked(getBoolean(ADVANCED_DEBUG,false));
 			lAdvanced.add(mDebugMode);
@@ -117,6 +122,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			mSettingsMap.put(SIP_PROXY, mProxy.getText());
 			mSettingsMap.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
 			mSettingsMap.put(ADVANCED_DEBUG, new Boolean(mDebugMode.getChecked()));
+			mSettingsMap.put(ADVANCED_PTIME,  mPtime.getText());
 			mSettingsMap.put(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, new Boolean(mSubstituteZero2Plus.getChecked()));
 			try {
 				initFromConf();
@@ -226,6 +232,9 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			transport.udp = 5060;
 		}
 		mCore.setSignalingTransportPorts(transport);	
+		
+		String lPtime = getString(Settings.ADVANCED_PTIME, "20");
+		mCore.setUploadPtime(Integer.parseInt(lPtime));
 		
 		//auth
 		mCore.clearAuthInfos();

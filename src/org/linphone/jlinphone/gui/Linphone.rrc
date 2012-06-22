@@ -8,6 +8,7 @@ GOODBYE#0="Goodbye !";
 MUTE#0="Mute";
 SAVE#0="Save";
 SETTINGS#0="Settings";
+SETTINGS_PTIME#0="Ptime: ";
 SETTING_ADVANCED#0="Advanced";
 SETTING_DEBUG#0="Enable debug mode";
 SETTING_DOMAIN#0="Domain*: ";

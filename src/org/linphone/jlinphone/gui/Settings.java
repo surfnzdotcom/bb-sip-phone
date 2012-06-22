@@ -28,6 +28,7 @@ public interface Settings {
 	
 	public static final String ADVANCED_DEBUG = "org.jlinphone.settings.advanced.debug";
 	public static final String ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO = "org.jlinphone.settings.advanced.zerotoplus";
+	public static final String ADVANCED_PTIME = "org.jlinphone.settings.advanced.ptime";
 	
 
 	public abstract boolean getBoolean(String key, boolean defaultValue);
