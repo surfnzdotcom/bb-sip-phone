@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
+import java.util.Vector;
+
 import org.linphone.core.CallDirection;
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCallLog;
@@ -88,22 +90,22 @@ public class CallLogsField extends SelectableListField implements TabFieldItem, 
 		    	
 		    } 
 		    public Object get(ListField list, int index) {
-		        return mCore.getCallLogs().elementAt(getLenth()-index-1); 
+		        return mCore.getCallLogs()[(getLenth()-index-1)]; 
 		    } 
 		    public int indexOfList(ListField list, String prefix, int string) { 
-		        return mCore.getCallLogs().indexOf(prefix, string); 
+		        return -1;
 		    } 
 		    public int getPreferredWidth(ListField list) { 
 		        return Display.getWidth(); 
 		    }
 		    private int getLenth() {
-		    	return  mCore.getCallLogs().size();
+		    	return  mCore.getCallLogs().length;
 		    }
 		});
 		refresh();
 	}
 	public void refresh() {
-		setSize(mCore.getCallLogs().size());
+		setSize(mCore.getCallLogs().length);
 	}
 	public void onSelected() {
 		refresh();

@@ -368,6 +368,17 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 			RegistrationState cstate, String smessage) {
 		
 		sLogger.info("new registration state ["+cstate+"]");
+		if (cfg.getState() == RegistrationState.RegistrationFailed && lc.isNetworkReachable()) {
+			int nextTryIn = 15;
+			sLogger.info("trying new registration in ["+nextTryIn+"]");
+			mTimer.schedule(new TimerTask() {
+				
+				public void run() {
+					mCore.refreshRegisters();
+					
+				}
+			}, nextTryIn*1000);
+		}
 	}
 
 
@@ -400,6 +411,13 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 	public void callEncryptionChanged(LinphoneCore lc, LinphoneCall call,
 			boolean encrypted, String authenticationToken) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	public void notifyReceived(LinphoneCore lc, LinphoneCall call,
+			LinphoneAddress from, byte[] event) {
 		// TODO Auto-generated method stub
 		
 	}
