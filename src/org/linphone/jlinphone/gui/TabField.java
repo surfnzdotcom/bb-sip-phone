@@ -23,7 +23,6 @@ import java.util.Vector;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
-
 import net.rim.device.api.ui.component.BitmapField;
 import net.rim.device.api.ui.component.SeparatorField;
 import net.rim.device.api.ui.container.HorizontalFieldManager;
@@ -40,7 +39,7 @@ public class TabField extends VerticalFieldManager {
 	int PADDING=0;
 	static final public int SIZE=40;
 	Background  CONTROL_NORMAL_BG=BackgroundFactory.createSolidBackground(Color.DARKGRAY);
-	Background  CONTROL_ACTIVE_BG=BackgroundFactory.createSolidBackground(Color.LIGHTGREY);
+	Background  CONTROL_ACTIVE_BG=BackgroundFactory.createSolidBackground(Color.LIGHTGRAY);
 	public TabField() {
 		add(mTabController);
 		add(new SeparatorField());
@@ -50,8 +49,11 @@ public class TabField extends VerticalFieldManager {
 		if (mDefault <= mTabFields.size()-1) {
 			display(mDefault);
 		}
-		
 	}
+	int getDefault() { return mDefault; }
+	int getCurrentIndex() { return mCurrentIndex; }
+	Field getCurrentField() { return mCurrentField; }
+
 	public void display(int index) {
 		if (mCurrentField !=null) {
 			if (mCurrentField instanceof TabFieldItem) {
@@ -60,6 +62,7 @@ public class TabField extends VerticalFieldManager {
 			delete(mCurrentField);
 		}
 		mCurrentField=(Field) mTabFields.elementAt(index);
+		mCurrentField.setBackground(CONTROL_ACTIVE_BG);
 		add(mCurrentField);
 		if (mCurrentField instanceof TabFieldItem) {
 			((TabFieldItem) mCurrentField).onSelected();
@@ -102,12 +105,6 @@ public class TabField extends VerticalFieldManager {
 		lButton.setSpace(10, 10);
 		mTabController.add(lButton);
 		mTabFields.addElement(aTabField);
-
-		if (mDefault == mTabFields.size()-1 && aTabField!=null) {
-			display(mDefault);
-			//this.add(aTabField);
-			//mCurrentField=aTabField;
-		}
 	}
 	protected boolean keyChar(char ch, int status, int time) {
 		if (mCurrentField != null && mCurrentField instanceof TabFieldItem) { 
@@ -116,5 +113,16 @@ public class TabField extends VerticalFieldManager {
 			return super.keyChar(ch, status, time);
 		}
 	}
-	
+
+	public void setFocusOnTab(int pos) {
+		mTabController.getField(pos).setFocus();
+	}
+
+	public void setFocus() {
+		if (mCurrentField!=null) {
+			mCurrentField.setFocus();
+		} else {
+			super.setFocus();
+		}
+	}
 }

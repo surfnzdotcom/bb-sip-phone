@@ -20,21 +20,11 @@ package org.linphone.jlinphone.gui;
 
 import java.util.Hashtable;
 
-import org.linphone.core.LinphoneAuthInfo;
-import org.linphone.core.LinphoneCore;
-import org.linphone.core.LinphoneCoreException;
-import org.linphone.core.LinphoneCoreFactory;
-import org.linphone.core.LinphoneProxyConfig;
-import org.linphone.jortp.JOrtpFactory;
-import org.linphone.jortp.Logger;
-
 import net.rim.device.api.i18n.ResourceBundle;
-import net.rim.device.api.system.EventLogger;
 import net.rim.device.api.system.PersistentObject;
 import net.rim.device.api.system.PersistentStore;
 import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
-import net.rim.device.api.ui.FieldChangeListener;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.BasicEditField;
@@ -43,11 +33,18 @@ import net.rim.device.api.ui.component.Dialog;
 import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ObjectChoiceField;
 import net.rim.device.api.ui.component.SeparatorField;
-
 import net.rim.device.api.ui.container.MainScreen;
 import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
 import net.rim.device.api.util.Persistable;
+
+import org.linphone.core.LinphoneAuthInfo;
+import org.linphone.core.LinphoneCore;
+import org.linphone.core.LinphoneCoreException;
+import org.linphone.core.LinphoneCoreFactory;
+import org.linphone.core.LinphoneProxyConfig;
+import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
 
 
 class LinphonePersistentHashTable extends Hashtable implements Persistable {
@@ -104,8 +101,8 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			
 			mTransPort= new ObjectChoiceField(mRes.getString(SETTING_TRANSPORT),SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
 			lAdvanced.add(mTransPort);
-			mPtime = new BasicEditField(mRes.getString(SETTINGS_PTIME), "20", 3, 0);
-			mPtime.setText(getString(ADVANCED_PTIME,""));
+			String pTimeValue=getString(ADVANCED_PTIME,"20");
+			mPtime = new BasicEditField(mRes.getString(SETTINGS_PTIME), pTimeValue, 3, 0);
 			lAdvanced.add(mPtime);
 			
 			mDebugMode = new CheckboxField(mRes.getString(SETTING_DEBUG), false);
@@ -278,4 +275,5 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 	public SettingsFieldContent createSettingsFields() {
 		return new SettingsFieldContent();
 	}
+
  }

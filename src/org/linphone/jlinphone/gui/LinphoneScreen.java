@@ -23,28 +23,6 @@ package org.linphone.jlinphone.gui;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.linphone.bb.NetworkManager;
-import org.linphone.bb.LogHandler;
-import org.linphone.core.CallDirection;
-import org.linphone.core.LinphoneAddress;
-import org.linphone.core.LinphoneCall;
-import org.linphone.core.LinphoneCallLog;
-import org.linphone.core.LinphoneChatRoom;
-import org.linphone.core.LinphoneCore;
-import org.linphone.core.LinphoneCoreException;
-import org.linphone.core.LinphoneCoreFactory;
-import org.linphone.core.LinphoneCoreListener;
-import org.linphone.core.LinphoneFriend;
-import org.linphone.core.LinphoneProxyConfig;
-import org.linphone.core.LinphoneCall.State;
-import org.linphone.core.LinphoneCore.EcCalibratorStatus;
-import org.linphone.core.LinphoneCore.GlobalState;
-import org.linphone.core.LinphoneCore.RegistrationState;
-import org.linphone.jortp.JOrtpFactory;
-import org.linphone.jortp.Logger;
-
-
-
 import net.rim.device.api.applicationcontrol.ApplicationPermissions;
 import net.rim.device.api.applicationcontrol.ApplicationPermissionsManager;
 import net.rim.device.api.i18n.ResourceBundle;
@@ -58,6 +36,7 @@ import net.rim.device.api.system.WLANInfo;
 import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
+import net.rim.device.api.ui.Keypad;
 import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.Dialog;
@@ -65,11 +44,30 @@ import net.rim.device.api.ui.component.LabelField;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.Status;
 import net.rim.device.api.ui.container.MainScreen;
-import net.rim.device.api.ui.container.VerticalFieldManager;
 import net.rim.device.api.ui.decor.BackgroundFactory;
 
-public class LinphoneScreen extends MainScreen implements LinphoneCoreListener , LinphoneResource {
+import org.linphone.bb.LogHandler;
+import org.linphone.bb.NetworkManager;
+import org.linphone.core.CallDirection;
+import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneCall;
+import org.linphone.core.LinphoneCall.State;
+import org.linphone.core.LinphoneCallLog;
+import org.linphone.core.LinphoneChatRoom;
+import org.linphone.core.LinphoneCore;
+import org.linphone.core.LinphoneCore.EcCalibratorStatus;
+import org.linphone.core.LinphoneCore.GlobalState;
+import org.linphone.core.LinphoneCore.RegistrationState;
+import org.linphone.core.LinphoneCoreException;
+import org.linphone.core.LinphoneCoreFactory;
+import org.linphone.core.LinphoneCoreListener;
+import org.linphone.core.LinphoneFriend;
+import org.linphone.core.LinphoneProxyConfig;
+import org.linphone.jlinphone.gui.msg.MessengerManager;
+import org.linphone.jortp.JOrtpFactory;
+import org.linphone.jortp.Logger;
 
+public class LinphoneScreen extends MainScreen implements LinphoneCoreListener , LinphoneResource {
  	private LabelField mStatus;
 	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
 	private LinphoneCore mCore;
@@ -77,10 +75,12 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	private SettingsScreen  mSettingsScreen ;
 	private ListField mCallLogs;
 	private DialerField mDialer;
+	private Field mMessenger;
 	private TabField mTabField;
 	private final int HISTORY_TAB_INDEX=0;
 	private final int DIALER_TAB_INDEX=1;
-	private final int SETTINGS_TAB_INDEX=2;
+	public static final int MESSENGER_TAB_INDEX=2;
+	private final int SETTINGS_TAB_INDEX=3;
 	static int[] sPermissions = { 
 		ApplicationPermissions.PERMISSION_INTERNET
 		,ApplicationPermissions.PERMISSION_MEDIA
@@ -92,39 +92,38 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		,ApplicationPermissions.PERMISSION_PHONE};
 	
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
+
 	LinphoneScreen()  {
+		LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
+		LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
+		LinphoneCoreFactory.instance().setDebugMode(true);//debug mode until configuration is loaded
+		sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
 
+		ApplicationPermissions lCurentPermission = ApplicationPermissionsManager.getInstance().getApplicationPermissions();
+		boolean lPermissionRequestNeeded = false;
+		for (int i=0;i<sPermissions.length;i++) {
+			if (!lCurentPermission.containsPermissionKey(sPermissions[i]) 
+					|| lCurentPermission.getPermission(sPermissions[i]) != ApplicationPermissions.VALUE_ALLOW) {
+				lPermissionRequestNeeded=true;
+			}
+		}
 
-			LinphoneCoreFactory.setFactoryClassName("org.linphone.jlinphone.core.LinphoneFactoryImpl");
-			LinphoneCoreFactory.instance().setLogHandler(new LogHandler());
-			LinphoneCoreFactory.instance().setDebugMode(true);//debug mode until configuration is loaded
-			sLogger.warn(" Starting version "+ApplicationDescriptor.currentApplicationDescriptor().getVersion());
-			
-			ApplicationPermissions lCurentPermission = ApplicationPermissionsManager.getInstance().getApplicationPermissions();
-			boolean lPermissionRequestNeeded = false;
+		if (lPermissionRequestNeeded) {
+			ApplicationPermissions lLinphonePermission = new ApplicationPermissions();
 			for (int i=0;i<sPermissions.length;i++) {
-				if (!lCurentPermission.containsPermissionKey(sPermissions[i]) 
-						|| lCurentPermission.getPermission(sPermissions[i]) != ApplicationPermissions.VALUE_ALLOW) {
-					lPermissionRequestNeeded=true;
-				}
+				lLinphonePermission.addPermission(sPermissions[i]);
 			}
-			
-			if (lPermissionRequestNeeded) {
-				ApplicationPermissions lLinphonePermission = new ApplicationPermissions();
-				for (int i=0;i<sPermissions.length;i++) {
-					lLinphonePermission.addPermission(sPermissions[i]);
-				}
-				if (!ApplicationPermissionsManager.getInstance().invokePermissionsRequest(lLinphonePermission)) {
-					sLogger.error("permission refused");
-					UiApplication.getUiApplication().invokeLater(new Runnable() {
-						public void run() {
-							Dialog.alert(mRes.getString(ERROR_AUDIO_PERMISSION_DENY));
-							close();
-						}
-					});
-					return;
-				}
+			if (!ApplicationPermissionsManager.getInstance().invokePermissionsRequest(lLinphonePermission)) {
+				sLogger.error("permission refused");
+				UiApplication.getUiApplication().invokeLater(new Runnable() {
+					public void run() {
+						Dialog.alert(mRes.getString(ERROR_AUDIO_PERMISSION_DENY));
+						close();
+					}
+				});
+				return;
 			}
+		}
 
 		// volume control keys
 		addKeyListener(new KeyListener() {
@@ -135,6 +134,15 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 			private int mLastVolumeEvent; 
 			public boolean keyChar(char key, int status, int time) {return false;}
 			public boolean keyDown(int keycode, int time) {
+//				mStatus.setText("Key down: " + keycode);
+				if(Keypad.key(keycode) == Keypad.KEY_ESCAPE) {
+					TabFieldItem item=(TabFieldItem) mTabField.getCurrentField();
+					if (item.navigateBack()) return true;
+					if (mTabField.getDefault() != mTabField.getCurrentIndex()) {
+						mTabField.display(mTabField.getDefault());
+						return true;
+					}
+				}
 				if (keycode == GREEN_BUTTON_KEY || keycode == RED_BUTTON_KEY) {
 					return true;
 				} else if (time != mLastVolumeEvent && (keycode == VOLUME_DOWN || keycode == VOLUME_UP) && mCore.isIncall()) {
@@ -156,22 +164,26 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 			public boolean keyRepeat(int keycode, int time) {return false;}
 			public boolean keyStatus(int keycode, int time) {return false;}
 			public boolean keyUp(int keycode, int time) {
-				if (keycode == GREEN_BUTTON_KEY) {
+//				mStatus.setText("Key up: " + keycode);
+
+				if (keycode==GREEN_BUTTON_KEY) {
 					return callButtonPressed();
-				} else if (keycode == RED_BUTTON_KEY) {
+				} else if (keycode==RED_BUTTON_KEY) {
 					hangupButtonPressed();
 					return true;
-				} else {
-					return false;
 				}
+				return false;
 			}
 			
 		});
 
 
-
-		mStatus=new LabelField("",Field.FIELD_BOTTOM);
+//		Manager titleBar= new VerticalFieldManager();
+//		add(titleBar);
+		mStatus=new LabelField("",FIELD_BOTTOM);
+//		mStatus.setMinimalWidth(Display.getWidth());
 		mStatus.setFont(Font.getDefault().derive(Font.ANTIALIAS_STANDARD,20));
+//		mStatus.setBackground(BackgroundFactory.createSolidBackground(Color.BLACK));
 		// Set the displayed title of the screen       
 		setTitle(mStatus);
 
@@ -188,14 +200,11 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 			return;
 		}
-		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));
 		
 		mTabField = new TabField();
-		add(mTabField);		
-
 
 		//call logs
-		mCallLogs = new CallLogsField(mCore, new CallLogsField.Listener() {
+		mCallLogs = new CallLogsField(mCore, new CallLogsField.SelectedListener() {
 			
 			public void onSelected(Object selected) {
 				LinphoneAddress lAddress;
@@ -215,10 +224,18 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		//dialer
 		mDialer = new DialerField(mCore);
 		mTabField.addTab(Bitmap.getBitmapResource("dialer_orange.png"), mDialer);
+		//messenger
+		mMessenger = new MessengerManager(mCore);
+		mTabField.addTab(Bitmap.getBitmapResource("msg_orange.png"), mMessenger);
 		//settings
 		mSettingsScreen = new SettingsScreen(mCore);
 		mTabField.addTab(Bitmap.getBitmapResource("settings_orange.png"), new SettingField(mSettingsScreen.createSettingsFields()));
+
+		add(mTabField);
+		//setBanner(mTabField);
 		mTabField.setDefault(DIALER_TAB_INDEX);
+
+
 		//menu
 		addMenuItem(new MenuItem(mRes.getString(SETTINGS), 110, 10)
 		{
@@ -259,18 +276,13 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		Application.getApplication().addRadioListener(RadioInfo.WAF_3GPP|RadioInfo.WAF_CDMA,lNetworkManager );
 		WLANInfo.addListener(lNetworkManager);
 		mCore.setUploadPtime(20);
+		
+		getMainManager().setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGRAY));
 	}
 
     
- 	/**
-     * Displays a dialog box to the user with the text "Goodbye!" when the
-     * application is closed.
-     * 
-     * @see net.rim.device.api.ui.Screen#close()
-     */
 	public void close() {   
-		try {// Display a farewell message before closing the application
-			Dialog.alert(mRes.getString(GOODBYE));
+		try {
 			if (mCore != null) mCore.destroy();
 		} finally {
 			super.close();
@@ -397,8 +409,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 
 	public void textReceived(LinphoneCore lc, LinphoneChatRoom cr,
 			LinphoneAddress from, String message) {
-		// TODO Auto-generated method stub
-		
+		// See directly in LinphoneCoreImpl
 	}
 
 
@@ -422,6 +433,27 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		
 	}
 
+	protected boolean onSavePrompt() {
+		return true; // don't bug at user on close
+	}
+	
+	protected void sublayout(int width, int height) {
+		super.sublayout(width, height);
+	}
 
-		
+	private static int titleHeightCache=0;
+	public int getTitlePreferredHeight() {
+		if (titleHeightCache==0) {
+			titleHeightCache=mStatus.getHeight()+mTabField.getHeight();
+		}
+		return titleHeightCache;
+	}
+	
+	public void setFocusToTab(int pos) {
+		mTabField.setFocusOnTab(pos);
+	}
+	
+	public boolean isDisplayedTab(int pos) {
+		return mTabField.mCurrentIndex==pos;
+	}
 }

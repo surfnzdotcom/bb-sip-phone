@@ -18,13 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 package org.linphone.jlinphone.gui;
 
-import java.util.Vector;
-
-import org.linphone.core.CallDirection;
-import org.linphone.core.LinphoneAddress;
-import org.linphone.core.LinphoneCallLog;
-import org.linphone.core.LinphoneCore;
-
 import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.system.Bitmap;
 import net.rim.device.api.system.Display;
@@ -35,7 +28,11 @@ import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.MenuItem;
 import net.rim.device.api.ui.component.ListField;
 import net.rim.device.api.ui.component.ListFieldCallback;
-import net.rim.device.api.ui.container.MainScreen;
+
+import org.linphone.core.CallDirection;
+import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneCallLog;
+import org.linphone.core.LinphoneCore;
 
 public class CallLogsField extends SelectableListField implements TabFieldItem, LinphoneResource{
 
@@ -43,7 +40,7 @@ public class CallLogsField extends SelectableListField implements TabFieldItem, 
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	MenuItem mClearMenu;
 	boolean isViewable = false;
-	CallLogsField(LinphoneCore aCore,Listener aListener) {
+	CallLogsField(LinphoneCore aCore,SelectedListener aListener) {
 		super (aListener);
 		mCore = aCore;
 		final Bitmap lOutBitmap = new Bitmap(this.getRowHeight(), this.getRowHeight());
@@ -118,5 +115,8 @@ public class CallLogsField extends SelectableListField implements TabFieldItem, 
 	}
 	public boolean keyChar(char ch, int status, int time) {
 		return super.keyChar(ch, status, time);
+	}
+	public boolean navigateBack() {
+		return false;
 	}
 }

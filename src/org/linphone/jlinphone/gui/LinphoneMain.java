@@ -15,34 +15,45 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
+ */
 package org.linphone.jlinphone.gui;
 
 
+import net.rim.device.api.notification.NotificationsConstants;
+import net.rim.device.api.notification.NotificationsManager;
 import net.rim.device.api.ui.UiApplication;
 
 public class LinphoneMain extends UiApplication{
-	 /**
-     * Entry point for application
-     * @param args Command line arguments (not used)
-     */ 
-    public static void main(String[] args)
-    {
+	public static final long NOTIF_ID=0xcca02cbde8bdd39bL; // class qualified name string to long
 
-    	// Create a new instance of the application and make the currently
-        // running thread the application's event dispatch thread.
-    	LinphoneMain theApp = new LinphoneMain();       
-    	theApp.enterEventDispatcher();
-    }
-    
+	/**
+	 * Entry point for application
+	 * @param args Command line arguments (not used)
+	 */ 
+	public static void main(String[] args)
+	{
 
-    /**
-     * Creates a new HelloWorldDemo object
-     */
-    public LinphoneMain()
-    {        
-        // Push a screen onto the UI stack for rendering.
-        pushScreen(new LinphoneScreen());
-    }    
+		// Create a new instance of the application and make the currently
+		// running thread the application's event dispatch thread.
+		LinphoneMain theApp = new LinphoneMain();       
+
+		NotificationsManager.registerSource(NOTIF_ID, new Object() {
+			public String toString() {
+				return "Linphone";
+			}
+		}, NotificationsConstants.IMPORTANT);
+
+		theApp.enterEventDispatcher();
+	}
+
+
+	/**
+	 * Creates a new HelloWorldDemo object
+	 */
+	public LinphoneMain()
+	{        
+		// Push a screen onto the UI stack for rendering.
+		pushScreen(new LinphoneScreen());
+	}    
 
 }

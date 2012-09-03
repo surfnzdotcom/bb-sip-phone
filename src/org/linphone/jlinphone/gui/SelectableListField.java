@@ -22,11 +22,18 @@ package org.linphone.jlinphone.gui;
 import net.rim.device.api.ui.component.ListField;
 
 public abstract class SelectableListField extends ListField {
-	interface Listener {
+	public interface SelectedListener {
 		public void onSelected(Object selected);
 	}
-	final Listener mListener;
-	SelectableListField(Listener aListener) {
+	private SelectedListener mListener;
+	protected void setSelectedListener(SelectedListener mListener) {
+		this.mListener = mListener;
+	}
+	protected SelectableListField() {
+		super();
+	}
+	protected SelectableListField(SelectedListener aListener) {
+		super();
 		mListener = aListener;
 	}
 	protected boolean keyChar(char key, int status, int time) {

@@ -30,7 +30,6 @@ import javax.microedition.pim.PIMItem;
 import net.rim.device.api.collection.util.SortedReadableList;
 import net.rim.device.api.system.Display;
 import net.rim.device.api.ui.Color;
-import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
 import net.rim.device.api.ui.Graphics;
 import net.rim.device.api.ui.component.KeywordFilterField;
@@ -98,7 +97,7 @@ class ContactListSource extends SortedReadableList implements KeywordProvider{
 	}
 }
 
-public class SearchableContactList implements ListFieldCallback{
+public class SearchableContactListListener implements ListFieldCallback{
 	interface Listener {
 		public void onSelected(Contact selected);
 	}
@@ -116,20 +115,22 @@ public class SearchableContactList implements ListFieldCallback{
 		}
 		
 		protected boolean navigationClick(int status, int time) {
-			if (mListener != null ) {
-				mListener.onSelected( (Contact) this.getCallback().get(this, getSelectedIndex()));
+			int selected=getSelectedIndex();
+			if (mListener != null && selected > -1) {
+				Contact selectedContact=(Contact) getCallback().get(this, selected);
+				mListener.onSelected(selectedContact);
 			}
 			return true;
 		}
 	};
 	
-	public SearchableContactList(Listener aListener) throws PIMException {
+	public SearchableContactListListener(Listener aListener) throws PIMException {
 		mListener = aListener;
 		mContactList = new ContactListSource();
 		mKeywordFilterField.setSourceList(mContactList, mContactList);
 		mKeywordFilterField.setCallback(this);
 	}
-	public SearchableContactList() throws PIMException {
+	public SearchableContactListListener() throws PIMException {
 		this(null);
 	}
 

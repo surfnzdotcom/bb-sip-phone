@@ -29,5 +29,6 @@ public interface TabFieldItem {
 	public void onUnSelected();
 	
 	public boolean keyChar(char ch, int status, int time);
+	public boolean navigateBack();
 	
 }
