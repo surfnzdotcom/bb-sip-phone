@@ -233,7 +233,8 @@ public class DialerField extends VerticalFieldManager implements TabFieldItem, L
 				if (mDuration <=60) {
 					mDurationField.setText(mDuration+"s");
 				} else {
-					mDurationField.setText(mDuration/60+":"+(mDuration - mDuration/60)+"s" );
+					int minutes=mDuration/60;
+					mDurationField.setText(minutes +":"+(mDuration - 60*minutes)+"s" );
 				}
 			}
 		};
