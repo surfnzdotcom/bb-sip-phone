@@ -54,10 +54,9 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		private BasicEditField mUserPasswd;
 		private BasicEditField mDomain;
 		private BasicEditField mProxy;
-		public final String[] SIP_TRANSPORT_TYPE={"udp","tcp"};  
 		private CheckboxField mDebugMode;
 		private CheckboxField mSubstituteZero2Plus;
-		private ObjectChoiceField mTransPort;
+		private TransportChoice mTransport;
 		private BasicEditField mPtime;
 		VerticalFieldManager mMainFiedManager = new VerticalFieldManager();
 
@@ -90,8 +89,9 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			lAvancedLabelField.setFont(Font.getDefault().derive(Font.BOLD|Font.UNDERLINED));
 			lAdvanced.add(lAvancedLabelField);
 			
-			mTransPort= new ObjectChoiceField(mRes.getString(SETTING_TRANSPORT),SIP_TRANSPORT_TYPE,SIP_TRANSPORT_TYPE[0].equals(lp.getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]))?0:1);
-			lAdvanced.add(mTransPort);
+			
+			mTransport= new TransportChoice(mRes);
+			lAdvanced.add(mTransport);
 			String pTimeValue=lp.getString(ADVANCED_PTIME,"20");
 			mPtime = new BasicEditField(mRes.getString(SETTINGS_PTIME), pTimeValue, 3, 0);
 			lAdvanced.add(mPtime);
@@ -108,7 +108,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			lp.put(SIP_PASSWORD, mUserPasswd.getText());
 			lp.put(SIP_DOMAIN, mDomain.getText());
 			lp.put(SIP_PROXY, mProxy.getText());
-			lp.put(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[mTransPort.getSelectedIndex()]);
+			lp.put(SIP_TRANSPORT,mTransport.getSelectedString());
 			lp.put(ADVANCED_DEBUG, mDebugMode.getChecked());
 			lp.put(ADVANCED_PTIME,  mPtime.getText());
 			lp.put(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, mSubstituteZero2Plus.getChecked());
@@ -143,6 +143,26 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 
 	}
 	
+	
+	public static class TransportChoice extends ObjectChoiceField {
+		public static final String[] SIP_TRANSPORT_TYPE={"udp","tcp","tls"};  
+
+		public static int valueOf(String str) {
+			for (int i=0; i < SIP_TRANSPORT_TYPE.length; ++i) {
+				if (SIP_TRANSPORT_TYPE[i].equalsIgnoreCase(str)) return i;
+			}
+			return 0; // ;)
+		}
+		public TransportChoice(ResourceBundle res) {
+			super(res.getString(SETTING_TRANSPORT),
+					SIP_TRANSPORT_TYPE,
+					LinphonePersistance.instance().getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]));
+		}
+
+		public String getSelectedString() {
+			return SIP_TRANSPORT_TYPE[getSelectedIndex()];
+		}
+	}
 	protected boolean onSave() {
 		mSettingsFields.save();
 		return true;
@@ -180,6 +200,8 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		transport.tls = 0;
 		if (lTransport != null && "tcp".equalsIgnoreCase(lTransport)) {
 			transport.tcp = 5060;
+		} else if (lTransport != null && "tls".equalsIgnoreCase(lTransport)) {
+			transport.tls = 5061;
 		} else {
 			transport.udp = 5060;
 		}
@@ -198,28 +220,31 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		String lProxy = lp.getString(Settings.SIP_PROXY,null);
 		if (lProxy == null || lProxy.length() == 0) {
 			lProxy = "sip:"+lDomain;
-		} else if (lProxy.startsWith("sip:")== false){
+		} else if (!lProxy.startsWith("sip:")){
 			lProxy="sip:"+lProxy;
 		}
+		if (transport.tls != 0 && lProxy.substring(4).indexOf(":") == -1) {
+			lProxy+=":"+transport.tls;
+		}
 		//get Default proxy if any
-		LinphoneProxyConfig lDefaultProxyConfig = mCore.getDefaultProxyConfig();
+		LinphoneProxyConfig proxyConfig = mCore.getDefaultProxyConfig();
 		String lIdentity = "sip:"+lUserName+"@"+lDomain;
 		try {
-			if (lDefaultProxyConfig == null) {
-				lDefaultProxyConfig = LinphoneCoreFactory.instance().createProxyConfig(lIdentity, lProxy, null,true);
-				lDefaultProxyConfig.setExpires(600);
-				mCore.addProxyConfig(lDefaultProxyConfig);
-				mCore.setDefaultProxyConfig(lDefaultProxyConfig);
+			if (proxyConfig == null) {
+				proxyConfig = LinphoneCoreFactory.instance().createProxyConfig(lIdentity, lProxy, null,true);
+				proxyConfig.setExpires(600);
+				mCore.addProxyConfig(proxyConfig);
+				mCore.setDefaultProxyConfig(proxyConfig);
 
 			} else {
-				lDefaultProxyConfig.edit();
-				lDefaultProxyConfig.setIdentity(lIdentity);
-				lDefaultProxyConfig.setProxy(lProxy);
-				lDefaultProxyConfig.enableRegister(true);
-				lDefaultProxyConfig.done();
+				proxyConfig.edit();
+				proxyConfig.setIdentity(lIdentity);
+				proxyConfig.setProxy(lProxy);
+				proxyConfig.enableRegister(true);
+				proxyConfig.done();
 			}
-			lDefaultProxyConfig = mCore.getDefaultProxyConfig();
-			lDefaultProxyConfig.setDialEscapePlus(lp.getBoolean(Settings.ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, false));
+			proxyConfig = mCore.getDefaultProxyConfig();
+			proxyConfig.setDialEscapePlus(lp.getBoolean(Settings.ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, false));
 
 			//init network state
 			
