@@ -71,9 +71,9 @@ import org.linphone.sal.SalListener.MessageEvent;
  */
 public class MessengerManager extends VerticalFieldManager implements TabFieldItem, LinphoneResource, OnTextMessageListener {
 
-	private static Bitmap successIcon = Bitmap.getBitmapResource("led_connected.png");
-	private static Bitmap progressIcon = Bitmap.getBitmapResource("led_inprogress.png");
-	private static Bitmap failureIcon = Bitmap.getBitmapResource("led_error.png");
+	private static Bitmap successIcon = Bitmap.getBitmapResource("chat_message_delivered.png");
+	private static Bitmap progressIcon = Bitmap.getBitmapResource("chat_message_inprogress.png");
+	private static Bitmap failureIcon = Bitmap.getBitmapResource("chat_message_not_delivered.png");
 
 
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
