@@ -31,6 +31,7 @@ import net.rim.device.api.ui.decor.Background;
 import net.rim.device.api.ui.decor.BackgroundFactory;
 
 public class TabField extends VerticalFieldManager {
+	CallStateIndicatorField mCallStateField = new CallStateIndicatorField(Field.FIELD_RIGHT);
 	HorizontalFieldManager mTabController = new HorizontalFieldManager();
 	Vector mTabFields = new Vector();
 	Field mCurrentField;
@@ -76,6 +77,9 @@ public class TabField extends VerticalFieldManager {
 		mCurrentField.setFocus();
 	}
 	public void addTab(Bitmap aBitmap, final Field aTabField) {
+		if (mCallStateField.getManager() != null) {
+			mTabController.delete(mCallStateField);
+		}
 		Bitmap lBitmapScaled = new Bitmap(SIZE, SIZE);
 		
 		lBitmapScaled.createAlpha(Bitmap.ALPHA_BITDEPTH_MONO);
@@ -105,6 +109,7 @@ public class TabField extends VerticalFieldManager {
 		lButton.setSpace(10, 10);
 		mTabController.add(lButton);
 		mTabFields.addElement(aTabField);
+		mTabController.add(mCallStateField);
 	}
 	protected boolean keyChar(char ch, int status, int time) {
 		if (mCurrentField != null && mCurrentField instanceof TabFieldItem) { 

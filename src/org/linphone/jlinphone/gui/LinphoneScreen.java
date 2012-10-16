@@ -362,8 +362,11 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 				}
 				if (state == LinphoneCall.State.OutgoingInit || state == LinphoneCall.State.IncomingReceived ) {
 					mDialer.enableIncallFields();
+				} else if (state == LinphoneCall.State.Connected) {
+					mTabField.mCallStateField.setCallState(CallStateIndicatorField.CallStateINCALL);
 				} else if (state==LinphoneCall.State.CallEnd | state==LinphoneCall.State.Error) {
 					mDialer.enableOutOfCallFields();
+					mTabField.mCallStateField.setCallState(CallStateIndicatorField.CallStateENDCALL);
 				}
 			}
 		});
@@ -420,10 +423,14 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	}
 
 
-	public void callEncryptionChanged(LinphoneCore lc, LinphoneCall call,
-			boolean encrypted, String authenticationToken) {
-		// TODO Auto-generated method stub
-		
+	public void callEncryptionChanged(final LinphoneCore lc, final LinphoneCall call,
+			final boolean encrypted, final String authenticationToken) {
+		UiApplication.getUiApplication().invokeLater(new Runnable() {
+			public void run() {
+				int state=encrypted?CallStateIndicatorField.CallStateSECURE:CallStateIndicatorField.CallStateUNSECURE;
+				mTabField.mCallStateField.setCallState(state);
+			}
+		});
 	}
 
 

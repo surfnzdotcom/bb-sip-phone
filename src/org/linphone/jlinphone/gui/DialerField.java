@@ -45,7 +45,7 @@ import org.linphone.core.LinphoneCoreException;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 
-public class DialerField extends VerticalFieldManager implements TabFieldItem, LinphoneResource{
+public class DialerField extends VerticalFieldManager implements TabFieldItem, LinphoneResource {
 	private VerticalFieldManager mOutcallFields = new VerticalFieldManager();
 	private AdvancedSearchableContactList mASCL;
 	
@@ -138,12 +138,11 @@ public class DialerField extends VerticalFieldManager implements TabFieldItem, L
 	    	}
 			protected void sublayout(int maxWidth, int maxHeight) {
 				layoutChild(mPhoneNumberField, 2*maxWidth/3, maxHeight);   
-				layoutChild(mDurationField, maxWidth/3, maxHeight);   
+				layoutChild(mDurationField, maxWidth/3, maxHeight);
 				setPositionChild(mPhoneNumberField, 10, 0);    
 				setPositionChild(mDurationField, maxWidth - maxWidth/3, 0);    
 				setExtent(maxWidth, mPhoneNumberField.getHeight());  
 			}
-	    	
 	    };
 	    
 
@@ -171,7 +170,7 @@ public class DialerField extends VerticalFieldManager implements TabFieldItem, L
 	    	}
 			protected void sublayout(int maxWidth, int maxHeight) {
 				layoutChild(mMute, 2*maxWidth/3, maxHeight);   
-				layoutChild(mSpeaker, maxWidth/3, maxHeight);   
+				layoutChild(mSpeaker, maxWidth/3, maxHeight);
 				int lYPosition = Display.getHeight() - 2*TabField.SIZE -mDisplayNameField.getContentHeight() - mPhoneNumberField.getHeight()-60;
 				setPositionChild(mMute, 10, lYPosition);    
 				setPositionChild(mSpeaker, maxWidth - mSpeaker.getWidth()-10, lYPosition);    
@@ -270,5 +269,5 @@ public class DialerField extends VerticalFieldManager implements TabFieldItem, L
 	public void setDisplayName(String aDisplayName) {
 		mASCL.setDisplayName(aDisplayName);
 	}
-	
+
 }
