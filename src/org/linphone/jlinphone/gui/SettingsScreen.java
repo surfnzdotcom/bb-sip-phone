@@ -35,6 +35,7 @@ import net.rim.device.api.ui.decor.BackgroundFactory;
 
 import org.linphone.core.LinphoneAuthInfo;
 import org.linphone.core.LinphoneCore;
+import org.linphone.core.LinphoneCore.MediaEncryption;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.core.LinphoneProxyConfig;
@@ -54,6 +55,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		private BasicEditField mUserPasswd;
 		private BasicEditField mDomain;
 		private BasicEditField mProxy;
+		private CheckboxField mUseSrtp;
 		private CheckboxField mDebugMode;
 		private CheckboxField mSubstituteZero2Plus;
 		private TransportChoice mTransport;
@@ -96,6 +98,10 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			mPtime = new BasicEditField(mRes.getString(SETTINGS_PTIME), pTimeValue, 3, 0);
 			lAdvanced.add(mPtime);
 			
+			mUseSrtp = new CheckboxField(mRes.getString(SETTING_SRTP), false);
+			mUseSrtp.setChecked(lp.getBoolean(SRTP_ENCRYPTION, false));
+			lAdvanced.add(mUseSrtp);
+
 			mDebugMode = new CheckboxField(mRes.getString(SETTING_DEBUG), false);
 			mDebugMode.setChecked(lp.getBoolean(ADVANCED_DEBUG,false));
 			lAdvanced.add(mDebugMode);
@@ -109,6 +115,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			lp.put(SIP_DOMAIN, mDomain.getText());
 			lp.put(SIP_PROXY, mProxy.getText());
 			lp.put(SIP_TRANSPORT,mTransport.getSelectedString());
+			lp.put(SRTP_ENCRYPTION, mUseSrtp.getChecked());
 			lp.put(ADVANCED_DEBUG, mDebugMode.getChecked());
 			lp.put(ADVANCED_PTIME,  mPtime.getText());
 			lp.put(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, mSubstituteZero2Plus.getChecked());
@@ -215,6 +222,8 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		LinphoneAuthInfo lAuthInfo =  LinphoneCoreFactory.instance().createAuthInfo(lUserName, lPasswd,null);
 		mCore.addAuthInfo(lAuthInfo);
 
+		boolean encryptMedia=lp.getBoolean(Settings.SRTP_ENCRYPTION, false);
+		mCore.setMediaEncryption(encryptMedia?MediaEncryption.SRTP:MediaEncryption.None);
 
 		//proxy
 		String lProxy = lp.getString(Settings.SIP_PROXY,null);

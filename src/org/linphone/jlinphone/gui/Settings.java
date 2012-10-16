@@ -25,6 +25,7 @@ public interface Settings {
 	public static final String SIP_DOMAIN = "org.jlinphone.settings.sip.domain";
 	public static final String SIP_PROXY = "org.jlinphone.settings.sip.proxy";
 	public static final String SIP_TRANSPORT = "org.jlinphone.settings.sip.transport";
+	public static final String SRTP_ENCRYPTION = "org.jlinphone.settings.srtp";
 	
 	public static final String ADVANCED_DEBUG = "org.jlinphone.settings.advanced.debug";
 	public static final String ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO = "org.jlinphone.settings.advanced.zerotoplus";
