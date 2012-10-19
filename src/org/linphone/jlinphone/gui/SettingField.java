@@ -35,7 +35,6 @@ public class SettingField extends VerticalFieldManager implements LinphoneResour
 	public SettingField(final SettingsFieldContent aContentSettings) {
 		contentField=aContentSettings.getRootField();
 		add(contentField);
-		add( new SeparatorField());
 		saveButton = new ButtonField(mRes.getString(SAVE),Field.FOCUSABLE |ButtonField.CONSUME_CLICK);
 		saveButton.setRunnable(new Runnable() {
 			public void run() {

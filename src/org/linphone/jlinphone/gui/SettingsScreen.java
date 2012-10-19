@@ -22,6 +22,7 @@ import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
+import net.rim.device.api.ui.Manager;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.BasicEditField;
 import net.rim.device.api.ui.component.CheckboxField;
@@ -60,7 +61,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		private CheckboxField mSubstituteZero2Plus;
 		private TransportChoice mTransport;
 		private BasicEditField mPtime;
-		VerticalFieldManager mMainFiedManager = new VerticalFieldManager();
+		VerticalFieldManager mMainFiedManager = new VerticalFieldManager(VERTICAL_SCROLL);
 
 		public SettingsFieldContent (){
 			VerticalFieldManager lSipAccount = new VerticalFieldManager();
