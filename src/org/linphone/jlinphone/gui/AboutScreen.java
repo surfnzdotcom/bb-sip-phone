@@ -40,34 +40,35 @@ import net.rim.device.api.ui.decor.Border;
 import net.rim.device.api.ui.decor.BorderFactory;
 
 public class AboutScreen extends MainScreen implements LinphoneResource{
-	static final String LINPHONE_WWW="http://www.linphone.org";
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	public AboutScreen() {
-		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGREY));
+		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGRAY));
 		Border lBorder = BorderFactory.createSimpleBorder(new XYEdges(40,20,20,20) ); 
 		
 		setBorder(lBorder);
 		BitmapField lLinphonebanner = new BitmapField(Bitmap.getBitmapResource("linphone-banner.png"),Field.FIELD_HCENTER|Field.FIELD_VCENTER );
 		add(new TextField(Field.NON_FOCUSABLE));
 		add(lLinphonebanner);
-		add(new RichTextField("Linphone "+ApplicationDescriptor.currentApplicationDescriptor().getVersion()+mRes.getString(ABOUT_STRING),Field.FIELD_HCENTER|Field.FIELD_VCENTER|RichTextField.TEXT_ALIGN_HCENTER|Field.NON_FOCUSABLE));
+		add(new RichTextField(Custom.APPNAME+" "
+				+ApplicationDescriptor.currentApplicationDescriptor().getVersion()
+				+mRes.getString(ABOUT_STRING),Field.FIELD_HCENTER|Field.FIELD_VCENTER|RichTextField.TEXT_ALIGN_HCENTER|Field.NON_FOCUSABLE));
 		
-		ButtonField lLinphoneAddress = new ButtonField(LINPHONE_WWW,Field.FIELD_VCENTER|Field.FIELD_HCENTER) {
+		ButtonField lLinphoneAddress = new ButtonField(Custom.APPLINK,Field.FIELD_VCENTER|Field.FIELD_HCENTER) {
 			protected void paint(Graphics graphics){
 				graphics.setColor(Color.BLUE);
-		        graphics.drawText(LINPHONE_WWW, 0, 0);
+		        graphics.drawText(Custom.APPLINK, 0, 0);
 		    }
 			protected void paintBackground(Graphics graphics) {}
 		};
 		lLinphoneAddress.setRunnable(new Runnable() {
 			public void run() {
 				BrowserSession lBrowserSession = Browser.getDefaultSession();
-				lBrowserSession.displayPage(LINPHONE_WWW);
+				lBrowserSession.displayPage(Custom.APPLINK);
 			}
 		});
 		lLinphoneAddress.setBorder(BorderFactory.createSimpleBorder(new XYEdges(0,0,0,0)));
 		lLinphoneAddress.setFont(Font.getDefault().derive(Font.UNDERLINED));
 		add(lLinphoneAddress);
-		add(new LabelField("© 2010 Belledonne Communications",Field.FIELD_VCENTER|Field.FIELD_HCENTER));
+		add(new LabelField(Custom.COPYRIGHT,Field.FIELD_VCENTER|Field.FIELD_HCENTER));
 	}
 }

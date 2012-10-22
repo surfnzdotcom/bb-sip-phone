@@ -39,7 +39,7 @@ public class LinphoneMain extends UiApplication{
 
 		NotificationsManager.registerSource(NOTIF_ID, new Object() {
 			public String toString() {
-				return "Linphone";
+				return Custom.APPNAME;
 			}
 		}, NotificationsConstants.IMPORTANT);
 

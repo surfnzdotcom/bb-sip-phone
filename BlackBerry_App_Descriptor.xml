@@ -5,7 +5,7 @@
   <Application Type="BlackBerry Application" MainMIDletName="" MainArgs="" HomeScreenPosition="0" StartupTier="7" IsSystemModule="false" IsAutostartup="false"/>
   <Resources hasTitleResource="true" TitleResourceBundleName="Linphone" TitleResourceBundleRelativePath="src/org/linphone/jlinphone/gui/Linphone.rrh" TitleResourceBundleClassName="org.linphone.jlinphone.gui.Linphone" TitleResourceBundleKey="" DescriptionId="">
     <Icons>
-      <Icon CanonicalFileName="submodules/jliblinphone/submodules/linphone/pixmaps/linphone.png" IsFocus="false"/>
+      <Icon CanonicalFileName="res/logo.png" IsFocus="false"/>
     </Icons>
   </Resources>
   <KeywordResources KeywordResourceBundleName="" KeywordResourceBundleRelativePath="" KeywordResourceBundleClassName="" KeywordResourceBundleKey=""/>

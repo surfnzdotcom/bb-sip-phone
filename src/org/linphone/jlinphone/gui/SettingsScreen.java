@@ -22,7 +22,6 @@ import net.rim.device.api.i18n.ResourceBundle;
 import net.rim.device.api.ui.Color;
 import net.rim.device.api.ui.Field;
 import net.rim.device.api.ui.Font;
-import net.rim.device.api.ui.Manager;
 import net.rim.device.api.ui.UiApplication;
 import net.rim.device.api.ui.component.BasicEditField;
 import net.rim.device.api.ui.component.CheckboxField;
@@ -48,7 +47,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 
 	private LinphonePersistance lp=LinphonePersistance.instance();
 	private final LinphoneCore mCore;
-	private Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
+	private Logger sLogger=JOrtpFactory.instance().createLogger(Custom.APPNAME);
 	SettingsFieldContent mSettingsFields;
 	private static ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
 	class SettingsFieldContent {
@@ -138,7 +137,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 	}
 	SettingsScreen(LinphoneCore lc) {
 		mCore = lc;	
-		setTitle("Linphone "+mRes.getString(SETTINGS));
+		setTitle(Custom.APPNAME +" "+mRes.getString(SETTINGS));
 		((VerticalFieldManager)getMainManager()).setBackground(BackgroundFactory.createSolidBackground(Color.LIGHTGRAY));
 		mSettingsFields = new SettingsFieldContent(); 
 		add(mSettingsFields.getRootField());

@@ -80,22 +80,7 @@ public class TabField extends VerticalFieldManager {
 		if (mCallStateField.getManager() != null) {
 			mTabController.delete(mCallStateField);
 		}
-		Bitmap lBitmapScaled = new Bitmap(SIZE, SIZE);
-		
-		lBitmapScaled.createAlpha(Bitmap.ALPHA_BITDEPTH_MONO);
-	
-		aBitmap.scaleInto(	0
-							,0
-							,aBitmap.getWidth()
-							,aBitmap.getHeight()
-							,lBitmapScaled
-							,PADDING
-							,PADDING
-							,SIZE-2*PADDING
-							,SIZE-2*PADDING
-							,Bitmap.FILTER_LANCZOS);
-		BitmapField lButton = new BitmapField(lBitmapScaled,Field.FOCUSABLE) {
-
+		BitmapField lButton = new BitmapField(aBitmap,Field.FOCUSABLE) {
 			protected boolean navigationUnclick(int status, int time) {
 				if (aTabField == null) {
 					return  false; //nop

@@ -19,10 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 package org.linphone.jlinphone.gui.msg;
 
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Vector;
-
-import javax.microedition.io.file.FileSystemRegistry;
 
 import net.rim.device.api.database.DatabaseException;
 import net.rim.device.api.database.DatabaseFactory;
@@ -30,6 +27,7 @@ import net.rim.device.api.io.MalformedURIException;
 import net.rim.device.api.io.URI;
 
 import org.linphone.core.LinphoneAddress;
+import org.linphone.jlinphone.gui.Custom;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
 import org.linphone.sal.SalListener.MessageEvent;
@@ -42,7 +40,7 @@ public abstract class MessageStorage {
 	protected static URI dbUri;
 
 	protected Vector mThreadItems = new Vector();
-	protected static final Logger sLogger=JOrtpFactory.instance().createLogger("Linphone - MessageStorage");
+	protected static final Logger sLogger=JOrtpFactory.instance().createLogger(Custom.APPNAME+" - MessageStorage");
 	protected static final void fatal(String msg, Throwable e) {
 		sLogger.fatal(msg, e);
 		String eMsg=e.getMessage();
@@ -54,7 +52,6 @@ public abstract class MessageStorage {
 	public synchronized static final MessageStorage getInstance() {
 		if (instance == null) {
 			dbUri=createUriQuietly(DatabaseFactory.getDefaultRoot()+"messages.db");
-			//			dbUri=discoverDatabaseUri();
 			if (dbUri != null) {
 				try {
 					PersistentMessageStorage.createDatabase(dbUri);
@@ -290,36 +287,6 @@ public abstract class MessageStorage {
 		return result;
 	}
 
-
-	private static URI discoverDatabaseUri() {
-		Vector possibleRoots= new Vector();
-
-		Enumeration e = FileSystemRegistry.listRoots();
-		while (e.hasMoreElements()) {
-			String root=(String) e.nextElement();
-			String file= "file://" + root + "messages.db";
-			URI testUri=createUriQuietly(file);
-			try {
-				if (DatabaseFactory.exists(testUri)) return testUri;
-			} catch (Exception e0) {}
-
-			possibleRoots.addElement(root);
-		}
-
-		if (possibleRoots.contains("SDCard/")) {
-			return createUriQuietly("file://SDCard/messages.db");
-		}
-
-		if (possibleRoots.contains("store/")) {
-			// FIXME why the extra / ?
-			// without it I get a net.rim.device.api.database.DatabasePathException: 
-			// Invalid path name. Path does not contains a proper root list. See FileSystemRegistry class for details.
-			// while opening the database.
-			return createUriQuietly("file:///store/messages.db");
-		}
-
-		return null;
-	}
 
 	private static URI createUriQuietly(String uri) {
 		try {

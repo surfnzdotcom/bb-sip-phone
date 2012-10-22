@@ -57,7 +57,7 @@ public class DialerField extends VerticalFieldManager implements TabFieldItem, L
 	CheckboxField mSpeaker;
 	static final private Timer mTimer = new Timer();
 	TimerTask mCallDurationTask;
-	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
+	private static Logger sLogger=JOrtpFactory.instance().createLogger(Custom.APPNAME);
 	String mDisplayName;
 	LinphoneCore mCore;
 	final static int GREEN_BUTTON_KEY=1114112;

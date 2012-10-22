@@ -23,7 +23,7 @@ public class AdvancedSearchableContactList extends VerticalFieldManager implemen
 	protected TextField  mInputAddress;
 	protected KeywordFilterField mKeywordFilter;
 	private ResourceBundle mRes = ResourceBundle.getBundle(BUNDLE_ID, BUNDLE_NAME);
-	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
+	private static Logger sLogger=JOrtpFactory.instance().createLogger(Custom.APPNAME);
 
 	private void strangelyRetrieveKeywordFilter() {
 		try {

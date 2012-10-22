@@ -69,7 +69,7 @@ import org.linphone.jortp.Logger;
 
 public class LinphoneScreen extends MainScreen implements LinphoneCoreListener , LinphoneResource {
  	private LabelField mStatus;
-	private static Logger sLogger=JOrtpFactory.instance().createLogger("Linphone");
+	private static Logger sLogger=JOrtpFactory.instance().createLogger(Custom.APPNAME);
 	private LinphoneCore mCore;
 	private Timer mTimer;
 	private SettingsScreen  mSettingsScreen ;
@@ -330,7 +330,7 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	public void displayStatus(LinphoneCore lc, final String message) {
 		UiApplication.getUiApplication().invokeLater(new Runnable() {
 			public void run() {
-				mStatus.setText("Linphone  "+message);
+				mStatus.setText(Custom.APPNAME +"  "+message);
 			}
 		});
 
