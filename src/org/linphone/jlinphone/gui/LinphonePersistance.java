@@ -11,9 +11,19 @@ public final class LinphonePersistance implements Persistable {
 	private static LinphonePersistance instance;
 	private Hashtable data;
 	private PersistentObject mPersistentObject;
+	private static final String UNIQUE_PERSISTANCE_PATH;
+	
+	static {
+		if ("Linphone".equals(Custom.APPNAME)) {
+			// backward compatibility
+			UNIQUE_PERSISTANCE_PATH="org.jlinphone.settings";
+		} else {
+			UNIQUE_PERSISTANCE_PATH="org.jlinphone.persistance."+Custom.APPNAME;
+		}
+	}
 
 	private LinphonePersistance() {
-		mPersistentObject = PersistentStore.getPersistentObject( "org.jlinphone.persistance".hashCode());
+		mPersistentObject = PersistentStore.getPersistentObject(UNIQUE_PERSISTANCE_PATH.hashCode());
 		if (mPersistentObject.getContents() != null && mPersistentObject.getContents() instanceof Hashtable) {
 			data = (Hashtable) mPersistentObject.getContents();
 		} else {
