@@ -68,17 +68,21 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			LabelField lSipAccountLabelField = new LabelField(mRes.getString(SETTING_SIP_ACCOUNT));
 			lSipAccountLabelField.setFont(Font.getDefault().derive(Font.BOLD|Font.UNDERLINED));
 			lSipAccount.add(lSipAccountLabelField);
+
 			mUserNameField = new BasicEditField(mRes.getString(SETTING_USERNAME), "", 128, 0);
 			mUserNameField.setText(lp.getString(SIP_USERNAME,""));
 			lSipAccount.add(mUserNameField);
+
 			mUserPasswd = new BasicEditField(mRes.getString(SETTING_PASSWD), "", 128, 0);
 			mUserPasswd.setText(lp.getString(SIP_PASSWORD,""));
 			lSipAccount.add(mUserPasswd);
-			mDomain = new BasicEditField(mRes.getString(SETTING_DOMAIN), "", 128, 0);
-			mDomain.setText(lp.getString(SIP_DOMAIN,""));
+
+			final String domain=lp.getString(SIP_DOMAIN,Custom.DEFAULT_DOMAIN);
+			mDomain = new BasicEditField(mRes.getString(SETTING_DOMAIN), domain, 128, 0);
 			lSipAccount.add(mDomain);
-			mProxy = new BasicEditField(mRes.getString(SETTING_PROXY), "", 128, 0);
-			mProxy.setText(lp.getString(SIP_PROXY,""));
+
+			final String proxy=lp.getString(SIP_PROXY,Custom.DEFAULT_PROXY);
+			mProxy = new BasicEditField(mRes.getString(SETTING_PROXY), proxy, 128, 0);
 			lSipAccount.add(mProxy);
 
 			
@@ -92,21 +96,24 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			lAdvanced.add(lAvancedLabelField);
 			
 			
-			mTransport= new TransportChoice(mRes);
+			final String transport=lp.getString(SIP_TRANSPORT,Custom.DEFAULT_TRANSPORT);
+			mTransport= new TransportChoice(mRes.getString(SETTING_TRANSPORT), transport);
 			lAdvanced.add(mTransport);
-			String pTimeValue=lp.getString(ADVANCED_PTIME,"20");
+
+			final String pTimeValue=lp.getString(ADVANCED_PTIME,Custom.DEFAULT_PTIME);
 			mPtime = new BasicEditField(mRes.getString(SETTINGS_PTIME), pTimeValue, 3, 0);
 			lAdvanced.add(mPtime);
 			
-			mUseSrtp = new CheckboxField(mRes.getString(SETTING_SRTP), false);
-			mUseSrtp.setChecked(lp.getBoolean(SRTP_ENCRYPTION, false));
+			final boolean enableSrtp=lp.getBoolean(SRTP_ENCRYPTION, Custom.DEFAULT_ENABLE_SRTP);
+			mUseSrtp = new CheckboxField(mRes.getString(SETTING_SRTP), enableSrtp);
 			lAdvanced.add(mUseSrtp);
 
-			mDebugMode = new CheckboxField(mRes.getString(SETTING_DEBUG), false);
-			mDebugMode.setChecked(lp.getBoolean(ADVANCED_DEBUG,false));
+			final boolean debug=lp.getBoolean(ADVANCED_DEBUG,Custom.DEFAUL_DEBUG);
+			mDebugMode = new CheckboxField(mRes.getString(SETTING_DEBUG), debug);
 			lAdvanced.add(mDebugMode);
-			mSubstituteZero2Plus = new CheckboxField(mRes.getString(SETTING_ESCAPE_PLUS), false);
-			mSubstituteZero2Plus.setChecked(lp.getBoolean(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO,false));
+
+			final boolean plusTo00 = lp.getBoolean(ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, Custom.DEFAULT_PLUS_TO_ZERO);
+			mSubstituteZero2Plus = new CheckboxField(mRes.getString(SETTING_ESCAPE_PLUS), plusTo00);
 			lAdvanced.add(mSubstituteZero2Plus);
 		}
 		public void save() {
@@ -160,10 +167,8 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			}
 			return 0; // ;)
 		}
-		public TransportChoice(ResourceBundle res) {
-			super(res.getString(SETTING_TRANSPORT),
-					SIP_TRANSPORT_TYPE,
-					LinphonePersistance.instance().getString(SIP_TRANSPORT,SIP_TRANSPORT_TYPE[0]));
+		public TransportChoice(String label, String selected) {
+			super(label, SIP_TRANSPORT_TYPE, selected.toLowerCase());
 		}
 
 		public String getSelectedString() {
@@ -181,7 +186,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 
 		
 		//traces
-		boolean lIsDebug = lp.getBoolean(Settings.ADVANCED_DEBUG, false);
+		boolean lIsDebug = lp.getBoolean(Settings.ADVANCED_DEBUG, Custom.DEFAUL_DEBUG);
 		LinphoneCoreFactory.instance().setDebugMode(lIsDebug);
 		
 		//1 read proxy config from preferences
@@ -195,26 +200,26 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 			throw new LinphoneConfigException(mRes.getString(SETTING_ERROR_NO_PASSWD));
 		}
 
-		String lDomain = lp.getString(Settings.SIP_DOMAIN, null);
+		String lDomain = lp.getString(Settings.SIP_DOMAIN, Custom.DEFAULT_DOMAIN);
 		if (lDomain == null || lDomain.length()==0) {
 			throw new LinphoneConfigException(mRes.getString(SETTING_DOMAIN));
 		}
 
-		String lTransport = lp.getString(Settings.SIP_TRANSPORT, null);
+		String lTransport = lp.getString(Settings.SIP_TRANSPORT, Custom.DEFAULT_TRANSPORT);
 		LinphoneCore.Transports transport = new LinphoneCore.Transports();
 		transport.tcp = 0;
 		transport.udp = 0;
 		transport.tls = 0;
 		if (lTransport != null && "tcp".equalsIgnoreCase(lTransport)) {
-			transport.tcp = 5060;
+			transport.tcp = Custom.SIP_PORT;
 		} else if (lTransport != null && "tls".equalsIgnoreCase(lTransport)) {
-			transport.tls = 5061;
+			transport.tls = Custom.TLS_PORT;
 		} else {
-			transport.udp = 5060;
+			transport.udp = Custom.SIP_PORT;
 		}
 		mCore.setSignalingTransportPorts(transport);	
 		
-		String lPtime = lp.getString(Settings.ADVANCED_PTIME, "20");
+		String lPtime = lp.getString(Settings.ADVANCED_PTIME, Custom.DEFAULT_PTIME);
 		mCore.setUploadPtime(Integer.parseInt(lPtime));
 		
 		//auth
@@ -222,11 +227,11 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		LinphoneAuthInfo lAuthInfo =  LinphoneCoreFactory.instance().createAuthInfo(lUserName, lPasswd,null);
 		mCore.addAuthInfo(lAuthInfo);
 
-		boolean encryptMedia=lp.getBoolean(Settings.SRTP_ENCRYPTION, false);
+		boolean encryptMedia=lp.getBoolean(Settings.SRTP_ENCRYPTION, Custom.DEFAULT_ENABLE_SRTP);
 		mCore.setMediaEncryption(encryptMedia?MediaEncryption.SRTP:MediaEncryption.None);
 
 		//proxy
-		String lProxy = lp.getString(Settings.SIP_PROXY,null);
+		String lProxy = lp.getString(Settings.SIP_PROXY,Custom.DEFAULT_PROXY);
 		if (lProxy == null || lProxy.length() == 0) {
 			lProxy = "sip:"+lDomain;
 		} else if (!lProxy.startsWith("sip:")){
@@ -253,7 +258,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 				proxyConfig.done();
 			}
 			proxyConfig = mCore.getDefaultProxyConfig();
-			proxyConfig.setDialEscapePlus(lp.getBoolean(Settings.ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, false));
+			proxyConfig.setDialEscapePlus(lp.getBoolean(Settings.ADVANCED_SUBSTITUTE_PLUS_TO_DOUBLE_ZERO, Custom.DEFAULT_PLUS_TO_ZERO));
 
 			//init network state
 			
