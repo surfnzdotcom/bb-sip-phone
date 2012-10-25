@@ -241,7 +241,7 @@ public class SettingsScreen extends MainScreen implements Settings, LinphoneReso
 		try {
 			if (proxyConfig == null) {
 				proxyConfig = LinphoneCoreFactory.instance().createProxyConfig(lIdentity, lProxy, null,true);
-				proxyConfig.setExpires(600);
+				proxyConfig.setExpires(Custom.EXPIRE);
 				mCore.addProxyConfig(proxyConfig);
 				mCore.setDefaultProxyConfig(proxyConfig);
 
