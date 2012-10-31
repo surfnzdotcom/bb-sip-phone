@@ -18,7 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package org.linphone.jlinphone.gui.msg;
 
-import java.util.Date;
 import java.util.Vector;
 
 import net.rim.device.api.database.DatabaseException;
@@ -27,10 +26,11 @@ import net.rim.device.api.io.MalformedURIException;
 import net.rim.device.api.io.URI;
 
 import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneChatMessage;
+import org.linphone.core.LinphoneChatMessage.State;
 import org.linphone.jlinphone.gui.Custom;
 import org.linphone.jortp.JOrtpFactory;
 import org.linphone.jortp.Logger;
-import org.linphone.sal.SalListener.MessageEvent;
 
 /**
  * @author guillaume Beraudo
@@ -83,7 +83,7 @@ public abstract class MessageStorage {
 		String getUri();
 		String getContent();
 		int getDirection();
-		int getStatus();
+		LinphoneChatMessage.State getState();
 		long getId();
 		String getErrorMsg();
 	}
@@ -122,7 +122,7 @@ public abstract class MessageStorage {
 		SimpleMessageItem item = new SimpleMessageItem();
 		item.direction=MessageItem.DIR_SENT;
 		item.message=msg;
-		item.status=MessageEvent.PROGRESS;
+		item.state=State.InProgress;
 		item.uri=uri;
 		item.read=true;
 
@@ -131,7 +131,7 @@ public abstract class MessageStorage {
 		return item;
 	}
 
-	public synchronized MessageItem receivedMsg(String uri, String message, Date now) {
+	public synchronized MessageItem receivedMsg(String uri, String message) {
 		SimpleThreadItem thread=loadThread(uri);
 		if (thread == null) {
 			thread = new SimpleThreadItem(uri, uri);
@@ -140,7 +140,7 @@ public abstract class MessageStorage {
 		SimpleMessageItem item = new SimpleMessageItem();
 		item.direction=MessageItem.DIR_RECEIVED;
 		item.message=message;
-		item.status=MessageEvent.SUCCESS;
+		item.state=State.InProgress;
 		item.uri=uri;
 		item.thread=thread;
 		item.read=uri.equalsIgnoreCase(activePeer);
@@ -151,8 +151,7 @@ public abstract class MessageStorage {
 		return item;
 	}
 
-	public abstract void updateSentMsg(Object opaque, LinphoneAddress to,
-			int event, String phrase);
+	public abstract void updateSentMsg(LinphoneChatMessage message, State event, String phrase);
 
 	public abstract Vector getAllMessages(LinphoneAddress peer);
 
@@ -182,7 +181,7 @@ public abstract class MessageStorage {
 		String uri;
 		String message;
 		int direction;
-		int status;
+		LinphoneChatMessage.State state;
 		String error;
 		long id;
 		ThreadItem thread;
@@ -196,7 +195,7 @@ public abstract class MessageStorage {
 		public String getUri() {return uri;}
 		public String getContent() {return message;}
 		public int getDirection() {return direction;}
-		public int getStatus() {return status;}
+		public LinphoneChatMessage.State getState() {return state;}
 		public long getId() {return id;}
 		public String getErrorMsg() {return error;}
 	}
@@ -267,13 +266,12 @@ public abstract class MessageStorage {
 		return null;
 	}
 
-	protected SimpleMessageItem findMessage(ThreadItem thread, Object opaque) {
-		long opaqueLong=((Long)opaque).longValue();
+	protected SimpleMessageItem findMessage(ThreadItem thread, long id) {
 		if (thread == null) return null;
 		Vector messages=((SimpleThreadItem)thread).getMessages();
 		for (int i=0; i < messages.size(); ++i) {
 			SimpleMessageItem f=(SimpleMessageItem)messages.elementAt(i);
-			if (f.id == opaqueLong) return f;
+			if (f.id == id) return f;
 		}
 		return null;
 	}

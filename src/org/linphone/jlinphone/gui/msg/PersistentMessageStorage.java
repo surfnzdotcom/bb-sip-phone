@@ -31,6 +31,8 @@ import net.rim.device.api.database.Statement;
 import net.rim.device.api.io.URI;
 
 import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneChatMessage;
+import org.linphone.core.LinphoneChatMessage.State;
 
 /**
  * Store conversation threads and associated messages.
@@ -130,19 +132,19 @@ public final class PersistentMessageStorage extends MessageStorage {
 	}
 
 
-	public synchronized MessageItem receivedMsg(String uri, String message, Date now) {
-		SimpleMessageItem item = (SimpleMessageItem) super.receivedMsg(uri, message, now);
+	public synchronized MessageItem receivedMsg(String uri, String message) {
+		SimpleMessageItem item = (SimpleMessageItem) super.receivedMsg(uri, message);
 		insertMessageInDatabase(item);
 		return item;
 	}
 
-	public synchronized void updateSentMsg(Object opaque, LinphoneAddress to, int event, String phrase) {
-		Long id=(Long)opaque;
+	public synchronized void updateSentMsg(LinphoneChatMessage message, State event, String phrase) {
+		Long id=(Long)message.getUserData();
 		Statement st=null;
 		try {
 			st=db.createStatement("UPDATE Message SET status=? where id = ?");
 			st.prepare();
-			st.bind(1, event);
+			st.bind(1, event.toInt());
 			st.bind(2, id.longValue());
 			st.execute();
 		} catch (DatabaseException e) {
@@ -220,7 +222,7 @@ public final class PersistentMessageStorage extends MessageStorage {
 			item.direction=r.getInteger(i++);
 			item.message=r.getString(i++);
 			item.time=r.getLong(i++);
-			item.status=r.getInteger(i++);
+			item.state=State.fromInt(r.getInteger(i++));
 			item.read=r.getInteger(i++) == 0;
 		} catch (DataTypeException e) {
 			fatal("Parsing message row", e);
@@ -240,7 +242,7 @@ public final class PersistentMessageStorage extends MessageStorage {
 			st.bind(2, item.direction);
 			st.bind(3, item.message);
 			st.bind(4, new Date().getTime());
-			st.bind(5, item.status);
+			st.bind(5, item.state.toInt());
 			st.bind(6, item.read?0:1);
 			st.execute();
 			item.id=db.lastInsertedRowID();

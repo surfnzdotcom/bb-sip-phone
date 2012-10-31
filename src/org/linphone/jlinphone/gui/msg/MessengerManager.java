@@ -18,7 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package org.linphone.jlinphone.gui.msg;
 
-import java.util.Date;
 import java.util.Vector;
 
 import net.rim.device.api.i18n.ResourceBundle;
@@ -49,13 +48,16 @@ import net.rim.device.api.util.StringProvider;
 
 import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCall;
+import org.linphone.core.LinphoneChatMessage;
+import org.linphone.core.LinphoneChatMessage.State;
 import org.linphone.core.LinphoneChatRoom;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCoreException;
 import org.linphone.core.LinphoneCoreFactory;
 import org.linphone.jlinphone.core.LinphoneAddressImpl;
+import org.linphone.jlinphone.core.LinphoneChatMessageImpl;
 import org.linphone.jlinphone.core.LinphoneCoreImpl;
-import org.linphone.jlinphone.core.LinphoneCoreImpl.OnTextMessageListener;
+import org.linphone.jlinphone.core.LinphoneCoreImpl.OnMessageListener;
 import org.linphone.jlinphone.gui.AdvancedSearchableContactList;
 import org.linphone.jlinphone.gui.LinphoneMain;
 import org.linphone.jlinphone.gui.LinphoneResource;
@@ -63,13 +65,12 @@ import org.linphone.jlinphone.gui.LinphoneScreen;
 import org.linphone.jlinphone.gui.TabFieldItem;
 import org.linphone.jlinphone.gui.msg.MessageStorage.MessageItem;
 import org.linphone.jlinphone.gui.msg.MessageStorage.ThreadItem;
-import org.linphone.sal.SalListener.MessageEvent;
 
 /**
  * @author guillaume Beraudo
  *
  */
-public class MessengerManager extends VerticalFieldManager implements TabFieldItem, LinphoneResource, OnTextMessageListener {
+public class MessengerManager extends VerticalFieldManager implements TabFieldItem, LinphoneResource, OnMessageListener {
 
 	private static Bitmap successIcon = Bitmap.getBitmapResource("chat_message_delivered.png");
 	private static Bitmap progressIcon = Bitmap.getBitmapResource("chat_message_inprogress.png");
@@ -99,11 +100,11 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 		mContactChooserMgr = new ContactChooser();
 		mCore=(LinphoneCoreImpl)core;
 		initializeThreadContent();
-		mCore.setTextMessageListener(this);
+		mCore.setMessageListener(this);
 	}
 
 
-	public void onTextReceived(final LinphoneAddress from, final String message, Date when) {
+	private void onTextReceived(final LinphoneAddress from, final String message) {
 		if (shouldNotifyUserOfIncomingMsg(from)) {
 			NotificationsManager.triggerImmediateEvent(LinphoneMain.NOTIF_ID, 0, null, null);
 		}
@@ -129,18 +130,6 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 		}
 
 	}
-
-	public void onTextSentEvent(final Object opaque, LinphoneAddress to, final int event, String phrase) {
-		//		getLinphoneScreen().displayStatus(mCore, "Message event " + event + " from " + to.asStringUriOnly());
-		if (isMgrDisplayed(mConversationMgr) && LinphoneAddressImpl.equalsUserAndDomain(to, mConversationMgr.getPeer())) {
-			UiApplication.getUiApplication().invokeLater(new Runnable() {
-				public void run() {
-					mConversationMgr.updateMessage(opaque, event);
-				}
-			});
-		}
-	}
-
 
 
 	MenuItem composeMenu=new MenuItem(provideString(MSG_COMPOSE), 110, 10) {
@@ -220,7 +209,7 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 	 * Displays a given conversation, passed or active.
 	 * @author guillaume
 	 */
-	private class ConversationField extends VerticalFieldManager {
+	private class ConversationField extends VerticalFieldManager implements LinphoneChatMessage.StateListener{
 		private ContactField mRemoteContact= new ContactField();
 		private LinphoneChatRoom mChatRoom;
 		private Manager mMessages= new VerticalFieldManager(VERTICAL_SCROLL|USE_ALL_WIDTH|USE_ALL_HEIGHT) {
@@ -307,13 +296,13 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 			mTextInput.setText("");
 		}
 
-		public void updateMessage(Object opaque, int event) {
+		public void updateMessage(Object opaque, State state) {
 			long id=((Long)opaque).longValue();
-			for (int i=mMessages.getFieldCount()-1; i > 0; --i) {
+			for (int i=mMessages.getFieldCount()-1; i >= 0; --i) {
 				MessageField f=(MessageField)mMessages.getField(i);
 				if (f.getMessageId() == id) {
 					SentMessageField sent=(SentMessageField) f;
-					sent.onEvent(event);
+					sent.onEvent(state);
 					return;
 				}
 			}
@@ -370,22 +359,21 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 
 		private class SentMessageField extends LabelField implements MessageField {
 			MessageItem item;
-			int status;
+			LinphoneChatMessage.State status;
 
 			Bitmap getIcon() {
-				switch (status) {
-				case MessageEvent.SUCCESS:
+				if (status == LinphoneChatMessage.State.Delivered) {
 					return successIcon;
-				case MessageEvent.PROGRESS:
+				} else if (status == LinphoneChatMessage.State.InProgress) {
 					return progressIcon;
-				case MessageEvent.FAILURE:
+				} else if (status == LinphoneChatMessage.State.NotDelivered) {
 					return failureIcon;
-				default:
+				} else {
 					return progressIcon;
 				}
 			}
 
-			private String labelize(MessageItem msg, int status) {
+			private String labelize(MessageItem msg, State status) {
 				String label= "    " + msg.getContent();
 				String error=msg.getErrorMsg();
 				if (error != null && error.length() > 0) label+= "\n" + error;
@@ -395,7 +383,7 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 			public SentMessageField(MessageItem item, long style) {
 				super("", style|FOCUSABLE);
 				this.item = item;
-				onEvent(item.getStatus());
+				onEvent(item.getState());
 				boxize(this);
 			}
 
@@ -413,7 +401,7 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 				return item.getId();
 			}
 
-			public void onEvent(int event) {
+			public void onEvent(State event) {
 				// Hopefully the item has been updated
 				status=event;
 				setText(labelize(item, event));
@@ -435,17 +423,19 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 
 		private class ConversationEditText extends AutoTextEditField {
 
+			private static final boolean simulateRecvdMsg = false;
 			public ConversationEditText() {
 				super("->", "", 150, FOCUSABLE|EDITABLE);
 				setBackground(BackgroundFactory.createSolidBackground(Color.WHITE));
 			}
 
-			void processMessage(String msg) {
-				if (!msg.startsWith(" ")) {
+			void sendMessage(String msg) {
+				if (!simulateRecvdMsg || !msg.startsWith(" ")) {
 					String uri=mRemoteContact.mPeer.asStringUriOnly();
 					MessageItem item = mMessageStorage.sendMsg(uri, msg);
 					mConversationMgr.addSentMsg(item);
-					mChatRoom.sendMessage(new Long(item.getId()), msg);
+					LinphoneChatMessageImpl lcm=LinphoneChatMessageImpl.createSentMessage(item, null, mRemoteContact.mPeer);
+					mChatRoom.sendMessage(lcm, ConversationField.this);
 				} else {
 					mConversationMgr.addReceivedMsg(msg);
 				}
@@ -454,11 +444,27 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 			}
 			protected boolean keyChar(char key, int status, int time) {
 				if (key =='\n') {
-					if (mTextInput.getText().length() > 0) processMessage(getText());
+					if (mTextInput.getText().length() > 0) sendMessage(getText());
 					return true;
 				}
 				return super.keyChar(key, status, time);
 			}
+		}
+
+		public void onLinphoneChatMessageStateChanged(final LinphoneChatMessage msg,
+				final State state) {
+			//		getLinphoneScreen().displayStatus(mCore, "Message event " + event + " from " + to.asStringUriOnly());
+			if (!isMgrDisplayed(mConversationMgr)) return;
+
+			LinphoneAddress p1=msg.getPeerAddress();
+			LinphoneAddress p2=mConversationMgr.getPeer();
+			if (!LinphoneAddressImpl.equalsUserAndDomain(p1, p2)) return;
+
+			UiApplication.getUiApplication().invokeLater(new Runnable() {
+				public void run() {
+					mConversationMgr.updateMessage(msg.getUserData(), state);
+				}
+			});
 		}
 	}
 
@@ -692,6 +698,13 @@ public class MessengerManager extends VerticalFieldManager implements TabFieldIt
 
 	private LinphoneScreen getLinphoneScreen() {
 		return (LinphoneScreen)getScreen();
+	}
+
+
+	public void onMessageReceived(LinphoneCore lc, LinphoneChatRoom cr,
+			LinphoneChatMessage message) {
+		onTextReceived(message.getPeerAddress(), message.getMessage());
+		
 	}
 
 

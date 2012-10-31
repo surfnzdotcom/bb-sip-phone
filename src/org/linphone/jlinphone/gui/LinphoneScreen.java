@@ -53,6 +53,8 @@ import org.linphone.core.LinphoneAddress;
 import org.linphone.core.LinphoneCall;
 import org.linphone.core.LinphoneCall.State;
 import org.linphone.core.LinphoneCallLog;
+import org.linphone.core.LinphoneCallStats;
+import org.linphone.core.LinphoneChatMessage;
 import org.linphone.core.LinphoneChatRoom;
 import org.linphone.core.LinphoneCore;
 import org.linphone.core.LinphoneCore.EcCalibratorStatus;
@@ -409,10 +411,15 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 		
 	}
 
+	public void messageReceived(LinphoneCore lc, LinphoneChatRoom cr,
+			LinphoneChatMessage message) {
+		// See directly in LinphoneCoreImpl
+	}
+	
 
 	public void textReceived(LinphoneCore lc, LinphoneChatRoom cr,
 			LinphoneAddress from, String message) {
-		// See directly in LinphoneCoreImpl
+		throw new RuntimeException("deprecated");
 	}
 
 
@@ -462,5 +469,14 @@ public class LinphoneScreen extends MainScreen implements LinphoneCoreListener ,
 	
 	public boolean isDisplayedTab(int pos) {
 		return mTabField.mCurrentIndex==pos;
+	}
+
+
+	public void callStatsUpdated(LinphoneCore lc, LinphoneCall call,
+			LinphoneCallStats stats) {
+	}
+
+
+	public void dtmfReceived(LinphoneCore lc, LinphoneCall call, int dtmf) {
 	}
 }

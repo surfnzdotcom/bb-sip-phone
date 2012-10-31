@@ -22,6 +22,8 @@ import java.util.Date;
 import java.util.Vector;
 
 import org.linphone.core.LinphoneAddress;
+import org.linphone.core.LinphoneChatMessage;
+import org.linphone.core.LinphoneChatMessage.State;
 
 /**
  * Store conversation threads and associated messages.
@@ -51,14 +53,15 @@ public final class MemoryMessageStorage extends MessageStorage {
 
 
 	public synchronized MessageItem receivedMsg(String uri, String message, Date now) {
-		return super.receivedMsg(uri, message, now);
+		return super.receivedMsg(uri, message);
 	}
 
-	public synchronized void updateSentMsg(Object opaque, LinphoneAddress to, int event, String phrase) {
-		ThreadItem thread=loadThread(to.asStringUriOnly());
-		SimpleMessageItem message=findMessage(thread, opaque);
+	public synchronized void updateSentMsg(LinphoneChatMessage msg, State event, String phrase) {
+		ThreadItem thread=loadThread(msg.getPeerAddress().asStringUriOnly());
+		Long id=(Long) msg.getUserData();
+		SimpleMessageItem message=findMessage(thread, id.longValue());
 		if (message!=null) {
-			message.status=event;
+			message.state=event;
 			message.error=phrase;
 		}
 	}
